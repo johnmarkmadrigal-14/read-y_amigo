@@ -1,41 +1,91 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { Screen } from "../components/Screen";
+import { useTheme } from "../theme/ThemeProvider";
+import { radius, spacing, typography } from "../theme/tokens";
+
+const SHADOW_OFFSET = 5;
+
+interface RoleCardProps {
+  title: string;
+  fill: string;
+  shadowColor: string;
+  onPress: () => void;
+}
+
+function RoleCard({ title, fill, shadowColor, onPress }: RoleCardProps) {
+  const pressed = useSharedValue(0);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: pressed.value * SHADOW_OFFSET }],
+  }));
+
+  const shadowStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(pressed.value ? 0 : 1, { duration: 80 }),
+  }));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => (pressed.value = withTiming(1, { duration: 80 }))}
+      onPressOut={() => (pressed.value = withTiming(0, { duration: 80 }))}
+      style={styles.cardWrapper}
+    >
+      <Animated.View
+        style={[styles.shadowBlock, { backgroundColor: shadowColor }, shadowStyle]}
+      />
+      <Animated.View style={[styles.card, { backgroundColor: fill, borderColor: shadowColor }, cardStyle]}>
+        <Text style={[typography.display.lg, { textAlign: "center" }]}>{title}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function ChooseRole() {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Who are you?</Text>
-
-      <Text style={styles.subtitle}>
-        Choose how you will use READ-Y AMIGO.
-      </Text>
-
-      <Pressable
-        style={styles.card}
-        onPress={() => router.push("/auth/teacher-signup")}
-      >
-        <Text style={styles.cardTitle}>👩‍🏫 Teacher</Text>
-
-        <Text style={styles.cardText}>
-          Create classrooms and guide your learners.
+    <Screen>
+      <View style={styles.container}>
+        <Text style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.xs }]}>
+          Who are you?
         </Text>
-      </Pressable>
 
-      <Pressable
-        style={styles.card}
-        onPress={() => router.push("/auth/learner-signup")}
-      >
-        <Text style={styles.cardTitle}>📚 Learner</Text>
-
-        <Text style={styles.cardText}>
-          Join a classroom and improve your reading skills.
+        <Text
+          style={[
+            typography.reading.sm,
+            { color: colors.textMuted, textAlign: "center", marginBottom: spacing.xl },
+          ]}
+        >
+          Choose how you will use READ-Y AMIGO.
         </Text>
-      </Pressable>
 
-      <Pressable onPress={() => router.back()}>
-        <Text style={styles.back}>← Back</Text>
-      </Pressable>
-    </View>
+        <RoleCard
+          title="Teacher"
+          fill={colors.surface}
+          shadowColor={colors.border}
+          onPress={() => router.push("/auth/teacher-signup")}
+        />
+
+        <RoleCard
+          title="Learner"
+          fill={colors.surface}
+          shadowColor={colors.border}
+          onPress={() => router.push("/auth/learner-signup")}
+        />
+
+        <Pressable onPress={() => router.back()} style={{ marginTop: spacing.sm }}>
+          <Text style={[typography.reading.sm, { textAlign: "center", color: colors.success }]}>
+            ← Back
+          </Text>
+        </Pressable>
+      </View>
+    </Screen>
   );
 }
 
@@ -43,44 +93,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#F4F7F5",
+    alignItems: "center",
+    padding: spacing.lg,
   },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 8,
+  cardWrapper: {
+    width: "80%",
+    marginBottom: spacing.md,
   },
-
-  subtitle: {
-    textAlign: "center",
-    color: "#666",
-    marginBottom: 30,
-  },
-
   card: {
-    backgroundColor: "white",
-    padding: 24,
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: radius.lg,
+    borderWidth: 3,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
   },
-
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-
-  cardText: {
-    color: "#666",
-    lineHeight: 20,
-  },
-
-  back: {
-    textAlign: "center",
-    marginTop: 16,
-    color: "#2E7D32",
+  shadowBlock: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: SHADOW_OFFSET,
+    bottom: -SHADOW_OFFSET,
+    borderRadius: radius.lg,
   },
 });

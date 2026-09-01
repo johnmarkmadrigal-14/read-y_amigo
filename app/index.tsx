@@ -1,84 +1,97 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
+import { useEffect } from "react";
+import { Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+} from "react-native-reanimated";
+import { Button } from "./components/Button";
+import { Screen } from "./components/Screen";
+import { useTheme } from "./theme/ThemeProvider";
+import { spacing, typography } from "./theme/tokens";
 
 export default function Index() {
+  const { colors } = useTheme();
+
+  const logoScale = useSharedValue(0.6);
+  const logoOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(16);
+  const titleOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    logoScale.value = withSpring(1, { damping: 7, stiffness: 140 });
+    logoOpacity.value = withSpring(1, { damping: 12 });
+    titleTranslateY.value = withDelay(120, withSpring(0, { damping: 10, stiffness: 120 }));
+    titleOpacity.value = withDelay(120, withSpring(1, { damping: 12 }));
+  }, []);
+
+  const logoStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value,
+  }));
+
+  const titleStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: titleTranslateY.value }],
+    opacity: titleOpacity.value,
+  }));
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.logo}>READ-Y AMIGO</Text>
+    <Screen>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Animated.Image
+          source={require("../assets/images/logo.png")}
+          style={[
+            {
+              width: 180,
+              height: 180,
+              marginBottom: spacing.xs,
+            },
+            logoStyle,
+          ]}
+          resizeMode="contain"
+        />
 
-      <Text style={styles.subtitle}>
-        Learn, read, and improve together.
-      </Text>
+        <Animated.Text
+          style={[
+            typography.display.xl,
+            {
+              color: colors.primary,
+              textAlign: "center",
+              marginBottom: spacing.xs,
+            },
+            titleStyle,
+          ]}
+        >
+          READ-Y AMIGO
+        </Animated.Text>
 
-      <Pressable
-        style={styles.primaryButton}
-        onPress={() => router.push("/auth/choose-role")}
-      >
-        <Text style={styles.primaryButtonText}>
-          Create Account
+        <Text
+          style={{
+            ...typography.reading.sm,
+            color: colors.textMuted,
+            textAlign: "center",
+            marginBottom: spacing.xxl,
+            paddingHorizontal: spacing.lg,
+          }}
+        >
+          Learn, read, and improve together.
         </Text>
-      </Pressable>
 
-      <Pressable
-        style={styles.secondaryButton}
-        onPress={() => router.push("/auth/login")}
-      >
-        <Text style={styles.secondaryButtonText}>
-          Log In
-        </Text>
-      </Pressable>
-    </View>
+        <View style={{ width: "85%", gap: spacing.md }}>
+          <Button
+            label="Create account"
+            variant="primary"
+            onPress={() => router.push("/auth/choose-role")}
+          />
+          <Button
+            label="Log in"
+            variant="secondary"
+            onPress={() => router.push("/auth/login")}
+          />
+        </View>
+      </View>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#F4F7F5",
-  },
-
-  logo: {
-    fontSize: 32,
-    fontWeight: "800",
-    textAlign: "center",
-    color: "#2E7D32",
-    marginBottom: 12,
-  },
-
-  subtitle: {
-    textAlign: "center",
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 40,
-  },
-
-  primaryButton: {
-    backgroundColor: "#2E7D32",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-
-  primaryButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: "#2E7D32",
-    padding: 16,
-    borderRadius: 12,
-  },
-
-  secondaryButtonText: {
-    color: "#2E7D32",
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-});

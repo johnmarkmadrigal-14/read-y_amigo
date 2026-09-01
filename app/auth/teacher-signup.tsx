@@ -1,16 +1,14 @@
-import { useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
 import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, TextInput } from "react-native";
+import { Button } from "../components/Button";
+import { Screen } from "../components/Screen";
+import { useTheme } from "../theme/ThemeProvider";
+import { radius, spacing, typography } from "../theme/tokens";
 
 export default function TeacherSignup() {
+  const { colors } = useTheme();
+
   const [firstName, setFirstName] = useState("");
   const [secondName, setSecondName] = useState("");
   const [middleInitial, setMiddleInitial] = useState("");
@@ -21,7 +19,9 @@ export default function TeacherSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSignup = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async () => {
     const numericAge = Number(age);
 
     if (!firstName || !secondName || !displayName || !age) {
@@ -30,89 +30,119 @@ export default function TeacherSignup() {
     }
 
     if (numericAge < 15) {
-      Alert.alert(
-        "Age Requirement",
-        "Teachers must be at least 15 years old."
-      );
+      Alert.alert("Age Requirement", "Teachers must be at least 15 years old.");
       return;
     }
 
-    // Temporary navigation.
-    // Later, this will send data to MongoDB through the backend.
-    router.replace("/teacher/dashboard");
+    setLoading(true);
+    try {
+      // Temporary navigation.
+      // Later, this will send data to MongoDB through the backend.
+      router.replace("/teacher/dashboard");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Teacher Account</Text>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text
+          style={[
+            typography.display.xl,
+            { color: colors.primary, textAlign: "center", marginBottom: spacing.xl },
+          ]}
+        >
+          Teacher Account
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="First Name"
-        value={firstName}
-        onChangeText={setFirstName}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="First Name"
+          placeholderTextColor={colors.textMuted}
+          value={firstName}
+          onChangeText={setFirstName}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Second / Last Name"
-        value={secondName}
-        onChangeText={setSecondName}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="Second / Last Name"
+          placeholderTextColor={colors.textMuted}
+          value={secondName}
+          onChangeText={setSecondName}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Middle Initial"
-        value={middleInitial}
-        onChangeText={setMiddleInitial}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="Middle Initial"
+          placeholderTextColor={colors.textMuted}
+          value={middleInitial}
+          onChangeText={setMiddleInitial}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="How should learners address you? (Ms. Santos)"
-        value={displayName}
-        onChangeText={setDisplayName}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="How should learners address you?"
+          placeholderTextColor={colors.textMuted}
+          value={displayName}
+          onChangeText={setDisplayName}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Age"
-        keyboardType="numeric"
-        value={age}
-        onChangeText={setAge}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="Age"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="numeric"
+          value={age}
+          onChangeText={setAge}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Level of learners you teach"
-        value={learnerLevel}
-        onChangeText={setLearnerLevel}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="Level of learners you teach"
+          placeholderTextColor={colors.textMuted}
+          value={learnerLevel}
+          onChangeText={setLearnerLevel}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email Address"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="Email Address"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }, typography.reading.sm]}
+          placeholder="Password"
+          placeholderTextColor={colors.textMuted}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <Pressable
-        style={styles.button}
-        onPress={handleSignup}
-      >
-        <Text style={styles.buttonText}>Create Teacher Account</Text>
-      </Pressable>
-    </ScrollView>
+        <Button
+          label="Create Teacher Account"
+          variant="primary"
+          onPress={handleSignup}
+          loading={loading}
+          style={{ marginTop: spacing.sm }}
+        />
+
+        <Text
+          onPress={() => router.back()}
+          style={[
+            typography.reading.sm,
+            { textAlign: "center", color: colors.success, marginTop: spacing.md },
+          ]}
+        >
+          ← Back
+        </Text>
+      </ScrollView>
+    </Screen>
   );
 }
 
@@ -120,36 +150,13 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#F4F7F5",
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 24,
+    padding: spacing.lg,
   },
 
   input: {
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
-  },
-
-  button: {
-    backgroundColor: "#2E7D32",
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 10,
-  },
-
-  buttonText: {
-    color: "white",
-    textAlign: "center",
-    fontWeight: "700",
+    borderWidth: 3,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
 });
