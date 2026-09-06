@@ -1,15 +1,13 @@
 import { useState } from "react";
-import {
-  Alert,
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-} from "react-native";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
+import { Button } from "../components/Button";
+import { Screen } from "../components/Screen";
+import { useTheme } from "../theme/ThemeProvider";
+import { radius, spacing, typography } from "../theme/tokens";
 
 export default function CreateClassroom() {
+  const { colors } = useTheme();
   const [classroomName, setClassroomName] = useState("");
 
   const handleCreate = () => {
@@ -18,7 +16,6 @@ export default function CreateClassroom() {
         "Classroom Name Required",
         "Please enter a name for your classroom."
       );
-
       return;
     }
 
@@ -27,33 +24,56 @@ export default function CreateClassroom() {
 
     router.replace({
       pathname: "/teacher/classroom-created",
-      params: {
-        name: classroomName,
-        code: classroomCode,
-      },
+      params: { name: classroomName, code: classroomCode },
     });
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Classroom</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Classroom Name"
-        value={classroomName}
-        onChangeText={setClassroomName}
-      />
-
-      <Pressable
-        style={styles.button}
-        onPress={handleCreate}
-      >
-        <Text style={styles.buttonText}>
+    <Screen>
+      <View style={styles.container}>
+        <Text
+          style={[
+            typography.display.xl,
+            { color: colors.primary, textAlign: "center", marginBottom: spacing.xl },
+          ]}
+        >
           Create Classroom
         </Text>
-      </Pressable>
-    </View>
+
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              color: colors.text,
+            },
+            typography.reading.sm,
+          ]}
+          placeholder="Classroom Name"
+          placeholderTextColor={colors.textMuted}
+          value={classroomName}
+          onChangeText={setClassroomName}
+        />
+
+        <Button
+          label="Create Classroom"
+          variant="primary"
+          onPress={handleCreate}
+          style={{ marginTop: spacing.sm }}
+        />
+
+        <Text
+          onPress={() => router.back()}
+          style={[
+            typography.reading.sm,
+            { textAlign: "center", color: colors.success, marginTop: spacing.md },
+          ]}
+        >
+          ← Back
+        </Text>
+      </View>
+    </Screen>
   );
 }
 
@@ -61,35 +81,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#F4F7F5",
+    padding: spacing.lg,
   },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 24,
-  },
-
   input: {
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#DDD",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-
-  button: {
-    backgroundColor: "#2E7D32",
-    padding: 16,
-    borderRadius: 12,
-  },
-
-  buttonText: {
-    color: "white",
-    textAlign: "center",
-    fontWeight: "700",
+    borderWidth: 3,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
 });

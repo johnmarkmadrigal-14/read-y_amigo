@@ -1,17 +1,13 @@
 import { useState } from "react";
-
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Alert,
-  StyleSheet,
-} from "react-native";
-
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
+import { Button } from "../components/Button";
+import { Screen } from "../components/Screen";
+import { useTheme } from "../theme/ThemeProvider";
+import { radius, spacing, typography } from "../theme/tokens";
 
 export default function JoinClassroom() {
+  const { colors } = useTheme();
   const [code, setCode] = useState("");
 
   const handleJoin = () => {
@@ -28,30 +24,62 @@ export default function JoinClassroom() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Join Classroom</Text>
-
-      <Text style={styles.subtitle}>
-        Enter the classroom code given by your teacher.
-      </Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Classroom Code"
-        value={code}
-        onChangeText={setCode}
-        autoCapitalize="characters"
-      />
-
-      <Pressable
-        style={styles.button}
-        onPress={handleJoin}
-      >
-        <Text style={styles.buttonText}>
+    <Screen>
+      <View style={styles.container}>
+        <Text
+          style={[
+            typography.display.xl,
+            { color: colors.primary, textAlign: "center", marginBottom: spacing.sm },
+          ]}
+        >
           Join Classroom
         </Text>
-      </Pressable>
-    </View>
+
+        <Text
+          style={[
+            typography.reading.sm,
+            { color: colors.textMuted, textAlign: "center", marginBottom: spacing.xl },
+          ]}
+        >
+          Enter the classroom code given by your teacher.
+        </Text>
+
+        <TextInput
+          style={[
+            styles.codeInput,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              color: colors.text,
+            },
+            typography.display.lg,
+          ]}
+          placeholder="ABC123"
+          placeholderTextColor={colors.textMuted}
+          value={code}
+          onChangeText={setCode}
+          autoCapitalize="characters"
+          textAlign="center"
+        />
+
+        <Button
+          label="Join Classroom"
+          variant="primary"
+          onPress={handleJoin}
+          style={{ marginTop: spacing.sm }}
+        />
+
+        <Text
+          onPress={() => router.back()}
+          style={[
+            typography.reading.sm,
+            { textAlign: "center", color: colors.success, marginTop: spacing.md },
+          ]}
+        >
+          ← Back
+        </Text>
+      </View>
+    </Screen>
   );
 }
 
@@ -59,44 +87,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#F4F7F5",
+    padding: spacing.lg,
   },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
+  codeInput: {
+    borderWidth: 3,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    letterSpacing: 6,
     textAlign: "center",
-    marginBottom: 10,
-  },
-
-  subtitle: {
-    textAlign: "center",
-    color: "#666",
-    marginBottom: 24,
-  },
-
-  input: {
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#DDD",
-    padding: 18,
-    borderRadius: 12,
-    fontSize: 18,
-    textAlign: "center",
-    letterSpacing: 3,
-    marginBottom: 16,
-  },
-
-  button: {
-    backgroundColor: "#2E7D32",
-    padding: 16,
-    borderRadius: 12,
-  },
-
-  buttonText: {
-    color: "white",
-    textAlign: "center",
-    fontWeight: "700",
   },
 });

@@ -1,36 +1,47 @@
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-} from "react-native";
-
+import { View, Text, StyleSheet } from "react-native";
 import { router } from "expo-router";
+import { Button } from "../components/Button";
+import { Screen } from "../components/Screen";
+import { useTheme } from "../theme/ThemeProvider";
+import { radius, spacing, typography } from "../theme/tokens";
 
 export default function ClassroomJoined() {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.check}>✓</Text>
+    <Screen>
+      <View style={styles.container}>
+        {/* Success badge */}
+        <View style={[styles.checkBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={{ fontSize: 48 }}>✓</Text>
+        </View>
 
-      <Text style={styles.title}>
-        Classroom Joined!
-      </Text>
-
-      <Text style={styles.text}>
-        You have successfully joined the classroom.
-      </Text>
-
-      <Pressable
-        style={styles.button}
-        onPress={() =>
-          router.replace("/learner/dashboard")
-        }
-      >
-        <Text style={styles.buttonText}>
-          Go to My Classrooms
+        <Text
+          style={[
+            typography.display.xl,
+            { color: colors.primary, textAlign: "center", marginTop: spacing.lg, marginBottom: spacing.md },
+          ]}
+        >
+          Classroom Joined!
         </Text>
-      </Pressable>
-    </View>
+
+        <Text
+          style={[
+            typography.reading.sm,
+            { color: colors.textMuted, textAlign: "center", marginBottom: spacing.xl, paddingHorizontal: spacing.md },
+          ]}
+        >
+          You have successfully joined the classroom.
+        </Text>
+
+        <Button
+          label="Go to My Classrooms"
+          variant="primary"
+          onPress={() => router.replace("/learner/dashboard")}
+          style={{ width: "100%" }}
+        />
+      </View>
+    </Screen>
   );
 }
 
@@ -39,37 +50,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
-    backgroundColor: "#F4F7F5",
+    padding: spacing.lg,
   },
-
-  check: {
-    fontSize: 64,
-    marginBottom: 10,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 16,
-  },
-
-  text: {
-    fontSize: 16,
-    textAlign: "center",
-    color: "#666",
-    marginBottom: 30,
-  },
-
-  button: {
-    backgroundColor: "#2E7D32",
-    paddingVertical: 16,
-    paddingHorizontal: 30,
-    borderRadius: 12,
-  },
-
-  buttonText: {
-    color: "white",
-    fontWeight: "700",
+  checkBadge: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

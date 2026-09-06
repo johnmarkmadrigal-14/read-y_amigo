@@ -1,60 +1,70 @@
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-} from "react-native";
-
-import {
-  router,
-  useLocalSearchParams,
-} from "expo-router";
+import { View, Text, StyleSheet } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { Button } from "../components/Button";
+import { Screen } from "../components/Screen";
+import { useTheme } from "../theme/ThemeProvider";
+import { radius, spacing, typography } from "../theme/tokens";
 
 export default function ClassroomCreated() {
-  const { name, code } = useLocalSearchParams<{
-    name: string;
-    code: string;
-  }>();
+  const { colors } = useTheme();
+  const { name, code } = useLocalSearchParams<{ name: string; code: string }>();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.check}>✓</Text>
+    <Screen>
+      <View style={styles.container}>
+        {/* Success badge */}
+        <View style={[styles.checkBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={{ fontSize: 48 }}>✓</Text>
+        </View>
 
-      <Text style={styles.title}>
-        Classroom Created!
-      </Text>
-
-      <Text style={styles.label}>
-        Classroom Name
-      </Text>
-
-      <Text style={styles.classroomName}>
-        {name}
-      </Text>
-
-      <Text style={styles.label}>
-        Classroom Code
-      </Text>
-
-      <Text style={styles.code}>
-        {code}
-      </Text>
-
-      <Text style={styles.info}>
-        Share this code with your learners so they can join your classroom.
-      </Text>
-
-      <Pressable
-        style={styles.button}
-        onPress={() =>
-          router.replace("/teacher/dashboard")
-        }
-      >
-        <Text style={styles.buttonText}>
-          Go to Dashboard
+        <Text
+          style={[
+            typography.display.xl,
+            { color: colors.primary, textAlign: "center", marginTop: spacing.lg, marginBottom: spacing.xl },
+          ]}
+        >
+          Classroom Created!
         </Text>
-      </Pressable>
-    </View>
+
+        {/* Classroom name card */}
+        <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[typography.reading.sm, { color: colors.textMuted, marginBottom: 4 }]}>
+            Classroom Name
+          </Text>
+          <Text style={[typography.display.lg, { color: colors.text }]}>{name}</Text>
+        </View>
+
+        {/* Classroom code card */}
+        <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[typography.reading.sm, { color: colors.textMuted, marginBottom: 4 }]}>
+            Classroom Code
+          </Text>
+          <Text
+            style={[
+              typography.display.xl,
+              { color: colors.primary, letterSpacing: 6, textAlign: "center" },
+            ]}
+          >
+            {code}
+          </Text>
+        </View>
+
+        <Text
+          style={[
+            typography.reading.sm,
+            { color: colors.textMuted, textAlign: "center", marginVertical: spacing.lg, paddingHorizontal: spacing.md },
+          ]}
+        >
+          Share this code with your learners so they can join your classroom.
+        </Text>
+
+        <Button
+          label="Go to Dashboard"
+          variant="primary"
+          onPress={() => router.replace("/teacher/dashboard")}
+        />
+      </View>
+    </Screen>
   );
 }
 
@@ -63,54 +73,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
-    backgroundColor: "#F4F7F5",
+    padding: spacing.lg,
   },
-
-  check: {
-    fontSize: 64,
-    marginBottom: 10,
+  checkBadge: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    justifyContent: "center",
+    alignItems: "center",
   },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 30,
-  },
-
-  label: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 12,
-  },
-
-  classroomName: {
-    fontSize: 22,
-    fontWeight: "700",
-  },
-
-  code: {
-    fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: 4,
-    marginTop: 5,
-  },
-
-  info: {
-    textAlign: "center",
-    color: "#666",
-    marginVertical: 30,
-  },
-
-  button: {
-    backgroundColor: "#2E7D32",
-    paddingVertical: 16,
-    paddingHorizontal: 30,
-    borderRadius: 12,
-  },
-
-  buttonText: {
-    color: "white",
-    fontWeight: "700",
+  infoCard: {
+    width: "100%",
+    borderWidth: 3,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    alignItems: "center",
+    marginBottom: spacing.md,
   },
 });
