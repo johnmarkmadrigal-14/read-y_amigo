@@ -1,90 +1,74 @@
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-} from "react-native";
-
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
+import { Screen } from "../components/Screen";
+import { useTheme } from "../theme/ThemeProvider";
+import { spacing, typography } from "../theme/tokens";
 
 export default function LearnerDashboard() {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>My Classrooms</Text>
-
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>
-          You haven't joined a classroom yet.
+    <Screen>
+      <View style={styles.container}>
+        <Text style={[typography.display.xl, { color: colors.text, marginTop: spacing.sm }]}>
+          My Classrooms
         </Text>
 
-        <Text style={styles.emptySubtext}>
-          Ask your teacher for a classroom code.
-        </Text>
+        <View style={styles.emptyContainer}>
+          <Text style={[typography.display.md, { color: colors.text, textAlign: "center" }]}>
+            You haven't joined a classroom yet.
+          </Text>
+          <Text
+            style={[
+              typography.reading.sm,
+              { color: colors.textMuted, textAlign: "center", marginTop: spacing.sm },
+            ]}
+          >
+            Ask your teacher for a classroom code.
+          </Text>
+        </View>
+
+        {/* Floating + button */}
+        <Pressable
+          style={[styles.plusButton, { backgroundColor: colors.primary }]}
+          onPress={() => router.push("/learner/join-classroom")}
+        >
+          <Text style={[styles.plus, { color: colors.primaryText }]}>+</Text>
+        </Pressable>
       </View>
-
-      <Pressable
-        style={styles.plusButton}
-        onPress={() =>
-          router.push("/learner/join-classroom")
-        }
-      >
-        <Text style={styles.plus}>+</Text>
-      </Pressable>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F4F7F5",
-    padding: 24,
+    padding: spacing.sm,
   },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginTop: 40,
-  },
-
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: spacing.lg,
   },
-
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-
-  emptySubtext: {
-    marginTop: 8,
-    color: "#666",
-    textAlign: "center",
-  },
-
   plusButton: {
     position: "absolute",
     alignSelf: "center",
-    bottom: 60,
-
+    bottom: spacing.xl,
     width: 70,
     height: 70,
-
     borderRadius: 35,
-
-    backgroundColor: "#2E7D32",
-
     justifyContent: "center",
     alignItems: "center",
-
     elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-
   plus: {
-    color: "white",
     fontSize: 40,
+    lineHeight: 46,
+    fontWeight: "300",
   },
 });
