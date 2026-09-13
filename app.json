@@ -8,9 +8,11 @@
     "scheme": "readyamigo",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.readyamigo.app"
     },
     "android": {
+      "package": "com.readyamigo.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -38,6 +40,8 @@
         }
       ],
       "expo-font",
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
       "expo-image",
       "expo-status-bar",
       "expo-web-browser"
