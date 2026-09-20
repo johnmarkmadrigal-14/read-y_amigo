@@ -20,6 +20,7 @@ import { StepIndicator } from "../components/StepIndicator";
 import { signupTeacher } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
 import { radius, spacing, typography } from "../theme/tokens";
+import { CaptchaModal } from "../components/CaptchaModal";
 
 // Each step lists which fields belong to it and its heading.
 // Add/remove/reorder steps here without touching the render logic below.
@@ -80,6 +81,7 @@ export default function TeacherSignup() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [captchaVisible, setCaptchaVisible] = useState(false);
 
   // Returns an error message for the current step, or null if it's valid.
   const validateStep = () => {
@@ -119,38 +121,45 @@ export default function TeacherSignup() {
   };
 
   const handleNext = async () => {
-    const error = validateStep();
-    if (error) {
-      Alert.alert("Hold on", error);
-      return;
-    }
+  const error = validateStep();
+  if (error) {
+    Alert.alert("Hold on", error);
+    return;
+  }
 
-    if (!isLastStep) {
-      setStepIndex((i) => i + 1);
-      return;
-    }
+  if (!isLastStep) {
+    setStepIndex((i) => i + 1);
+    return;
+  }
 
-    setLoading(true);
-    try {
-      await signupTeacher({
-        firstName,
-        secondName,
-        middleInitial,
-        displayName,
-        age: String(calculateAge(birthDate as Date)),
-        learnerLevel,
-        email,
-        password,
-      });
-      router.replace("/teacher/dashboard");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      Alert.alert("Couldn't create account", message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Last step — show CAPTCHA before touching the backend.
+  setCaptchaVisible(true);
+};
+
+const handleCaptchaVerified = async (captchaToken: string) => {
+  setCaptchaVisible(false);
+  setLoading(true);
+  try {
+    await signupTeacher({
+      firstName,
+      secondName,
+      middleInitial,
+      displayName,
+      age: String(calculateAge(birthDate as Date)),
+      learnerLevel,
+      email,
+      password,
+      captchaToken,           // ← sent to backend for verification
+    });
+    router.replace("/teacher/dashboard");
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Something went wrong. Please try again.";
+    Alert.alert("Couldn't create account", message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleBack = () => {
     if (stepIndex === 0) {
@@ -379,6 +388,11 @@ export default function TeacherSignup() {
         />
       </ScrollView>
       </KeyboardAvoidingView>
+      <CaptchaModal
+        visible={captchaVisible}
+        onVerified={handleCaptchaVerified}
+        onDismiss={() => setCaptchaVisible(false)}
+      />
     </Screen>
   );
 }

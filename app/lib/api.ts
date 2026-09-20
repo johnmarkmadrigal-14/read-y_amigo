@@ -4,7 +4,7 @@ import * as SecureStore from "expo-secure-store";
 // Windows, look for "IPv4 Address" under your Wi-Fi adapter).
 // Must match the port your Express server listens on.
 // Your phone (Expo Go) and computer must be on the same Wi-Fi network.
-const API_ROOT = "http://192.168.18.86:4000/api";
+const API_ROOT = "http://192.168.18.5:4000/api";
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
@@ -167,6 +167,7 @@ export async function signupTeacher(payload: {
   learnerLevel: string;
   email: string;
   password: string;
+  captchaToken: string; 
 }) {
   const data = await publicRequest<AuthResponse>("/auth/teacher-signup", payload);
   await persistSession(data);
@@ -181,6 +182,7 @@ export async function signupLearner(payload: {
   age: string;
   username: string;
   password: string;
+  captchaToken: string; 
 }) {
   const data = await publicRequest<AuthResponse>("/auth/learner-signup", payload);
   await persistSession(data);
