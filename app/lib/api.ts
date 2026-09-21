@@ -27,8 +27,6 @@ export type ApiClass = {
   status: "active" | "deleted";
   createdAt: string;
   updatedAt: string;
-  // Only present on responses that compute it (getMyClasses, getClass) -
-  // not on create/update, which return the raw document.
   learnerCount?: number;
 };
 
@@ -64,7 +62,6 @@ export type ApiEnrollment = {
   createdAt: string;
 };
 
-// One row of the cross-class analytics breakdown.
 export type ApiReportClass = {
   _id: string;
   title: string;
@@ -74,7 +71,6 @@ export type ApiReportClass = {
   avgComprehension: number;
 };
 
-// Aggregate stats across all of the teacher's active classes.
 export type ApiReportTotals = {
   classCount: number;
   totalLearners: number;
@@ -92,8 +88,6 @@ type AuthResponse = {
   user: ApiUser;
 };
 
-// /auth/google can return either a completed login (existing account) or
-// a signal that the app must collect more info before the account exists.
 type GoogleAuthResult =
   | AuthResponse
   | {
@@ -102,12 +96,12 @@ type GoogleAuthResult =
       suggestedDisplayName: string;
     };
 
+// ── Core fetch helpers ───────────────────────────────────────────────────────
+
 async function rawFetch(path: string, init: RequestInit) {
   try {
     return await fetch(`${API_ROOT}${path}`, init);
   } catch {
-    // Fetch itself failed — almost always networking/config, not a bad
-    // request, so give a message that points at the actual cause.
     throw new Error(
       "Couldn't reach the server. Check that your computer and phone are on the same Wi-Fi and that API_ROOT in api.ts is set correctly."
     );
@@ -122,7 +116,6 @@ async function parseOrThrow<T>(res: Response): Promise<T> {
   return data as T;
 }
 
-// For public endpoints that don't require a token (signup/login).
 async function publicRequest<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const res = await rawFetch(path, {
     method: "POST",
@@ -132,7 +125,6 @@ async function publicRequest<T>(path: string, body: Record<string, unknown>): Pr
   return parseOrThrow<T>(res);
 }
 
-// For endpoints that require the logged-in user's token.
 async function authRequest<T>(
   path: string,
   options: { method?: string; body?: Record<string, unknown> } = {}
@@ -158,6 +150,8 @@ async function persistSession(response: AuthResponse) {
   await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));
 }
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
 export async function signupTeacher(payload: {
   firstName: string;
   secondName: string;
@@ -167,7 +161,6 @@ export async function signupTeacher(payload: {
   learnerLevel: string;
   email: string;
   password: string;
-  captchaToken: string; 
 }) {
   const data = await publicRequest<AuthResponse>("/auth/teacher-signup", payload);
   await persistSession(data);
@@ -182,7 +175,6 @@ export async function signupLearner(payload: {
   age: string;
   username: string;
   password: string;
-  captchaToken: string; 
 }) {
   const data = await publicRequest<AuthResponse>("/auth/learner-signup", payload);
   await persistSession(data);
@@ -195,11 +187,6 @@ export async function login(identifier: string, password: string) {
   return data;
 }
 
-// Signs in with a Google ID token. If an account already exists for this
-// Google user, this resolves to a completed login (session is persisted).
-// If not, it resolves to { needsProfile: true, pendingToken, ... } — no
-// account exists yet, so nothing is persisted; call completeGoogleSignup
-// next with the pendingToken plus the missing fields.
 export async function googleAuth(idToken: string, roleForNewAccount: "teacher" | "learner") {
   const data = await publicRequest<GoogleAuthResult>("/auth/google", {
     idToken,
@@ -211,8 +198,6 @@ export async function googleAuth(idToken: string, roleForNewAccount: "teacher" |
   return data;
 }
 
-// Finishes a Google sign-up started by googleAuth, once the app has
-// collected the fields Google doesn't provide (name parts, age).
 export async function completeGoogleSignup(payload: {
   pendingToken: string;
   firstName: string;
@@ -227,14 +212,11 @@ export async function completeGoogleSignup(payload: {
   return data;
 }
 
-// Fetches the logged-in user's own profile fresh from the server.
 export async function getMyProfile() {
   const data = await authRequest<{ user: ApiUser }>("/auth/me");
   return data.user;
 }
 
-// Updates the logged-in user's own profile. Only send the fields you want
-// changed - anything omitted is left as-is on the server.
 export async function updateMyProfile(payload: {
   firstName?: string;
   secondName?: string;
@@ -247,28 +229,36 @@ export async function updateMyProfile(payload: {
     method: "PATCH",
     body: payload,
   });
-  // Keep the locally stored user in sync so other screens reading
-  // getStoredUser() see the update without needing a fresh fetch.
   await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
   return data.user;
 }
 
-// Fetches the logged-in teacher's own active classes, each with a
-// learnerCount attached.
+export async function getStoredToken() {
+  return SecureStore.getItemAsync(TOKEN_KEY);
+}
+
+export async function getStoredUser(): Promise<ApiUser | null> {
+  const raw = await SecureStore.getItemAsync(USER_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+export async function logout() {
+  await SecureStore.deleteItemAsync(TOKEN_KEY);
+  await SecureStore.deleteItemAsync(USER_KEY);
+}
+
+// ── Teacher: classes ─────────────────────────────────────────────────────────
+
 export async function getMyClasses() {
   const data = await authRequest<{ classes: ApiClass[] }>("/classes/mine");
   return data.classes;
 }
 
-// Fetches the logged-in teacher's archived (soft-deleted) classes, each
-// with a learnerCount attached. Powers the "Archived classes" screen,
-// which pairs with restoreClass() below to bring a class back.
 export async function getArchivedClasses() {
   const data = await authRequest<{ classes: ApiClass[] }>("/classes/archived");
   return data.classes;
 }
 
-// Creates a new class owned by the logged-in teacher.
 export async function createClass(payload: { title: string; description?: string }) {
   const data = await authRequest<{ class: ApiClass }>("/classes", {
     method: "POST",
@@ -277,13 +267,10 @@ export async function createClass(payload: { title: string; description?: string
   return data.class;
 }
 
-// Fetches a single class's details, including its current learner count.
 export async function getClass(classId: string) {
   return authRequest<{ class: ApiClass; learnerCount: number }>(`/classes/${classId}`);
 }
 
-// Updates a class's title/description. Omit a field to leave it unchanged.
-// The join code can't be changed here - it's immutable once created.
 export async function updateClass(
   classId: string,
   payload: { title?: string; description?: string }
@@ -295,11 +282,6 @@ export async function updateClass(
   return data.class;
 }
 
-// Soft-deletes a class (shown in the app as "Archive"): marks it "deleted"
-// so it disappears from getMyClasses and stops being accessible via the
-// API, but nothing is actually removed server-side (enrollments, stream
-// posts, and classwork all stay intact). Returns the updated class for
-// confirmation. Pairs with restoreClass() below.
 export async function deleteClass(classId: string) {
   const data = await authRequest<{ class: ApiClass }>(`/classes/${classId}`, {
     method: "DELETE",
@@ -307,8 +289,6 @@ export async function deleteClass(classId: string) {
   return data.class;
 }
 
-// Restores a previously archived (soft-deleted) class back to "active",
-// so it reappears in getMyClasses.
 export async function restoreClass(classId: string) {
   const data = await authRequest<{ class: ApiClass }>(`/classes/${classId}/restore`, {
     method: "PATCH",
@@ -316,14 +296,14 @@ export async function restoreClass(classId: string) {
   return data.class;
 }
 
-// Cross-class analytics: a per-class breakdown (learner count, avg streak,
-// avg comprehension) plus overall totals, across all of the teacher's
-// active classes.
+// ── Teacher: reports ─────────────────────────────────────────────────────────
+
 export async function getReports() {
   return authRequest<ApiReports>("/reports");
 }
 
-// Stream tab
+// ── Teacher: stream ───────────────────────────────────────────────────────────
+
 export async function getStream(classId: string) {
   const data = await authRequest<{ posts: ApiStreamPost[] }>(`/classes/${classId}/stream`);
   return data.posts;
@@ -340,7 +320,8 @@ export async function createStreamPost(
   return data.post;
 }
 
-// Classwork tab
+// ── Teacher: classwork ────────────────────────────────────────────────────────
+
 export async function getClasswork(classId: string) {
   const data = await authRequest<{ classwork: ApiClasswork[] }>(`/classes/${classId}/classwork`);
   return data.classwork;
@@ -357,28 +338,52 @@ export async function createClasswork(
   return data.classwork;
 }
 
-// Learners tab
+// ── Teacher: learners & progress ──────────────────────────────────────────────
+
 export async function getLearners(classId: string) {
   const data = await authRequest<{ learners: ApiEnrollment[] }>(`/classes/${classId}/learners`);
   return data.learners;
 }
 
-// Progress tab
 export async function getProgress(classId: string) {
   const data = await authRequest<{ progress: ApiEnrollment[] }>(`/classes/${classId}/progress`);
   return data.progress;
 }
 
-export async function getStoredToken() {
-  return SecureStore.getItemAsync(TOKEN_KEY);
+// ── Learner: enrollments ──────────────────────────────────────────────────────
+
+export async function joinClassroom(code: string) {
+  const data = await authRequest<{ enrollment: ApiEnrollment; class: ApiClass }>(
+    "/enrollments/join",
+    { method: "POST", body: { code } }
+  );
+  return data;
 }
 
-export async function getStoredUser(): Promise<ApiUser | null> {
-  const raw = await SecureStore.getItemAsync(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+export async function getMyEnrollments() {
+  const data = await authRequest<{ enrollments: (ApiEnrollment & { class: ApiClass })[] }>(
+    "/enrollments/mine"
+  );
+  return data.enrollments;
 }
 
-export async function logout() {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-  await SecureStore.deleteItemAsync(USER_KEY);
+// ── Learner: class detail (read-only) ─────────────────────────────────────────
+
+export async function getLearnerClass(classId: string) {
+  return authRequest<{ class: ApiClass; learnerCount: number }>(`/learner/classes/${classId}`);
+}
+
+export async function getLearnerStream(classId: string) {
+  const data = await authRequest<{ posts: ApiStreamPost[] }>(`/learner/classes/${classId}/stream`);
+  return data.posts;
+}
+
+export async function getLearnerClasswork(classId: string) {
+  const data = await authRequest<{ classwork: ApiClasswork[] }>(`/learner/classes/${classId}/classwork`);
+  return data.classwork;
+}
+
+export async function getLearnerClassmates(classId: string) {
+  const data = await authRequest<{ learners: ApiEnrollment[] }>(`/learner/classes/${classId}/learners`);
+  return data.learners;
 }

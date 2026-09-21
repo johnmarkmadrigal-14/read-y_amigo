@@ -35,9 +35,7 @@ export default function RootLayout() {
             to render as top-level Stack screens outside the tab bar. */}
         <Stack.Screen name="teacher" />
 
-        <Stack.Screen name="learner/dashboard" />
-        <Stack.Screen name="learner/join-classroom" />
-        <Stack.Screen name="learner/classroom-joined" />
+        <Stack.Screen name="learner" />
       </Stack>
     </ThemeProvider>
   );
