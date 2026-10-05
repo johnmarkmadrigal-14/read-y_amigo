@@ -24,10 +24,7 @@ export default function TeacherLayout() {
         },
       }}
     >
-      {/* Home now IS the classes list (greeting + "My classes" cards) - see
-          dashboard.tsx. The old standalone "Classes" tab was dropped since
-          it duplicated this content; the file still exists but is hidden
-          below so nothing 404s if something still links to it directly. */}
+      {/* HOME */}
       <Tabs.Screen
         name="dashboard"
         options={{
@@ -37,44 +34,110 @@ export default function TeacherLayout() {
           ),
         }}
       />
+
+      {/* TO-DO */}
       <Tabs.Screen
         name="todo"
         options={{
           title: "To-do",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkbox-outline" size={size} color={color} />
+            <Ionicons
+              name="checkbox-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
+
+      {/* NOTIFICATIONS */}
       <Tabs.Screen
         name="notifications"
         options={{
           title: "Notifications",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
+            <Ionicons
+              name="notifications-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
+
+      {/* SETTINGS */}
       <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+            <Ionicons
+              name="settings-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
 
-      {/* Hidden from the tab bar - still reachable via router.push, just not
-          a swipeable/tappable tab of its own anymore. */}
-      <Tabs.Screen name="classes" options={{ href: null }} />
-      <Tabs.Screen name="reports" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ href: null }} />
-      <Tabs.Screen name="archived-classes" options={{ href: null }} />
-      <Tabs.Screen name="create-class" options={{ href: null }} />
-      <Tabs.Screen name="classroom-created" options={{ href: null }} />
+      {/* HIDDEN ROUTES
+          These screens can still be opened with router.push(),
+          but they will NOT appear in the bottom navigation. */}
+
+      <Tabs.Screen
+        name="classes"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="reports"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="archived-classes"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="create-class"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="classroom-created"
+        options={{
+          href: null,
+        }}
+      />
+
+      {/* CLASS DETAILS - HIDDEN FROM BOTTOM NAV */}
       <Tabs.Screen
         name="class/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      {/* ANNOUNCEMENT DETAILS - HIDDEN FROM BOTTOM NAV
+          The screen still works when opened from ClassStream. */}
+      <Tabs.Screen
+        name="class/announcement/[id]"
         options={{
           href: null,
         }}
