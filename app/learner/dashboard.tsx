@@ -11,7 +11,12 @@ import {
   View,
 } from "react-native";
 import { Screen } from "../components/Screen";
-import { ApiClass, ApiEnrollment, getMyEnrollments, getMyProfile, ApiUser } from "../lib/api";
+import {
+  ApiLearnerEnrollment,
+  ApiUser,
+  getMyEnrollments,
+  getMyProfile,
+} from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
 import { radius, spacing, typography } from "../theme/tokens";
 
@@ -24,14 +29,12 @@ const CARD_PALETTE = [
 
 const SHADOW_OFFSET = 5;
 
-type EnrollmentWithClass = ApiEnrollment & { class: ApiClass };
-
 function ClassroomCard({
   enrollment,
   index,
   onPress,
 }: {
-  enrollment: EnrollmentWithClass;
+  enrollment: ApiLearnerEnrollment;
   index: number;
   onPress: () => void;
 }) {
@@ -41,7 +44,12 @@ function ClassroomCard({
   return (
     <Pressable onPress={onPress} style={styles.cardWrapper}>
       <View style={[styles.cardShadow, { backgroundColor: palette.shadow }]} />
-      <View style={[styles.card, { backgroundColor: palette.shadow, borderColor: palette.shadow }]}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: palette.shadow, borderColor: palette.shadow },
+        ]}
+      >
         {/* Banner header */}
         <View style={styles.cardBanner}>
           <Text style={styles.cardBannerTitle} numberOfLines={2}>
@@ -51,19 +59,32 @@ function ClassroomCard({
         </View>
         {/* Body */}
         <View style={[styles.cardBody, { backgroundColor: palette.fill }]}>
-          <Text style={[typography.reading.sm, { color: palette.text }]} numberOfLines={2}>
+          <Text
+            style={[typography.reading.sm, { color: palette.text }]}
+            numberOfLines={2}
+          >
             {cls.description || "Tap to open classroom"}
           </Text>
           <View style={styles.cardFooter}>
             <View style={[styles.codeBadge, { borderColor: palette.shadow }]}>
-              <Text style={[typography.reading.sm, { color: palette.text, fontWeight: "700", letterSpacing: 1 }]}>
+              <Text
+                style={[
+                  typography.reading.sm,
+                  { color: palette.text, fontWeight: "700", letterSpacing: 1 },
+                ]}
+              >
                 {cls.code}
               </Text>
             </View>
             {enrollment.streakDays > 0 && (
               <View style={styles.streakBadge}>
                 <Ionicons name="flame" size={13} color="#FF8A00" />
-                <Text style={[typography.reading.sm, { color: "#B85E00", fontWeight: "700", marginLeft: 3 }]}>
+                <Text
+                  style={[
+                    typography.reading.sm,
+                    { color: "#B85E00", fontWeight: "700", marginLeft: 3 },
+                  ]}
+                >
                   {enrollment.streakDays}d streak
                 </Text>
               </View>
@@ -76,18 +97,20 @@ function ClassroomCard({
 }
 
 function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("") || "?";
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  );
 }
 
 export default function LearnerDashboard() {
   const { colors } = useTheme();
   const [profile, setProfile] = useState<ApiUser | null>(null);
-  const [enrollments, setEnrollments] = useState<EnrollmentWithClass[]>([]);
+  const [enrollments, setEnrollments] = useState<ApiLearnerEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,9 +122,15 @@ export default function LearnerDashboard() {
         getMyEnrollments(),
       ]);
       setProfile(profileData);
-      setEnrollments(enrollmentData);
+      // Hide classes the teacher archived, and enrollments whose class no
+      // longer exists (populate returns null in that case).
+      setEnrollments(
+        enrollmentData.filter((e) => e.class && e.class.status === "active")
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't load your classrooms.");
+      setError(
+        err instanceof Error ? err.message : "Couldn't load your classrooms."
+      );
     } finally {
       setLoading(false);
     }
@@ -127,11 +156,24 @@ export default function LearnerDashboard() {
     return (
       <Screen>
         <View style={styles.centered}>
-          <Text style={[typography.reading.sm, { color: colors.text, textAlign: "center", marginBottom: spacing.md }]}>
+          <Text
+            style={[
+              typography.reading.sm,
+              { color: colors.text, textAlign: "center", marginBottom: spacing.md },
+            ]}
+          >
             {error}
           </Text>
-          <Pressable onPress={load} style={[styles.retryBtn, { borderColor: colors.border }]}>
-            <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "600" }]}>
+          <Pressable
+            onPress={load}
+            style={[styles.retryBtn, { borderColor: colors.border }]}
+          >
+            <Text
+              style={[
+                typography.reading.sm,
+                { color: colors.text, fontWeight: "600" },
+              ]}
+            >
               Try again
             </Text>
           </Pressable>
@@ -142,33 +184,64 @@ export default function LearnerDashboard() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Welcome back,</Text>
+            <Text style={[typography.reading.sm, { color: colors.textMuted }]}>
+              Welcome back,
+            </Text>
             <Text style={[typography.display.lg, { color: colors.text }]}>
               {profile?.displayName ?? "Learner"}
             </Text>
           </View>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={[typography.display.sm, { color: colors.primaryText }]}>
+            <Text
+              style={[typography.display.sm, { color: colors.primaryText }]}
+            >
               {getInitials(profile?.displayName ?? "")}
             </Text>
           </View>
         </View>
 
-        <Text style={[typography.reading.sm, { color: colors.textMuted, fontWeight: "600", marginBottom: spacing.sm }]}>
+        <Text
+          style={[
+            typography.reading.sm,
+            { color: colors.textMuted, fontWeight: "600", marginBottom: spacing.sm },
+          ]}
+        >
           My Classrooms
         </Text>
 
         {enrollments.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="book-outline" size={48} color={colors.border} style={{ marginBottom: spacing.md }} />
-            <Text style={[typography.display.md, { color: colors.text, textAlign: "center" }]}>
+            <Ionicons
+              name="book-outline"
+              size={48}
+              color={colors.border}
+              style={{ marginBottom: spacing.md }}
+            />
+            <Text
+              style={[
+                typography.display.md,
+                { color: colors.text, textAlign: "center" },
+              ]}
+            >
               No classrooms yet
             </Text>
-            <Text style={[typography.reading.sm, { color: colors.textMuted, textAlign: "center", marginTop: spacing.sm }]}>
+            <Text
+              style={[
+                typography.reading.sm,
+                {
+                  color: colors.textMuted,
+                  textAlign: "center",
+                  marginTop: spacing.sm,
+                },
+              ]}
+            >
               Ask your teacher for a classroom code, then tap + to join.
             </Text>
           </View>
