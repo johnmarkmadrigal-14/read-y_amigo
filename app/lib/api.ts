@@ -2,7 +2,9 @@ import * as SecureStore from "expo-secure-store";
 
 // TODO: Replace with your computer's local network IP.
 // Your phone and computer must be connected to the same Wi-Fi.
-const API_ROOT = "http://192.168.137.119:4000/api";
+const API_ROOT = "http://192.168.18.5:4000/api";
+// Server origin without "/api" — used to build links to /uploads files.
+export const API_ORIGIN = API_ROOT.replace(/\/api$/, "");
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
@@ -865,4 +867,16 @@ export async function getLearnerClassmates(classId: string) {
     `/learner/classes/${classId}/learners`
   );
   return data.learners;
+}
+
+export async function getLearnerStreamPost(classId: string, postId: string) {
+  const posts = await getLearnerStream(classId);
+  return posts.find((post) => post._id === postId) ?? null;
+}
+
+export async function getLearnerMaterials(classId: string) {
+  const data = await authRequest<{ materials: ApiMaterial[] }>(
+    `/learner/classes/${classId}/materials`
+  );
+  return data.materials;
 }

@@ -40,6 +40,7 @@ interface TeacherPostCardProps {
   onPress: (post: TeacherPost) => void;
   onEdit: (post: TeacherPost) => void;
   onDelete: (post: TeacherPost) => void;
+  readOnly?: boolean;
 }
 
 export default function TeacherPostCard({
@@ -47,6 +48,7 @@ export default function TeacherPostCard({
   onPress,
   onEdit,
   onDelete,
+  readOnly = false,
 }: TeacherPostCardProps) {
   const { colors } = useTheme();
 
@@ -141,17 +143,19 @@ export default function TeacherPostCard({
           </Text>
         </View>
 
-        <Pressable
-          onPress={handleMenu}
-          hitSlop={10}
-          style={styles.menuButton}
-        >
-          <Ionicons
-            name="ellipsis-vertical"
-            size={20}
-            color={colors.secondaryText}
-          />
-        </Pressable>
+        {!readOnly && (
+          <Pressable
+            onPress={handleMenu}
+            hitSlop={10}
+            style={styles.menuButton}
+          >
+            <Ionicons
+              name="ellipsis-vertical"
+              size={20}
+              color={colors.secondaryText}
+            />
+          </Pressable>
+        )}
       </View>
 
       {/* CONTENT */}
@@ -320,8 +324,8 @@ const styles = StyleSheet.create({
   },
 
   teacherName: {
-  fontSize: typography.body.md.fontSize,
-  fontWeight: "700",
+    fontSize: typography.body.md.fontSize,
+    fontWeight: "700",
   },
 
   date: {
@@ -413,4 +417,3 @@ const styles = StyleSheet.create({
     marginRight: 3,
   },
 });
-

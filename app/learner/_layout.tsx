@@ -31,11 +31,11 @@ export default function LearnerLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="todo"
         options={{
-          title: "Notifications",
+          title: "To-do",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
+            <Ionicons name="checkbox-outline" size={size} color={color} />
           ),
         }}
       />
@@ -53,6 +53,7 @@ export default function LearnerLayout() {
       <Tabs.Screen name="join-classroom" options={{ href: null }} />
       <Tabs.Screen name="classroom-joined" options={{ href: null }} />
       <Tabs.Screen name="class/[id]" options={{ href: null }} />
+      <Tabs.Screen name="class/announcement/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

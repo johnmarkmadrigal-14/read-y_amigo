@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import {
+  API_ORIGIN,
   ApiClasswork,
   createStreamPost,
   getStream,
@@ -305,15 +306,15 @@ export default function ClassStream({
     if (item.kind === "announcement") {
       return (
         <TeacherPostCard
-  post={item.data}
-  onPress={(selectedPost) => {
-  router.push(
-    `/teacher/class/announcement/${selectedPost.id}?classId=${selectedPost.classId}`
-  );
-}}
-  onEdit={handleEdit}
-  onDelete={handleDelete}
-/>
+          post={item.data}
+          onPress={(selectedPost) => {
+            router.push(
+              `/teacher/class/announcement/${selectedPost.id}?classId=${selectedPost.classId}`
+            );
+          }}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       );
     }
 
@@ -541,14 +542,18 @@ function FilterButton({
 
 /* =========================================================
    CLASSWORK STREAM CARD
+   (exported so the learner stream can reuse it; pass `onView`
+   to open a details sheet instead of expanding inline)
    ========================================================= */
 
-function ClassworkStreamCard({
+export function ClassworkStreamCard({
   item,
   colors,
+  onView,
 }: {
   item: ApiClasswork;
   colors: ThemeColors;
+  onView?: () => void;
 }) {
   const [expanded, setExpanded] =
     useState(false);
@@ -1002,9 +1007,11 @@ function ClassworkStreamCard({
 
         <Pressable
           onPress={() =>
-            setExpanded(
-              (previous) => !previous
-            )
+            onView
+              ? onView()
+              : setExpanded(
+                  (previous) => !previous
+                )
           }
           style={[
             styles.viewClassworkButton,
@@ -1023,14 +1030,16 @@ function ClassworkStreamCard({
               },
             ]}
           >
-            {expanded
+            {onView
+              ? "View Classwork"
+              : expanded
               ? "Show Less"
               : "View Classwork"}
           </Text>
 
           <Ionicons
             name={
-              expanded
+              !onView && expanded
                 ? "chevron-up"
                 : "chevron-forward"
             }
@@ -1219,7 +1228,7 @@ function getAttachmentUrl(url: string) {
     return url;
   }
 
-  return `http://192.168.18.86:4000${
+  return `${API_ORIGIN}${
     url.startsWith("/") ? "" : "/"
   }${url}`;
 }

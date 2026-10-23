@@ -19,6 +19,7 @@ import {
   ApiStreamPost,
   createPostComment,
   deletePostComment,
+  getLearnerStreamPost,
   getPostComments,
   getStoredUser,
   getStreamPost,
@@ -85,16 +86,17 @@ export default function AnnouncementDetailsScreen() {
       return;
     }
 
-    try {
+        try {
       setLoading(true);
 
-      const [
-        storedUser,
-        announcement,
-        postComments,
-      ] = await Promise.all([
-        getStoredUser(),
-        getStreamPost(classId, postId),
+      const storedUser = await getStoredUser();
+      const isLearner = storedUser?.role === "learner";
+
+      // Learners can't use the teacher-only /classes/* stream route.
+      const [announcement, postComments] = await Promise.all([
+        isLearner
+          ? getLearnerStreamPost(classId, postId)
+          : getStreamPost(classId, postId),
         getPostComments(classId, postId),
       ]);
 
