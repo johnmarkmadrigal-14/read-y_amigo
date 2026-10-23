@@ -4,29 +4,31 @@ import { Image, Text, View } from "react-native";
 import { Button } from "../components/Button";
 import { Screen } from "../components/Screen";
 import { TextField } from "../components/TextField";
+import { login } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
 import { spacing, typography } from "../theme/tokens";
 
 export default function LoginScreen() {
   const { colors } = useTheme();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleLogin() {
-    if (!email || !password) {
-      setError("Enter your email and password");
+    if (!identifier || !password) {
+      setError("Enter your email/username and password");
       return;
     }
     setError(null);
     setLoading(true);
     try {
-      // TODO: replace with your real auth call to backend/
-      await new Promise((res) => setTimeout(res, 800));
-      router.replace("/auth/choose-role");
+      const { user } = await login(identifier, password);
+      router.replace(user.role === "teacher" ? "/teacher/dashboard" : "/learner/dashboard");
     } catch (e) {
-      setError("Couldn't log in. Check your details and try again.");
+      const message =
+        e instanceof Error ? e.message : "Couldn't log in. Check your details and try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -51,11 +53,11 @@ export default function LoginScreen() {
       </View>
 
       <TextField
-        label="Email"
-        placeholder="you@email.com"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+        label="Email or Username"
+        placeholder="you@email.com or username"
+        autoCapitalize="none"
+        value={identifier}
+        onChangeText={setIdentifier}
       />
       <TextField
         label="Password"
