@@ -3992,6 +3992,28 @@ function ClassworkTab({
                       fontWeight: "800",
                     }}
                   >
+                   
+                   {detailsItem.type === "reading" && (
+  <Pressable
+    onPress={() => {
+      const target = detailsItem;
+      setDetailsItem(null);
+      router.push({
+        pathname: "/teacher/classwork/[id]",
+        params: { id: target._id },
+      });
+    }}
+    style={[
+      styles.fullButton,
+      { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary },
+    ]}
+  >
+    <Text style={{ color: colors.primary, fontWeight: "800" }}>
+      View submissions
+    </Text>
+  </Pressable>
+)}
+
                     Done
                   </Text>
                 </Pressable>

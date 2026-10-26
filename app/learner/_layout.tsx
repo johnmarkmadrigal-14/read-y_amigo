@@ -54,6 +54,7 @@ export default function LearnerLayout() {
       <Tabs.Screen name="classroom-joined" options={{ href: null }} />
       <Tabs.Screen name="class/[id]" options={{ href: null }} />
       <Tabs.Screen name="class/announcement/[id]" options={{ href: null }} />
+      <Tabs.Screen name="classwork/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

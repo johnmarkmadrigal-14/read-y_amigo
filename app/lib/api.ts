@@ -96,6 +96,7 @@ export type ApiAttachment = {
   url: string;
   mimeType?: string;
   size?: number;
+  fileId?: string;
 };
 
 export type ApiQuizQuestion = {
@@ -320,6 +321,14 @@ async function authMultipartRequest<T>(
   return parseOrThrow<T>(res);
 }
 
+// Turns an uploaded file's path (e.g. "/uploads/123.pdf") into a full URL.
+const FILE_ROOT = API_ROOT.replace(/\/api\/?$/, "");
+
+export function getFileUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${FILE_ROOT}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
 // =========================
 // SESSION
 // =========================
@@ -507,6 +516,35 @@ export async function restoreClass(classId: string) {
 export async function getReports() {
   return authRequest<ApiReports>("/reports");
 }
+
+export type ApiSubmission = {
+  _id: string;
+  class: string;
+  classwork: string;
+  learner:
+    | string
+    | {
+        _id: string;
+        displayName?: string;
+        firstName?: string;
+        secondName?: string;
+      };
+  audio: {
+    fileId: string;
+    url: string; // "/api/files/<id>"
+    mimeType?: string;
+    size?: number;
+    durationMs?: number;
+  };
+  status: "submitted";
+  submittedAt: string;
+};
+
+export type ApiClassworkSubmissions = {
+  classwork: { _id: string; title: string };
+  submissions: ApiSubmission[];
+  notSubmitted: { _id: string; displayName: string }[];
+};
 
 // =========================
 // STREAM (teacher)
@@ -879,4 +917,46 @@ export async function getLearnerMaterials(classId: string) {
     `/learner/classes/${classId}/materials`
   );
   return data.materials;
+}
+
+// =========================
+// SUBMISSIONS
+// =========================
+
+// Learner: uploads the recorded reading and marks the classwork submitted.
+export async function submitReading(
+  classworkId: string,
+  recording: { uri: string; durationMs: number }
+) {
+  const ext = recording.uri.split(".").pop()?.toLowerCase() || "m4a";
+  const mime = ext === "m4a" || ext === "mp4" ? "audio/mp4" : `audio/${ext}`;
+
+  const formData = new FormData();
+  formData.append("durationMs", String(Math.round(recording.durationMs)));
+  formData.append("audio", {
+    uri: recording.uri,
+    name: `reading.${ext}`,
+    type: mime,
+  } as any);
+
+  const data = await authMultipartRequest<{ submission: ApiSubmission }>(
+    `/submissions/classwork/${classworkId}`,
+    formData
+  );
+  return data.submission;
+}
+
+// Learner: this learner's submissions in one class.
+export async function getMySubmissions(classId: string) {
+  const data = await authRequest<{ submissions: ApiSubmission[] }>(
+    `/submissions/mine?classId=${classId}`
+  );
+  return data.submissions;
+}
+
+// Teacher: all submissions for one classwork + who hasn't submitted yet.
+export async function getClassworkSubmissions(classworkId: string) {
+  return authRequest<ApiClassworkSubmissions>(
+    `/submissions/classwork/${classworkId}`
+  );
 }

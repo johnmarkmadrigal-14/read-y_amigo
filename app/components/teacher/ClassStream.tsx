@@ -13,9 +13,9 @@ import {
 } from "react-native";
 
 import {
-  API_ORIGIN,
   ApiClasswork,
   createStreamPost,
+  getFileUrl,
   getStream,
 } from "../../lib/api";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -570,9 +570,7 @@ export function ClassworkStreamCard({
       return;
     }
 
-    const url = getAttachmentUrl(
-      attachment.url
-    );
+    const url = getFileUrl(attachment.url);
 
     try {
       const supported =
@@ -1221,16 +1219,6 @@ function getClassworkIcon(
     default:
       return "clipboard-outline";
   }
-}
-
-function getAttachmentUrl(url: string) {
-  if (/^https?:\/\//i.test(url)) {
-    return url;
-  }
-
-  return `${API_ORIGIN}${
-    url.startsWith("/") ? "" : "/"
-  }${url}`;
 }
 
 function formatRelativeTime(

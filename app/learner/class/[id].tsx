@@ -184,6 +184,23 @@ export default function LearnerClassDetail() {
     load();
   }, [load]);
 
+  // Reading + activity classwork opens the full-screen view (in-app file
+  // viewer + "Read now" recorder). Quizzes still use the details sheet.
+  const openClasswork = useCallback(
+    (item: ApiClasswork) => {
+      if (item.type === "quiz") {
+        setDetailsItem(item);
+        return;
+      }
+
+      router.push({
+        pathname: "/learner/classwork/[id]",
+        params: { id: item._id, classId },
+      });
+    },
+    [classId]
+  );
+
   const banner = bannerForClassId(classId);
 
   const cardStyle = [
@@ -238,7 +255,7 @@ export default function LearnerClassDetail() {
             classwork={classwork}
             refreshing={refreshing}
             onRefresh={() => load(true)}
-            onOpenClasswork={setDetailsItem}
+            onOpenClasswork={openClasswork}
           />
         </View>
       );
@@ -274,7 +291,7 @@ export default function LearnerClassDetail() {
           <ClassworkTab
             items={classwork}
             colors={colors}
-            onOpen={setDetailsItem}
+            onOpen={openClasswork}
           />
         )}
         {activeTab === "Materials" && (
@@ -532,6 +549,18 @@ function ClassworkTab({
                       numberOfLines={1}
                     >
                       Due {formatDueDateTime(item.dueDate)}
+                    </Text>
+                  </>
+                ) : null}
+
+                {item.attachment?.name ? (
+                  <>
+                    <Ionicons name="attach" size={12} color={colors.textMuted} />
+                    <Text
+                      style={[styles.classworkMetaText, { color: colors.textMuted }]}
+                      numberOfLines={1}
+                    >
+                      {item.attachment.name}
                     </Text>
                   </>
                 ) : null}
