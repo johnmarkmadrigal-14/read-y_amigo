@@ -1,8 +1,12 @@
-import * as SecureStore from "expo-secure-store";
+import {
+  saveItem,
+  getItem,
+  removeItem,
+} from "./secureStorage";
 
 // TODO: Replace with your computer's local network IP.
 // Your phone and computer must be connected to the same Wi-Fi.
-const API_ROOT = "http://192.168.18.5:4000/api";
+const API_ROOT = "http://10.72.86.152:4000/api";
 // Server origin without "/api" — used to build links to /uploads files.
 export const API_ORIGIN = API_ROOT.replace(/\/api$/, "");
 
@@ -334,22 +338,29 @@ export function getFileUrl(path: string) {
 // =========================
 
 async function persistSession(response: AuthResponse) {
-  await SecureStore.setItemAsync(TOKEN_KEY, response.token);
-  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(response.user));
+  await saveItem(TOKEN_KEY, response.token);
+  await saveItem(USER_KEY, JSON.stringify(response.user));
 }
 
-export async function getStoredToken() {
-  return SecureStore.getItemAsync(TOKEN_KEY);
+export async function getStoredToken(): Promise<string | null> {
+  return getItem(TOKEN_KEY);
 }
 
 export async function getStoredUser(): Promise<ApiUser | null> {
-  const raw = await SecureStore.getItemAsync(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  const raw = await getItem(USER_KEY);
+
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as ApiUser;
+  } catch {
+    return null;
+  }
 }
 
 export async function logout() {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-  await SecureStore.deleteItemAsync(USER_KEY);
+  await removeItem(TOKEN_KEY);
+  await removeItem(USER_KEY);
 }
 
 // =========================
@@ -447,7 +458,7 @@ export async function updateMyProfile(payload: {
     body: payload,
   });
 
-  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
+  await saveItem(USER_KEY, JSON.stringify(data.user));
 
   return data.user;
 }
@@ -924,26 +935,84 @@ export async function getLearnerMaterials(classId: string) {
 // =========================
 
 // Learner: uploads the recorded reading and marks the classwork submitted.
+// Uses XMLHttpRequest for the audio upload in React Native / Expo.
 export async function submitReading(
   classworkId: string,
   recording: { uri: string; durationMs: number }
-) {
+): Promise<ApiSubmission> {
+  const token = await getStoredToken();
+
+  if (!token) {
+    throw new Error("You're not logged in. Please log in again.");
+  }
+
   const ext = recording.uri.split(".").pop()?.toLowerCase() || "m4a";
-  const mime = ext === "m4a" || ext === "mp4" ? "audio/mp4" : `audio/${ext}`;
+  const mime =
+    ext === "m4a" || ext === "mp4"
+      ? "audio/mp4"
+      : ext === "3gp"
+        ? "audio/3gpp"
+        : `audio/${ext}`;
 
   const formData = new FormData();
   formData.append("durationMs", String(Math.round(recording.durationMs)));
-  formData.append("audio", {
-    uri: recording.uri,
-    name: `reading.${ext}`,
-    type: mime,
-  } as any);
-
-  const data = await authMultipartRequest<{ submission: ApiSubmission }>(
-    `/submissions/classwork/${classworkId}`,
-    formData
+  formData.append(
+    "audio",
+    {
+      uri: recording.uri,
+      name: `reading.${ext}`,
+      type: mime,
+    } as any
   );
-  return data.submission;
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open(
+      "POST",
+      `${API_ROOT}/submissions/classwork/${classworkId}`
+    );
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+    xhr.onload = () => {
+      let data: any = {};
+
+      try {
+        data = JSON.parse(xhr.responseText || "{}");
+      } catch {
+        data = {};
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (data.submission) {
+          resolve(data.submission as ApiSubmission);
+        } else {
+          reject(new Error("Server did not return the submitted recording."));
+        }
+      } else {
+        reject(
+          new Error(
+            data.error || data.message || `Upload failed (${xhr.status}).`
+          )
+        );
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(
+        new Error(
+          "Couldn't reach the server. Check your Wi-Fi and make sure the backend is running."
+        )
+      );
+    };
+
+    xhr.ontimeout = () => {
+      reject(new Error("The upload took too long. Please try again."));
+    };
+
+    xhr.timeout = 60000;
+    xhr.send(formData);
+  });
 }
 
 // Learner: this learner's submissions in one class.
@@ -952,6 +1021,16 @@ export async function getMySubmissions(classId: string) {
     `/submissions/mine?classId=${classId}`
   );
   return data.submissions;
+}
+
+// Learner: undo a reading submission before the classwork deadline.
+// Requires the backend DELETE /submissions/classwork/:classworkId route
+// to enforce ownership and deadline checks server-side as well.
+export async function unsubmitReading(classworkId: string) {
+  return authRequest<{ message: string }>(
+    `/submissions/classwork/${classworkId}`,
+    { method: "DELETE" }
+  );
 }
 
 // Teacher: all submissions for one classwork + who hasn't submitted yet.
