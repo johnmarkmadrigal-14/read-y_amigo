@@ -8,15 +8,16 @@ import {
 } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Animated, Easing, StyleSheet, Text, View } from "react-native";
+import Constants from "expo-constants";
+import { Alert, Animated, Easing, Platform, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 import { radius, spacing, typography } from "../theme/tokens";
 import { AudioPlayerBar, formatTime, useAuthorizedAudioSource } from "./AudioPlayerBar";
 import { Button } from "./Button";
 
-interface ReadAloudRecorderProps {
+export interface ReadAloudRecorderProps {
   // Uploads the recording. Should throw if the upload fails.
-  onSubmit: (recording: { uri: string; durationMs: number }) => Promise<void>;
+  onSubmit: (recording: { uri: string; durationMs: number; transcript?: string; transcriptLocale?: string }) => Promise<void>;
   // Set when the learner has already submitted this classwork.
   submitted?: {
     audioPath: string;
@@ -167,7 +168,29 @@ function Celebration({ color, textColor }: { color: string; textColor: string })
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export function ReadAloudRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
+let LiveRecorder: typeof import("../../components/LiveReadAloudRecorder").LiveReadAloudRecorder | null = null;
+if (Platform.OS !== "web" && Constants.executionEnvironment !== "storeClient") {
+  try {
+    // Native module must be loaded only in builds containing it.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const speech = require("expo-speech-recognition").ExpoSpeechRecognitionModule;
+    if (speech.isRecognitionAvailable() && speech.supportsRecording()) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      LiveRecorder = require("../../components/LiveReadAloudRecorder").LiveReadAloudRecorder;
+    }
+  } catch { /* Older builds keep the audio-only recorder. */ }
+}
+
+export function ReadAloudRecorder(props: ReadAloudRecorderProps) {
+  const [audioOnly, setAudioOnly] = useState(false);
+  if (LiveRecorder && !props.submitted && !audioOnly) return <LiveRecorder {...props} onUseAudioOnly={() => setAudioOnly(true)} />;
+  return <View>
+    {!props.submitted && <Text style={{ marginBottom: 12 }}>{audioOnly ? "Audio-only recording selected. You can still record and submit your reading." : "Live transcription needs a development build with speech recognition and a supported device (Android 13+ or iOS). Audio recording is still available."}</Text>}
+    <AudioOnlyRecorder {...props} />
+  </View>;
+}
+
+function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
   const { colors } = useTheme();
 
   const recorder = useAudioRecorder(recorderOptions);

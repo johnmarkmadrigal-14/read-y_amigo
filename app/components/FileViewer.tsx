@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.lg,

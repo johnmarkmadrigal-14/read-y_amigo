@@ -148,6 +148,8 @@ export type ApiClasswork = {
   points: number;
 
   attachment?: ApiAttachment | null;
+  readingSource?: "file" | "text";
+  readingText?: string;
 
   material?: string | ApiMaterial | null;
 
@@ -529,6 +531,8 @@ export async function getReports() {
 }
 
 export type ApiSubmission = {
+  transcript?: string;
+  transcriptLocale?: "en-US" | "fil-PH";
   _id: string;
   class: string;
   classwork: string;
@@ -644,6 +648,8 @@ export async function deletePostComment(
 // =========================
 
 export type CreateClassworkPayload = {
+  readingSource?: "file" | "text";
+  readingText?: string;
   title: string;
   description?: string;
   type: ClassworkType;
@@ -667,6 +673,10 @@ export async function getClasswork(classId: string) {
 function buildClassworkFormData(payload: CreateClassworkPayload) {
   const formData = new FormData();
 
+  if (payload.type === "reading") {
+    formData.append("readingSource", payload.readingSource ?? "file");
+    formData.append("readingText", payload.readingSource === "text" ? (payload.readingText ?? "").trim() : "");
+  }
   formData.append("title", payload.title);
   formData.append("description", payload.description || "");
   formData.append("type", payload.type);
@@ -938,7 +948,7 @@ export async function getLearnerMaterials(classId: string) {
 // Uses XMLHttpRequest for the audio upload in React Native / Expo.
 export async function submitReading(
   classworkId: string,
-  recording: { uri: string; durationMs: number }
+  recording: { uri: string; durationMs: number; transcript?: string; transcriptLocale?: string }
 ): Promise<ApiSubmission> {
   const token = await getStoredToken();
 
@@ -956,6 +966,8 @@ export async function submitReading(
 
   const formData = new FormData();
   formData.append("durationMs", String(Math.round(recording.durationMs)));
+  if (recording.transcript !== undefined) formData.append("transcript", recording.transcript);
+  if (recording.transcriptLocale) formData.append("transcriptLocale", recording.transcriptLocale);
   formData.append(
     "audio",
     {
