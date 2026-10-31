@@ -99,7 +99,8 @@ export default function LearnerClassworkScreen() {
     );
   }
 
-  const attachment = item.attachment?.name && item.attachment?.url ? item.attachment : null;
+  const hasTextPassage = item.type === "reading" && (item.readingSource === "text" || (!item.readingSource && !!item.readingText?.trim()));
+  const attachment = !hasTextPassage && item.attachment?.name && item.attachment?.url ? item.attachment : null;
   const deadlinePassed = !!item.dueDate && Date.now() >= new Date(item.dueDate).getTime();
   const canUnsubmit = !!submission && !deadlinePassed;
   const canReadAloud =
@@ -170,6 +171,12 @@ export default function LearnerClassworkScreen() {
         </Text>
       )}
 
+      {hasTextPassage && (
+        <View style={styles.section}>
+          <Text style={{ color: colors.text, fontWeight: "700", marginBottom: 12 }}>Reading passage</Text>
+          <Text selectable style={{ color: colors.text, fontSize: 20, lineHeight: 32 }}>{item.readingText || "The reading passage is unavailable. Please contact your teacher."}</Text>
+        </View>
+      )}
       {attachment && (
         <View style={styles.section}>
           <View style={styles.sectionHeading}>

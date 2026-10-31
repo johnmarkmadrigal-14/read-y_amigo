@@ -50,6 +50,13 @@
         {
           "microphonePermission": "Allow Read-Y Amigo to use your microphone so you can record your reading."
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Read-Y Amigo to record your reading.",
+          "speechRecognitionPermission": "Allow Read-Y Amigo to show the words you read aloud."
+        }
       ]
     ],
     "experiments": {

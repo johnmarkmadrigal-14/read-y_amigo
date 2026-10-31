@@ -232,7 +232,10 @@ export default function ClassworkDetailsSheet({
               ) : null}
 
               {/* ATTACHMENT */}
-              {item.attachment?.name ? (
+              {!!item.readingText && (
+                <Text selectable style={{ color: colors.text, fontSize: 18, lineHeight: 30 }}>{item.readingText}</Text>
+              )}
+              {item.readingSource !== "text" && item.attachment?.name ? (
                 <Pressable
                   onPress={() =>
                     item.attachment?.url && openRemoteUrl(item.attachment.url)

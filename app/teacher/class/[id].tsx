@@ -1546,6 +1546,9 @@ function ClassworkTab({
   const [questions, setQuestions] =
     useState<ApiQuizQuestion[]>([]);
 
+  const [readingSource, setReadingSource] = useState<"file" | "text">("file");
+  const [readingText, setReadingText] = useState("");
+
   const [selectedFile, setSelectedFile] =
     useState<{
       uri: string;
@@ -1559,6 +1562,9 @@ function ClassworkTab({
   const resetForm = () => {
     setSelectedType("Reading Assignment");
     setTitle("");
+    setReadingSource("file");
+    setReadingText("");
+    setSelectedFile(null);
     setDescription("");
     setPoints("10");
     setDueDate(null);
@@ -1705,6 +1711,10 @@ function ClassworkTab({
   };
 
   const handleCreate = async () => {
+    if (selectedType === "Reading Assignment" && (readingSource === "text" ? !readingText.trim() : (!selectedFile && !selectedMaterialId))) {
+      Alert.alert("Reading passage required", readingSource === "text" ? "Enter the text your learners will read." : "Attach the file your learners will read.");
+      return;
+    }
     if (!title.trim()) {
       Alert.alert(
         "Title required",
@@ -1790,8 +1800,10 @@ function ClassworkTab({
           ? dueDate.toISOString()
           : undefined,
         points: numericPoints,
+        readingSource: apiType === "reading" ? readingSource : undefined,
+        readingText: apiType === "reading" && readingSource === "text" ? readingText.trim() : undefined,
         material:
-          selectedMaterialId || undefined,
+          apiType === "reading" && readingSource === "text" ? undefined : selectedMaterialId || undefined,
         readingActivities:
           apiType === "reading"
             ? readingActivities
@@ -1810,7 +1822,7 @@ function ClassworkTab({
           : selectedLearners,
       };
 
-      if (selectedFile) {
+      if (selectedFile && !(apiType === "reading" && readingSource === "text")) {
         await createClassworkWithFile(
           classId,
           {
@@ -2476,6 +2488,31 @@ function ClassworkTab({
                 />
               )}
 
+              {selectedType === "Reading Assignment" && (
+                <View style={{ gap: 12, marginBottom: 16 }}>
+                  <Text style={{ color: colors.text, fontWeight: "700" }}>Reading passage</Text>
+                  <View style={{ flexDirection: "row", gap: 12 }}>
+                    {(["file", "text"] as const).map((source) => (
+                      <Pressable key={source} accessibilityRole="radio"
+                        accessibilityState={{ checked: readingSource === source }}
+                        onPress={() => setReadingSource(source)}
+                        style={{ padding: 12, borderWidth: 2, borderRadius: 12,
+                          borderColor: readingSource === source ? colors.primary : colors.border }}>
+                        <Text style={{ color: colors.text }}>{source === "file" ? "Attach file" : "Input text"}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  {readingSource === "text" && (
+                    <TextInput accessibilityLabel="Reading passage text" multiline maxLength={100000}
+                      value={readingText} onChangeText={setReadingText}
+                      placeholder="Type or paste the passage learners will read..."
+                      placeholderTextColor={colors.textMuted} textAlignVertical="top"
+                      style={{ minHeight: 200, padding: 16, borderWidth: 1, borderRadius: 12,
+                        borderColor: colors.border, color: colors.text, fontSize: 18, lineHeight: 28 }} />
+                  )}
+                </View>
+              )}
+              {(selectedType !== "Reading Assignment" || readingSource === "file") && (<>
               {/* FILE */}
 
             <Text
@@ -2591,6 +2628,8 @@ function ClassworkTab({
                   </Text>
                 </Pressable>
               )}
+
+              </>)}
 
               {/* READING */}
 
@@ -3655,7 +3694,10 @@ function ClassworkTab({
                   </View>
                 </View>
 
-                {detailsItem.attachment && (
+                {!!detailsItem.readingText && (
+                  <Text selectable style={{ color: colors.text, fontSize: 18, lineHeight: 30, padding: 16 }}>{detailsItem.readingText}</Text>
+                )}
+                {detailsItem.readingSource !== "text" && detailsItem.attachment && (
                   <View
                     style={[
                       styles.detailMetaCard,
