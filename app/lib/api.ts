@@ -6,7 +6,7 @@ import {
 
 // TODO: Replace with your computer's local network IP.
 // Your phone and computer must be connected to the same Wi-Fi.
-const API_ROOT = "http://10.72.86.152:4000/api";
+const API_ROOT = "http://192.168.18.5:4000/api";
 // Server origin without "/api" — used to build links to /uploads files.
 export const API_ORIGIN = API_ROOT.replace(/\/api$/, "");
 
