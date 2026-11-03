@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
@@ -100,9 +101,9 @@ export default function ReportsScreen() {
 
   return (
     <Screen scroll>
-      <Text style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
+      <HeadingLabel icon="bar-chart-outline" style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
         Reports
-      </Text>
+      </HeadingLabel>
 
       {classes.length === 0 ? (
         <Text style={[typography.reading.sm, { color: colors.textMuted }]}>

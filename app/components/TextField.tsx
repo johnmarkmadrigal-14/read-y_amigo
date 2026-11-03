@@ -1,6 +1,7 @@
+import { HeadingLabel, TextAction } from "./InterfaceChrome";
 // components/TextField.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, TextInputProps } from 'react-native';
+import { View, TextInput, TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, radius, typography } from '../theme/tokens';
@@ -16,7 +17,7 @@ export function TextField({ label, isPassword = false, ...inputProps }: Props) {
 
   return (
     <View style={{ marginBottom: spacing.sm + 4 }}>
-      <Text
+      <HeadingLabel icon={isPassword ? "lock-closed-outline" : "create-outline"} accessibilityRole="text"
         style={{
           color: colors.textMuted,
           fontSize: 12,
@@ -24,7 +25,7 @@ export function TextField({ label, isPassword = false, ...inputProps }: Props) {
         }}
       >
         {label}
-      </Text>
+      </HeadingLabel>
       <View
         style={{
           flexDirection: 'row',
@@ -47,13 +48,13 @@ export function TextField({ label, isPassword = false, ...inputProps }: Props) {
           {...inputProps}
         />
         {isPassword && (
-          <Pressable onPress={() => setHidden((h) => !h)} hitSlop={12}>
+          <TextAction accessibilityLabel="Show or hide password" onPress={() => setHidden((h) => !h)} hitSlop={12}>
             <Ionicons
               name={hidden ? 'eye-outline' : 'eye-off-outline'}
               size={18}
               color={colors.textMuted}
             />
-          </Pressable>
+          </TextAction>
         )}
       </View>
     </View>

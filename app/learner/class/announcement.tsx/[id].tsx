@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -262,13 +263,13 @@ export default function LearnerAnnouncementScreen() {
             { backgroundColor: colors.surface, borderBottomColor: colors.border },
           ]}
         >
-          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.headerBack}>
+          <TextAction accessibilityLabel="Back" onPress={() => router.back()} hitSlop={10} style={styles.headerBack}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </Pressable>
+          </TextAction>
 
-          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+          <HeadingLabel icon="chatbubble-outline" embedded style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
             Announcement
-          </Text>
+          </HeadingLabel>
 
           <View style={{ width: 32 }} />
         </View>
@@ -311,7 +312,7 @@ export default function LearnerAnnouncementScreen() {
               </View>
             </View>
 
-            <Text style={[styles.title, { color: colors.text }]}>{post.title}</Text>
+            <HeadingLabel icon="bookmark-outline" embedded style={[styles.title, { color: colors.text }]}>{post.title}</HeadingLabel>
 
             {!!post.body && (
               <Text style={[styles.body, { color: colors.text }]}>{post.body}</Text>
@@ -322,9 +323,9 @@ export default function LearnerAnnouncementScreen() {
           <View style={styles.commentsHeader}>
             <View style={styles.row}>
               <Ionicons name="chatbubbles-outline" size={21} color={colors.primary} />
-              <Text style={[styles.commentsTitle, { color: colors.text }]}>
+              <HeadingLabel icon={null} style={[styles.commentsTitle, { color: colors.text }]}>
                 Comments
-              </Text>
+              </HeadingLabel>
             </View>
             <Text style={[styles.commentCount, { color: colors.textMuted }]}>
               {comments.length}
@@ -409,7 +410,7 @@ export default function LearnerAnnouncementScreen() {
 
                     {mine && !editing && (
                       <View style={styles.row}>
-                        <Pressable
+                        <TextAction accessibilityLabel="Edit"
                           onPress={() => {
                             setEditingId(comment._id);
                             setEditingText(comment.body);
@@ -417,15 +418,15 @@ export default function LearnerAnnouncementScreen() {
                           hitSlop={8}
                         >
                           <Ionicons name="create-outline" size={19} color={colors.textMuted} />
-                        </Pressable>
+                        </TextAction>
 
-                        <Pressable
+                        <TextAction accessibilityLabel="Delete"
                           onPress={() => confirmDelete(comment)}
                           hitSlop={8}
                           style={{ marginLeft: spacing.sm }}
                         >
                           <Ionicons name="trash-outline" size={19} color="#D94A4A" />
-                        </Pressable>
+                        </TextAction>
                       </View>
                     )}
                   </View>

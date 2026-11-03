@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
@@ -121,14 +122,14 @@ export default function ClassworkDetailsSheet({
                 <Text style={[styles.kicker, { color: colors.primary }]}>
                   {classworkTypeLabel(item.type).toUpperCase()}
                 </Text>
-                <Text style={[styles.title, { color: colors.text }]}>
+                <HeadingLabel icon="bookmark-outline" embedded style={[styles.title, { color: colors.text }]}>
                   {item.title}
-                </Text>
+                </HeadingLabel>
               </View>
 
-              <Pressable onPress={onClose} hitSlop={8}>
+              <TextAction accessibilityLabel="Close" tone="close" onPress={onClose} hitSlop={8}>
                 <Ionicons name="close" size={25} color={colors.text} />
-              </Pressable>
+              </TextAction>
             </View>
 
             <ScrollView
@@ -136,9 +137,9 @@ export default function ClassworkDetailsSheet({
               contentContainerStyle={{ paddingBottom: 10 }}
             >
               {/* INSTRUCTIONS */}
-              <Text style={[styles.label, { color: colors.textMuted }]}>
+              <HeadingLabel icon="bookmark-outline" embedded style={[styles.label, { color: colors.textMuted }]}>
                 INSTRUCTIONS
-              </Text>
+              </HeadingLabel>
               <Text style={[styles.description, { color: colors.text }]}>
                 {item.description?.trim() || "No instructions provided."}
               </Text>
@@ -261,9 +262,9 @@ export default function ClassworkDetailsSheet({
               {/* QUIZ QUESTIONS (no answers — the server strips them) */}
               {item.type === "quiz" && item.questions?.length ? (
                 <View style={{ marginTop: 6 }}>
-                  <Text style={[styles.label, { color: colors.textMuted }]}>
+                  <HeadingLabel icon="clipboard-outline" embedded style={[styles.label, { color: colors.textMuted }]}>
                     QUESTIONS · {item.questions.length}
-                  </Text>
+                  </HeadingLabel>
 
                   {item.questions.map((question, index) => (
                     <View
@@ -482,3 +483,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
 });
+

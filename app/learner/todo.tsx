@@ -456,6 +456,8 @@ export default function LearnerTodoScreen() {
                 onPress={() => toggleSection(section.key)}
                 style={[
                   styles.sectionHeader,
+                  { borderWidth: 2, borderRadius: 16, borderColor: colors.border,
+                    backgroundColor: colors.surface, padding: spacing.sm },
                 ]}
                 hitSlop={6}
               >

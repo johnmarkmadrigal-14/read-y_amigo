@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -53,9 +54,9 @@ export default function ChooseRole() {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.xs }]}>
+        <HeadingLabel icon="person-outline" style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.xs }]}>
           Who are you?
-        </Text>
+        </HeadingLabel>
 
         <Text
           style={[

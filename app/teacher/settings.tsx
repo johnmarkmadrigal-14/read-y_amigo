@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text } from "react-native";
@@ -29,9 +30,9 @@ export default function SettingsScreen() {
 
   return (
     <Screen scroll>
-      <Text style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
+      <HeadingLabel icon="settings-outline" style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
         Settings
-      </Text>
+      </HeadingLabel>
 
       <Pressable
         style={[styles.row, { borderColor: colors.border }]}

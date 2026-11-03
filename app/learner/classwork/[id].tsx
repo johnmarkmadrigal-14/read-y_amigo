@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -89,11 +90,11 @@ export default function LearnerClassworkScreen() {
           >
             {error ?? "Classwork not found."}
           </Text>
-          <Pressable onPress={load} hitSlop={8}>
+          <TextAction icon="refresh" onPress={load} hitSlop={8}>
             <Text style={[typography.reading.sm, { color: colors.primary, fontWeight: "600" }]}>
               Try again
             </Text>
-          </Pressable>
+          </TextAction>
         </View>
       </Screen>
     );
@@ -115,20 +116,20 @@ export default function LearnerClassworkScreen() {
           { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
       >
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backRow}>
+        <TextAction onPress={() => router.back()} hitSlop={10} style={styles.backRow}>
           <Ionicons name="arrow-back" size={19} color={colors.textMuted} />
           <Text style={[typography.reading.sm, { color: colors.textMuted, fontWeight: "600" }]}>
             Back
           </Text>
-        </Pressable>
+        </TextAction>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>
           {item.type === "reading" ? "READING ACTIVITY" : item.type.toUpperCase()}
         </Text>
         <View style={styles.titleHeader}>
           <View style={styles.titleTextBlock}>
-            <Text style={[typography.display.lg, styles.pageTitle, { color: colors.text }]}>
+            <HeadingLabel icon="bookmark-outline" embedded style={[typography.display.lg, styles.pageTitle, { color: colors.text }]}>
               {item.title}
-            </Text>
+            </HeadingLabel>
           </View>
           <View style={[styles.activityIcon, { backgroundColor: colors.surface }]}>
             <Ionicons
@@ -173,7 +174,7 @@ export default function LearnerClassworkScreen() {
 
       {hasTextPassage && (
         <View style={styles.section}>
-          <Text style={{ color: colors.text, fontWeight: "700", marginBottom: 12 }}>Reading passage</Text>
+          <HeadingLabel icon="book-outline" accessibilityRole="text" style={{ color: colors.text, fontWeight: "700", marginBottom: 12 }}>Reading passage</HeadingLabel>
           <Text selectable style={{ color: colors.text, fontSize: 20, lineHeight: 32 }}>{item.readingText || "The reading passage is unavailable. Please contact your teacher."}</Text>
         </View>
       )}
@@ -181,9 +182,9 @@ export default function LearnerClassworkScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeading}>
             <Ionicons name="attach-outline" size={19} color={colors.text} />
-            <Text style={[typography.reading.sm, styles.sectionTitle, { color: colors.text }]}>
+            <HeadingLabel icon={null} style={[typography.reading.sm, styles.sectionTitle, { color: colors.text }]}>
               Attached file
-            </Text>
+            </HeadingLabel>
           </View>
           <Pressable
             onPress={() => setViewerOpen((open) => !open)}
@@ -236,9 +237,9 @@ export default function LearnerClassworkScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeading}>
             <Ionicons name="mic-outline" size={19} color={colors.text} />
-            <Text style={[typography.reading.sm, styles.sectionTitle, { color: colors.text }]}>
+            <HeadingLabel icon={null} style={[typography.reading.sm, styles.sectionTitle, { color: colors.text }]}>
               Your submission
-            </Text>
+            </HeadingLabel>
           </View>
           <ReadAloudRecorder
             readingTitle={item.title}
@@ -460,4 +461,5 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
 });
+
 

@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -376,7 +377,7 @@ export default function ClassStream({
             CLASS STREAM
           </Text>
 
-          <Text
+          <HeadingLabel icon="chatbubble-outline"
             style={[
               styles.title,
               {
@@ -385,7 +386,7 @@ export default function ClassStream({
             ]}
           >
             Updates
-          </Text>
+          </HeadingLabel>
 
           <Text
             style={[
@@ -1067,7 +1068,7 @@ function DetailRow({
 }) {
   return (
     <View style={styles.detailSection}>
-      <Text
+      <HeadingLabel icon="bookmark-outline"
         style={[
           styles.detailLabel,
           {
@@ -1076,7 +1077,7 @@ function DetailRow({
         ]}
       >
         {label}
-      </Text>
+      </HeadingLabel>
 
       <Text
         style={[

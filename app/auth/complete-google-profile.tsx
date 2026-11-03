@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
@@ -66,9 +67,9 @@ export default function CompleteGoogleProfileScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={[typography.display.lg, { color: colors.text }]}>
+        <HeadingLabel icon="bookmark-outline" style={[typography.display.lg, { color: colors.text }]}>
           Almost done!
-        </Text>
+        </HeadingLabel>
         <Text
           style={[
             typography.reading.sm,
@@ -136,9 +137,9 @@ function Field({
 }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <Text style={[typography.reading.sm, { color: colors.textMuted, marginBottom: spacing.xs ?? 4 }]}>
+      <HeadingLabel icon="create-outline" accessibilityRole="text" style={[typography.reading.sm, { color: colors.textMuted, marginBottom: spacing.sm }]}>
         {label}
-      </Text>
+      </HeadingLabel>
       <TextInput
         value={value}
         onChangeText={onChangeText}

@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { View, Text, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Button } from "../components/Button";
@@ -16,14 +17,14 @@ export default function ClassroomJoined() {
           <Text style={{ fontSize: 48 }}>✓</Text>
         </View>
 
-        <Text
+        <HeadingLabel icon="school-outline"
           style={[
             typography.display.xl,
             { color: colors.primary, textAlign: "center", marginTop: spacing.lg, marginBottom: spacing.md },
           ]}
         >
           Classroom Joined!
-        </Text>
+        </HeadingLabel>
 
         <Text
           style={[

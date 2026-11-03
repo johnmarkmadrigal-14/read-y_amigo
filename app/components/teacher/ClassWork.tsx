@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
@@ -144,14 +145,14 @@ export default function ClassWork({
               NEW ACTIVITY
             </Text>
 
-            <Text
+            <HeadingLabel icon="book-outline" embedded
               style={[
                 styles.sectionTitle,
                 { color: colors.text },
               ]}
             >
               Add Reading Task
-            </Text>
+            </HeadingLabel>
           </View>
 
           <View
@@ -172,14 +173,14 @@ export default function ClassWork({
 
         {/* TITLE */}
 
-        <Text
+        <HeadingLabel icon="bookmark-outline" embedded
           style={[
             styles.fieldLabel,
             { color: colors.text },
           ]}
         >
           Task title
-        </Text>
+        </HeadingLabel>
 
         <TextInput
           placeholder="e.g. Read Chapter 1"
@@ -198,14 +199,14 @@ export default function ClassWork({
 
         {/* DESCRIPTION */}
 
-        <Text
+        <HeadingLabel icon="book-outline" embedded
           style={[
             styles.fieldLabel,
             { color: colors.text },
           ]}
         >
           Reading instructions
-        </Text>
+        </HeadingLabel>
 
         <TextInput
           placeholder="e.g. Read the passage and answer the comprehension questions."

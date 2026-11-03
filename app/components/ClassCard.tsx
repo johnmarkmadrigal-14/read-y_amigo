@@ -1,3 +1,4 @@
+import { TextAction } from "./InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -66,13 +67,13 @@ export function ClassCard({
     // Own Pressable, so tapping the menu doesn't also trigger the card's
     // onPress (RN's responder system resolves this to the innermost
     // handler).
-    <Pressable onPress={onMenuPress} hitSlop={10} style={styles.menuButton}>
+    <TextAction accessibilityLabel="More options" onPress={onMenuPress} hitSlop={10} style={styles.menuButton}>
       <Ionicons
         name="ellipsis-vertical"
         size={20}
         color={variant === "banner" ? "#FFFFFF" : shadowColor}
       />
-    </Pressable>
+    </TextAction>
   ) : (
     <Ionicons
       name="book-outline"

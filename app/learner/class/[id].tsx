@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 // app/learner/class/[id].tsx
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -230,7 +231,7 @@ export default function LearnerClassDetail() {
           >
             {error}
           </Text>
-          <Pressable onPress={() => load()}>
+          <TextAction icon="refresh" onPress={() => load()}>
             <Text
               style={[
                 typography.reading.sm,
@@ -239,7 +240,7 @@ export default function LearnerClassDetail() {
             >
               Try again
             </Text>
-          </Pressable>
+          </TextAction>
         </View>
       </Screen>
     );
@@ -280,9 +281,9 @@ export default function LearnerClassDetail() {
                 ? "RESOURCES"
                 : "ROSTER"}
             </Text>
-            <Text style={[styles.pageTitle, { color: colors.text }]}>
+            <HeadingLabel icon="bookmark-outline" style={[styles.pageTitle, { color: colors.text }]}>
               {activeTab}
-            </Text>
+            </HeadingLabel>
           </View>
           <View style={[styles.pageDot, { backgroundColor: colors.primary }]} />
         </View>
@@ -636,7 +637,7 @@ function MaterialsTab({
           ) : null}
 
           {material.fileUrl ? (
-            <Pressable
+            <TextAction icon="book-outline"
               onPress={() => openRemoteUrl(material.fileUrl as string)}
               style={{ marginTop: spacing.sm }}
             >
@@ -646,7 +647,7 @@ function MaterialsTab({
               >
                 {material.fileUrl}
               </Text>
-            </Pressable>
+            </TextAction>
           ) : null}
 
           <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: spacing.sm }}>

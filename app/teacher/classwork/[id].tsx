@@ -1,7 +1,8 @@
+import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { AudioPlayerBar, formatTime, useAuthorizedAudioSource } from "../../components/AudioPlayerBar";
 import { Screen } from "../../components/Screen";
 import {
@@ -86,11 +87,11 @@ export default function TeacherClassworkSubmissions() {
           >
             {error ?? "Couldn't load submissions."}
           </Text>
-          <Pressable onPress={load}>
+          <TextAction icon="refresh" onPress={load}>
             <Text style={[typography.reading.sm, { color: colors.primary, fontWeight: "700" }]}>
               Try again
             </Text>
-          </Pressable>
+          </TextAction>
         </View>
       </Screen>
     );
@@ -98,12 +99,12 @@ export default function TeacherClassworkSubmissions() {
 
   return (
     <Screen scroll>
-      <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backRow}>
+      <TextAction onPress={() => router.back()} hitSlop={10} style={styles.backRow}>
         <Ionicons name="chevron-back" size={22} color={colors.text} />
         <Text style={[typography.reading.sm, { color: colors.text }]}>Back</Text>
-      </Pressable>
+      </TextAction>
 
-      <Text style={[typography.display.lg, { color: colors.text }]}>Submissions</Text>
+      <HeadingLabel icon="bookmark-outline" style={[typography.display.lg, { color: colors.text }]}>Submissions</HeadingLabel>
       <Text style={[typography.reading.sm, { color: colors.textMuted, marginBottom: spacing.lg }]}>
         {data.classwork.title}
       </Text>

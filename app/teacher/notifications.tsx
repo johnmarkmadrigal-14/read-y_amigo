@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { StyleSheet, Text, View } from "react-native";
 import { Screen } from "../components/Screen";
 import { useTheme } from "../theme/ThemeProvider";
@@ -13,9 +14,9 @@ export default function NotificationsScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
+        <HeadingLabel icon="notifications-outline" style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
           Notifications
-        </Text>
+        </HeadingLabel>
         <View style={styles.centered}>
           <Text style={[typography.reading.sm, { color: colors.textMuted, textAlign: "center" }]}>
             You're all caught up. Notifications about your classes will show up here.
