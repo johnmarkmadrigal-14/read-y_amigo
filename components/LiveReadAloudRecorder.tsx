@@ -1,16 +1,20 @@
-import { useEffect, useRef, useState } from "react";
-import { AppState, Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AppState, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ExpoSpeechRecognitionModule as Speech, useSpeechRecognitionEvent } from "expo-speech-recognition";
 import type { ReadAloudRecorderProps } from "../app/components/ReadAloudRecorder";
 import { AudioPlayerBar, formatTime } from "../app/components/AudioPlayerBar";
 import { Button } from "../app/components/Button";
 import { useTheme } from "../app/theme/ThemeProvider";
+import { radius, spacing, typography } from "../app/theme/tokens";
+import { Screen } from "../app/components/Screen";
+import { FileViewer } from "../app/components/FileViewer";
+import { readingPosition, readingSentences, readingWords } from "./readingProgress";
 
 type Phase = "idle" | "countdown" | "starting" | "recording" | "finishing";
 
 // Speech recognition owns the microphone AND saves the audio; running a second
 // expo-audio recorder alongside it can interrupt either recording on native devices.
-export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRecorderProps & { onUseAudioOnly: () => void }) {
+export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, readingText, readingAttachment }: ReadAloudRecorderProps & { onUseAudioOnly: () => void }) {
   const { colors } = useTheme();
   const [phase, setPhase] = useState<Phase>("idle");
   const [count, setCount] = useState(3);
@@ -21,6 +25,14 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRec
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [readerOpen, setReaderOpen] = useState(false);
+  const [transcriptExpanded, setTranscriptExpanded] = useState(false);
+  const [following, setFollowing] = useState(true);
+  const [passageHeight, setPassageHeight] = useState(0);
+  const [sentenceOffsets, setSentenceOffsets] = useState<Record<number, number>>({});
+  const [followTranscript, setFollowTranscript] = useState(true);
+  const passageScroll = useRef<ScrollView>(null);
+  const closeAfterStop = useRef(false);
   const finalized = useRef("");
   const startedAt = useRef(0);
   const duration = useRef(0);
@@ -29,6 +41,19 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRec
   const permissionPending = useRef(false);
   const generation = useRef(0);
   const scroll = useRef<ScrollView>(null);
+  const words = useMemo(() => readingWords(readingText ?? ""), [readingText]);
+  const sentences = useMemo(() => readingSentences(readingText ?? ""), [readingText]);
+  const position = useMemo(() => readingPosition(words, transcript), [words, transcript]);
+  const sentenceIndex = sentences.findIndex((sentence) =>
+    position >= sentence.wordStart && position < sentence.wordEnd);
+
+  useEffect(() => {
+    if (!readerOpen || !following || transcriptExpanded || sentenceIndex < 0) return;
+    const y = sentenceOffsets[sentenceIndex];
+    if (y !== undefined) passageScroll.current?.scrollTo({
+      y: Math.max(0, y - passageHeight * 0.25), animated: true,
+    });
+  }, [readerOpen, following, transcriptExpanded, sentenceIndex, sentenceOffsets, passageHeight]);
 
   useEffect(() => {
     mounted.current = true;
@@ -74,7 +99,10 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRec
   });
   useSpeechRecognitionEvent("end", () => {
     active.current = false;
-    if (mounted.current) setPhase("idle");
+    if (mounted.current) {
+      setPhase("idle");
+      if (closeAfterStop.current) { closeAfterStop.current = false; setReaderOpen(false); }
+    }
   });
   useSpeechRecognitionEvent("error", (event) => {
     if (mounted.current && event.error !== "aborted") {
@@ -83,6 +111,10 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRec
   });
 
   async function start() {
+    setReaderOpen(true);
+    setTranscriptExpanded(false);
+    setFollowing(true);
+    setFollowTranscript(true);
     const attempt = ++generation.current;
     setPhase("starting");
     setError("");
@@ -101,6 +133,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRec
       }
       setUri(null);
       setTranscript("");
+      passageScroll.current?.scrollTo({ y: 0, animated: false });
       finalized.current = "";
       startedAt.current = 0;
       duration.current = 0;
@@ -132,8 +165,26 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRec
     ]);
   }
 
+  function closeReader() {
+    if (submitting || phase === "finishing") return;
+    if (active.current) {
+      Alert.alert("Stop reading?", "Your recording will be kept for review.", [
+        { text: "Keep reading", style: "cancel" },
+        { text: "Stop reading", onPress: () => {
+          closeAfterStop.current = true;
+          setPhase("finishing");
+          Speech.stop();
+        } },
+      ]);
+      return;
+    }
+    generation.current += 1;
+    setPhase("idle");
+    setReaderOpen(false);
+  }
+
   if (submitted) return <Text style={{ color: colors.text }}>Great reading! Your teacher can listen now.</Text>;
-  return <View style={{ gap: 16 }}>
+  return <View style={{ gap: spacing.md }}>
     <Text style={{ color: colors.textMuted }}>Words appear as you read. Automatic transcription may make mistakes.</Text>
     <View style={{ flexDirection: "row", gap: 12 }}>
       {[["en-US", "English"], ["fil-PH", "Filipino"]].map(([code, label]) =>
@@ -143,23 +194,109 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly }: ReadAloudRec
           <Text style={{ color: colors.text }}>{label}</Text>
         </Pressable>)}
     </View>
-    {phase === "countdown" && <Text style={{ color: colors.text, fontSize: 32 }}>Get ready… {count}</Text>}
-    {phase === "starting" && <Text style={{ color: colors.text }}>Starting microphone…</Text>}
-    {phase === "recording" && <>
-      <Text style={{ color: colors.text }}>Reading · {formatTime(elapsed)}</Text>
-      <Button label="Stop reading" onPress={() => { setPhase("finishing"); Speech.stop(); }} />
-    </>}
-    {phase === "finishing" && <Text style={{ color: colors.text }}>Finishing your recording…</Text>}
-    <Text style={{ color: colors.text, fontWeight: "700" }}>Live transcript</Text>
-    <ScrollView ref={scroll} style={{ maxHeight: 240 }} onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
-      <Text selectable style={{ color: colors.text, fontSize: 20, lineHeight: 32 }}>{transcript || "Your words will appear here…"}</Text>
-    </ScrollView>
-    {!!error && <Text accessibilityRole="alert" style={{ color: colors.text }}>{error}</Text>}
-    {phase === "idle" && <Button label={uri ? "Read again" : "Read now"} onPress={start} disabled={submitting} />}
-    {phase === "idle" && !uri && <Button label="Use audio recording only" variant="secondary" onPress={onUseAudioOnly} disabled={submitting} />}
-    {phase === "idle" && !!uri && <>
-      <AudioPlayerBar source={uri} title="Your reading" subtitle={formatTime(elapsed)} />
-      <Button label="Submit" onPress={submit} loading={submitting} disabled={submitting} />
-    </>}
+    <Button label={uri ? "Review your reading" : "Read now"} onPress={() => uri ? setReaderOpen(true) : start()} disabled={submitting || phase !== "idle"} />
+    {!uri && <Button label="Use audio recording only" variant="secondary" onPress={onUseAudioOnly} disabled={submitting || phase !== "idle"} />}
+    <Modal visible={readerOpen} animationType="slide" presentationStyle="fullScreen" onRequestClose={closeReader}>
+      <Screen>
+        <View style={styles.reader}>
+          <View style={styles.heading}>
+            <Text style={[typography.display.md, styles.title, { color: colors.text }]} numberOfLines={1}>
+              {readingTitle || "Read aloud"}
+            </Text>
+            <Pressable onPress={closeReader} disabled={submitting || phase === "finishing"}
+              accessibilityRole="button" accessibilityLabel="Close reading view" hitSlop={8}>
+              <Text style={[typography.reading.sm, { color: colors.primary }]}>Close</Text>
+            </Pressable>
+          </View>
+
+          {!transcriptExpanded && <View style={styles.passage}>
+            <View style={styles.heading}>
+              <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "700" }]}>
+                {readingText ? "Reading passage" : "Attached file"}
+              </Text>
+              {!!readingText && <Pressable onPress={() => setFollowing(value => !value)} accessibilityRole="button"
+                accessibilityState={{ selected: following }}>
+                <Text style={[typography.reading.sm, { color: colors.primary }]}>{following ? "Auto-scroll on" : "Follow reading"}</Text>
+              </Pressable>}
+            </View>
+            {!!readingText ? <ScrollView ref={passageScroll} style={styles.flex}
+              onScrollBeginDrag={() => setFollowing(false)}
+              onLayout={event => setPassageHeight(event.nativeEvent.layout.height)}
+              contentContainerStyle={styles.passageContent}>
+              {sentences.map((sentence, index) => <Text key={index} selectable
+                onLayout={event => {
+                  const y = event.nativeEvent.layout.y;
+                  setSentenceOffsets(previous => previous[index] === y ? previous : { ...previous, [index]: y });
+                }}
+                style={[typography.reading.md, {
+                  color: index === sentenceIndex ? colors.secondaryText : colors.text,
+                  backgroundColor: index === sentenceIndex ? colors.highlight : "transparent",
+                }]}>{sentence.text}</Text>)}
+            </ScrollView> : readingAttachment ? <View style={styles.flex}
+              onLayout={event => setPassageHeight(event.nativeEvent.layout.height)}>
+              <FileViewer {...readingAttachment} height={Math.max(1, passageHeight)} />
+            </View> : <ScrollView style={styles.flex}>
+              <Text style={[typography.reading.sm, { color: colors.textMuted }]}>No passage was provided. You can still record your reading.</Text>
+            </ScrollView>}
+          </View>}
+
+          <View style={[styles.transcript, transcriptExpanded && styles.flex,
+            { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.heading}>
+              <Text style={[typography.display.md, { color: colors.text }]}>Live transcript</Text>
+              <Pressable onPress={() => setTranscriptExpanded(value => !value)} accessibilityRole="button"
+                accessibilityState={{ expanded: transcriptExpanded }}>
+                <Text style={[typography.reading.sm, { color: colors.primary }]}>{transcriptExpanded ? "Collapse" : "Expand"}</Text>
+              </Pressable>
+            </View>
+            <ScrollView ref={scroll} style={transcriptExpanded ? styles.flex : styles.transcriptPreview}
+              onScrollBeginDrag={() => setFollowTranscript(false)}
+              onContentSizeChange={() => { if (followTranscript) scroll.current?.scrollToEnd({ animated: true }); }}>
+              <Text selectable style={[typography.reading.md, { color: colors.text }]}>
+                {transcript || "Your words will appear here…"}
+              </Text>
+            </ScrollView>
+            {!followTranscript && <Pressable accessibilityRole="button" onPress={() => {
+              setFollowTranscript(true); scroll.current?.scrollToEnd({ animated: true });
+            }}><Text style={[typography.reading.sm, { color: colors.primary }]}>Follow latest words</Text></Pressable>}
+          </View>
+
+          <View style={styles.controls}>
+            {!!error && <ScrollView style={styles.error}><Text accessibilityRole="alert"
+              style={[typography.reading.sm, { color: colors.text }]}>{error}</Text></ScrollView>}
+            {phase === "countdown" && <Text style={[typography.display.lg, { color: colors.primary }]}>Get ready… {count}</Text>}
+            {phase === "starting" && <Text style={[typography.reading.sm, { color: colors.text }]}>Starting microphone…</Text>}
+            {phase === "recording" && <>
+              <Text style={[typography.display.md, { color: colors.text }]}>Reading · {formatTime(elapsed)}</Text>
+              <Button label="Stop reading" onPress={() => { setPhase("finishing"); Speech.stop(); }} />
+            </>}
+            {phase === "finishing" && <Text style={[typography.reading.sm, { color: colors.text }]}>Finishing your recording…</Text>}
+            {phase === "idle" && !!uri && <AudioPlayerBar source={uri} title="Your reading" subtitle={formatTime(elapsed)} />}
+            {phase === "idle" && <View style={styles.heading}>
+              <View style={styles.flex}><Button label={uri ? "Read again" : "Read now"} onPress={start} disabled={submitting} variant={uri ? "secondary" : "primary"} /></View>
+              {!!uri && <View style={styles.flex}><Button label="Submit" onPress={submit} loading={submitting} disabled={submitting} /></View>}
+            </View>}
+            <Text style={[typography.reading.sm, styles.hint, { color: colors.textMuted }]}>
+              {readingText ? "Highlight follows recognized words; it does not grade pronunciation." : "Automatic transcription may make mistakes."}
+            </Text>
+          </View>
+        </View>
+      </Screen>
+    </Modal>
   </View>;
 }
+
+const styles = StyleSheet.create({
+  reader: { flex: 1, gap: spacing.sm },
+  flex: { flex: 1, minHeight: 0 },
+  heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
+  title: { flex: 1 },
+  passage: { flex: 1, minHeight: 0, gap: spacing.sm },
+  passageContent: { paddingBottom: spacing.md },
+  transcript: { flexShrink: 0, borderWidth: 3, borderRadius: radius.lg, padding: spacing.sm, gap: spacing.sm },
+  transcriptPreview: { height: 96, flexGrow: 0 },
+  controls: { flexShrink: 0, gap: spacing.sm },
+  error: { maxHeight: 60 },
+  hint: { fontSize: 12, lineHeight: 16 },
+});
+
