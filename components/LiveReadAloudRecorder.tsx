@@ -219,7 +219,8 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
                 <Text style={[typography.reading.sm, { color: colors.primary }]}>{following ? "Auto-scroll on" : "Follow reading"}</Text>
               </Pressable>}
             </View>
-            {!!readingText ? <ScrollView ref={passageScroll} style={styles.flex}
+            {!!readingText ? <ScrollView ref={passageScroll}
+              style={[styles.flex, styles.passageCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onScrollBeginDrag={() => setFollowing(false)}
               onLayout={event => setPassageHeight(event.nativeEvent.layout.height)}
               contentContainerStyle={styles.passageContent}>
@@ -243,7 +244,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
           <View style={[styles.transcript, transcriptExpanded && styles.flex,
             { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.heading}>
-              <Text style={[typography.display.md, { color: colors.text }]}>Live transcript</Text>
+              <Text style={[typography.display.md, { color: colors.text }]}>{uri && phase === "idle" ? "Transcript" : "Live transcript"}</Text>
               <Pressable onPress={() => setTranscriptExpanded(value => !value)} accessibilityRole="button"
                 accessibilityState={{ expanded: transcriptExpanded }}>
                 <Text style={[typography.reading.sm, { color: colors.primary }]}>{transcriptExpanded ? "Collapse" : "Expand"}</Text>
@@ -292,6 +293,7 @@ const styles = StyleSheet.create({
   heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   title: { flex: 1 },
   passage: { flex: 1, minHeight: 0, gap: spacing.sm },
+  passageCard: { borderWidth: 3, borderRadius: radius.lg, padding: spacing.sm },
   passageContent: { paddingBottom: spacing.md },
   transcript: { flexShrink: 0, borderWidth: 3, borderRadius: radius.lg, padding: spacing.sm, gap: spacing.sm },
   transcriptPreview: { height: 96, flexGrow: 0 },
