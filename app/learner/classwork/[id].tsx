@@ -241,6 +241,9 @@ export default function LearnerClassworkScreen() {
             </Text>
           </View>
           <ReadAloudRecorder
+            readingTitle={item.title}
+            readingText={hasTextPassage ? item.readingText : null}
+            readingAttachment={attachment ? { ...attachment, url: getFileUrl(attachment.url) } : null}
             submitted={
               submission
                 ? {
@@ -457,3 +460,4 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
 });
+
