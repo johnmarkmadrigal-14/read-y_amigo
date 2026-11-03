@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
@@ -77,9 +78,9 @@ export default function TodoScreen() {
 
   return (
     <Screen scroll>
-      <Text style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
+      <HeadingLabel icon="clipboard-outline" style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
         To-do
-      </Text>
+      </HeadingLabel>
 
       {items.length === 0 && (
         <Text style={[typography.reading.sm, { color: colors.textMuted }]}>

@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -6,7 +7,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from "react-native";
@@ -70,14 +70,14 @@ export default function CreateClassroom() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text
+          <HeadingLabel icon="school-outline"
             style={[
               typography.display.xl,
               { color: colors.primary, textAlign: "center", marginBottom: spacing.lg },
             ]}
           >
             Create Classroom
-          </Text>
+          </HeadingLabel>
 
           <View>
             <TextInput

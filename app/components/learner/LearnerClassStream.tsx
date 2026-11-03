@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
@@ -76,7 +77,7 @@ export default function LearnerClassStream({
         <Text style={[styles.kicker, { color: colors.primary }]}>
           CLASS STREAM
         </Text>
-        <Text style={[styles.title, { color: colors.text }]}>Updates</Text>
+        <HeadingLabel icon="chatbubble-outline" style={[styles.title, { color: colors.text }]}>Updates</HeadingLabel>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           Announcements and new classwork
         </Text>

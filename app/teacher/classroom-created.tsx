@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
@@ -40,14 +41,14 @@ export default function ClassroomCreated() {
           style={{ marginBottom: spacing.sm }}
         />
 
-        <Text
+        <HeadingLabel icon={null}
           style={[
             typography.display.xl,
             { color: colors.primary, textAlign: "center", marginBottom: spacing.lg },
           ]}
         >
           Classroom Created!
-        </Text>
+        </HeadingLabel>
 
         <Text style={[typography.reading.sm, { color: colors.textMuted, marginTop: spacing.md }]}>
           Classroom Name

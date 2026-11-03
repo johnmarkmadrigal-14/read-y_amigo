@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
 
 import { router } from "expo-router";
 import { useState } from "react";
@@ -54,7 +55,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View
         style={{
           alignItems: "center",
@@ -72,9 +73,9 @@ export default function LoginScreen() {
           resizeMode="contain"
         />
 
-        <Text style={{ ...typography.display.lg, color: colors.text }}>
+        <HeadingLabel icon="person-outline" style={{ ...typography.display.lg, color: colors.text }}>
           Welcome back!
-        </Text>
+        </HeadingLabel>
 
         <Text
           style={{
@@ -122,14 +123,14 @@ export default function LoginScreen() {
           marginBottom: spacing.lg,
         }}
       >
-        <Text
-          style={{ color: colors.primary, fontSize: 12 }}
-          onPress={() => {
+        <TextAction icon="lock-closed-outline" onPress={() => {
             // Connect your forgot-password screen here.
-          }}
+          }}><Text
+          style={{ color: colors.primary, fontSize: 12 }}
+
         >
           Forgot password?
-        </Text>
+        </Text></TextAction>
       </View>
 
       <Button
@@ -142,6 +143,9 @@ export default function LoginScreen() {
         style={{
           flexDirection: "row",
           justifyContent: "center",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: spacing.sm,
           marginTop: spacing.lg,
         }}
       >
@@ -149,17 +153,18 @@ export default function LoginScreen() {
           New here?{" "}
         </Text>
 
-        <Text
+        <TextAction icon="person-outline" onPress={() => router.push("/auth/choose-role")}><Text
           style={{
             color: colors.primary,
             fontSize: 13,
             fontWeight: "600",
           }}
-          onPress={() => router.push("/auth/choose-role")}
+
         >
           Create an account
-        </Text>
+        </Text></TextAction>
       </View>
     </Screen>
   );
 }
+

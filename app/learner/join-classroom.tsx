@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 // app/learner/join-classroom.tsx
 import { router } from "expo-router";
 import { useState } from "react";
@@ -45,9 +46,9 @@ export default function JoinClassroom() {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.sm }]}>
+        <HeadingLabel icon="school-outline" style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.sm }]}>
           Join Classroom
-        </Text>
+        </HeadingLabel>
         <Text style={[typography.reading.sm, { color: colors.textMuted, textAlign: "center", marginBottom: spacing.xl }]}>
           Enter the classroom code given by your teacher.
         </Text>

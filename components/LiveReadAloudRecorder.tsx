@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../app/components/InterfaceChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppState, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ExpoSpeechRecognitionModule as Speech, useSpeechRecognitionEvent } from "expo-speech-recognition";
@@ -200,27 +201,28 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
       <Screen>
         <View style={styles.reader}>
           <View style={styles.heading}>
-            <Text style={[typography.display.md, styles.title, { color: colors.text }]} numberOfLines={1}>
+            <HeadingLabel icon="book-outline" style={[typography.display.md, styles.title, { color: colors.text }]} numberOfLines={1}>
               {readingTitle || "Read aloud"}
-            </Text>
-            <Pressable onPress={closeReader} disabled={submitting || phase === "finishing"}
+            </HeadingLabel>
+            <TextAction icon="close" tone="close" onPress={closeReader} disabled={submitting || phase === "finishing"}
               accessibilityRole="button" accessibilityLabel="Close reading view" hitSlop={8}>
               <Text style={[typography.reading.sm, { color: colors.primary }]}>Close</Text>
-            </Pressable>
+            </TextAction>
           </View>
 
-          {!transcriptExpanded && <View style={styles.passage}>
-            <View style={styles.heading}>
-              <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "700" }]}>
+          {!transcriptExpanded && <View style={[styles.passage, styles.passageCard,
+            { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[styles.heading, styles.sectionHeader, { borderColor: colors.border }]}>
+              <HeadingLabel icon={readingText ? "book-outline" : "attach-outline"} embedded style={[typography.reading.sm, { color: colors.text, fontWeight: "700" }]}>
                 {readingText ? "Reading passage" : "Attached file"}
-              </Text>
-              {!!readingText && <Pressable onPress={() => setFollowing(value => !value)} accessibilityRole="button"
+              </HeadingLabel>
+              {!!readingText && <TextAction icon="arrow-down" onPress={() => setFollowing(value => !value)} accessibilityRole="button"
                 accessibilityState={{ selected: following }}>
                 <Text style={[typography.reading.sm, { color: colors.primary }]}>{following ? "Auto-scroll on" : "Follow reading"}</Text>
-              </Pressable>}
+              </TextAction>}
             </View>
             {!!readingText ? <ScrollView ref={passageScroll}
-              style={[styles.flex, styles.passageCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={styles.flex}
               onScrollBeginDrag={() => setFollowing(false)}
               onLayout={event => setPassageHeight(event.nativeEvent.layout.height)}
               contentContainerStyle={styles.passageContent}>
@@ -243,12 +245,12 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
 
           <View style={[styles.transcript, transcriptExpanded && styles.flex,
             { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={styles.heading}>
-              <Text style={[typography.display.md, { color: colors.text }]}>{uri && phase === "idle" ? "Transcript" : "Live transcript"}</Text>
-              <Pressable onPress={() => setTranscriptExpanded(value => !value)} accessibilityRole="button"
+            <View style={[styles.heading, styles.sectionHeader, { borderColor: colors.border }]}>
+              <HeadingLabel icon="mic-outline" embedded style={[typography.display.md, { color: colors.text }]}>{uri && phase === "idle" ? "Transcript" : "Live transcript"}</HeadingLabel>
+              <TextAction icon="expand-outline" onPress={() => setTranscriptExpanded(value => !value)} accessibilityRole="button"
                 accessibilityState={{ expanded: transcriptExpanded }}>
                 <Text style={[typography.reading.sm, { color: colors.primary }]}>{transcriptExpanded ? "Collapse" : "Expand"}</Text>
-              </Pressable>
+              </TextAction>
             </View>
             <ScrollView ref={scroll} style={transcriptExpanded ? styles.flex : styles.transcriptPreview}
               onScrollBeginDrag={() => setFollowTranscript(false)}
@@ -257,9 +259,9 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
                 {transcript || "Your words will appear here…"}
               </Text>
             </ScrollView>
-            {!followTranscript && <Pressable accessibilityRole="button" onPress={() => {
+            {!followTranscript && <TextAction icon="arrow-down" accessibilityRole="button" onPress={() => {
               setFollowTranscript(true); scroll.current?.scrollToEnd({ animated: true });
-            }}><Text style={[typography.reading.sm, { color: colors.primary }]}>Follow latest words</Text></Pressable>}
+            }}><Text style={[typography.reading.sm, { color: colors.primary }]}>Follow latest words</Text></TextAction>}
           </View>
 
           <View style={styles.controls}>
@@ -291,6 +293,7 @@ const styles = StyleSheet.create({
   reader: { flex: 1, gap: spacing.sm },
   flex: { flex: 1, minHeight: 0 },
   heading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
+  sectionHeader: { borderBottomWidth: 1, paddingBottom: spacing.sm, flexWrap: "wrap" },
   title: { flex: 1 },
   passage: { flex: 1, minHeight: 0, gap: spacing.sm },
   passageCard: { borderWidth: 3, borderRadius: radius.lg, padding: spacing.sm },
@@ -301,4 +304,5 @@ const styles = StyleSheet.create({
   error: { maxHeight: 60 },
   hint: { fontSize: 12, lineHeight: 16 },
 });
+
 

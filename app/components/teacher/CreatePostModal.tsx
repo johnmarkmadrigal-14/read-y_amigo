@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useEffect, useState } from "react";
@@ -181,7 +182,7 @@ export default function CreatePostModal({
               </Text>
             </View>
 
-            <Pressable
+            <TextAction accessibilityLabel="Close" tone="close"
               onPress={onClose}
               style={styles.closeButton}
             >
@@ -190,7 +191,7 @@ export default function CreatePostModal({
                 size={25}
                 color={colors.secondaryText}
               />
-            </Pressable>
+            </TextAction>
           </View>
 
           <ScrollView
@@ -215,7 +216,7 @@ export default function CreatePostModal({
             />
 
             <View style={styles.field}>
-              <Text
+              <HeadingLabel icon="attach-outline" embedded
                 style={[
                   typography.body.md,
                   styles.label,
@@ -225,7 +226,7 @@ export default function CreatePostModal({
                 ]}
               >
                 Attachment
-              </Text>
+              </HeadingLabel>
 
               {!attachment ? (
                 <Pressable
@@ -286,7 +287,7 @@ export default function CreatePostModal({
                     {attachment.name}
                   </Text>
 
-                  <Pressable
+                  <TextAction accessibilityLabel="Delete"
                     onPress={() =>
                       setAttachment(undefined)
                     }
@@ -298,7 +299,7 @@ export default function CreatePostModal({
                         colors.secondaryText
                       }
                     />
-                  </Pressable>
+                  </TextAction>
                 </View>
               )}
             </View>
@@ -345,7 +346,7 @@ function Field({
 
   return (
     <View style={styles.field}>
-      <Text
+      <HeadingLabel icon="bookmark-outline"
         style={[
           typography.body.md,
           styles.label,
@@ -355,7 +356,7 @@ function Field({
         ]}
       >
         {label}
-      </Text>
+      </HeadingLabel>
 
       <TextInput
         value={value}

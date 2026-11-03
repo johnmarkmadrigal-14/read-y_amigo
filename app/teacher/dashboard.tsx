@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { router, useFocusEffect } from "expo-router";
@@ -230,13 +231,13 @@ export default function TeacherDashboard() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1, minWidth: 0, marginRight: spacing.sm }}>
             <Text style={[typography.reading.sm, { color: colors.textMuted }]}>
               Good morning,
             </Text>
-            <Text style={[typography.display.lg, { color: colors.text }]}>
+            <HeadingLabel icon="person-outline" style={[typography.display.lg, { color: colors.text }]}>
               {profile?.displayName ?? "Teacher"}
-            </Text>
+            </HeadingLabel>
           </View>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             <Text style={[typography.display.sm, { color: colors.primaryText }]}>
@@ -246,19 +247,19 @@ export default function TeacherDashboard() {
         </View>
 
         <View style={styles.sectionHeaderRow}>
-          <Text
+          <HeadingLabel icon="school-outline"
             style={[
               typography.reading.sm,
               { color: colors.textMuted, fontWeight: "600" },
             ]}
           >
             My classes
-          </Text>
-          <Pressable onPress={() => router.push("/teacher/archived-classes")}>
+          </HeadingLabel>
+          <TextAction icon="archive-outline" onPress={() => router.push("/teacher/archived-classes")}>
             <Text style={[typography.reading.sm, { color: colors.primary, fontWeight: "600" }]}>
               Archived classes
             </Text>
-          </Pressable>
+          </TextAction>
         </View>
 
         {classes.length === 0 && (
@@ -433,30 +434,30 @@ export default function TeacherDashboard() {
               </Text>
             )}
 
-            <Pressable style={styles.sheetRow} onPress={handleMenuEdit}>
+            <TextAction style={styles.sheetRow} onPress={handleMenuEdit}>
               <Ionicons name="create-outline" size={20} color={colors.text} />
               <Text style={[typography.reading.sm, { color: colors.text }]}>Edit</Text>
-            </Pressable>
+            </TextAction>
 
-            <Pressable style={styles.sheetRow} onPress={handleMenuCopyCode}>
+            <TextAction style={styles.sheetRow} onPress={handleMenuCopyCode}>
               <Ionicons name="copy-outline" size={20} color={colors.text} />
               <Text style={[typography.reading.sm, { color: colors.text }]}>Copy class code</Text>
-            </Pressable>
+            </TextAction>
 
             <View style={[styles.sheetDivider, { backgroundColor: colors.border }]} />
 
-            <Pressable style={styles.sheetRow} onPress={handleMenuArchive}>
+            <TextAction style={styles.sheetRow} onPress={handleMenuArchive}>
               <Ionicons name="archive-outline" size={20} color={colors.primary} />
               <Text style={[typography.reading.sm, { color: colors.primary, fontWeight: "600" }]}>
                 Archive
               </Text>
-            </Pressable>
+            </TextAction>
 
-            <Pressable style={styles.sheetCancel} onPress={closeCardMenu}>
+            <TextAction icon="close" tone="close" style={styles.sheetCancel} onPress={closeCardMenu}>
               <Text style={[typography.reading.sm, { color: colors.textMuted, fontWeight: "600" }]}>
                 Cancel
               </Text>
-            </Pressable>
+            </TextAction>
           </Pressable>
         </Pressable>
       </Modal>
@@ -489,6 +490,8 @@ const styles = StyleSheet.create({
   },
   sectionHeaderRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: spacing.sm,

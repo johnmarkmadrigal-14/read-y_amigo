@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -84,9 +85,9 @@ export default function ProfileScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
+        <HeadingLabel icon="person-outline" style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
           Profile
-        </Text>
+        </HeadingLabel>
 
         <Field label="First name" value={firstName} onChangeText={setFirstName} colors={colors} />
         <Field label="Last name" value={secondName} onChangeText={setSecondName} colors={colors} />

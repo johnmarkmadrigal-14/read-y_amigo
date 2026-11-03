@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
@@ -595,7 +596,7 @@ export default function ClassDetail() {
             {error}
           </Text>
 
-          <Pressable
+          <TextAction icon="refresh"
             onPress={loadEverything}
           >
             <Text
@@ -609,7 +610,7 @@ export default function ClassDetail() {
             >
               Try again
             </Text>
-          </Pressable>
+          </TextAction>
         </View>
       </Screen>
     );
@@ -687,7 +688,7 @@ export default function ClassDetail() {
                 : "OVERVIEW"}
             </Text>
 
-            <Text
+            <HeadingLabel icon="bookmark-outline"
               style={[
                 styles.pageTitle,
                 {
@@ -696,7 +697,7 @@ export default function ClassDetail() {
               ]}
             >
               {activeTab}
-            </Text>
+            </HeadingLabel>
           </View>
 
           <View
@@ -935,7 +936,7 @@ export default function ClassDetail() {
                   {classInfo?.class.code}
         </Text>
 
-        <Pressable
+        <TextAction accessibilityLabel="More options"
           onPress={handleCopyCode}
                   hitSlop={6}
         >
@@ -950,7 +951,7 @@ export default function ClassDetail() {
                       colors.primary
                     }
           />
-        </Pressable>
+        </TextAction>
               </View>
             </View>
           </View>
@@ -2048,7 +2049,7 @@ function ClassworkTab({
                   flex: 1,
                 }}
               >
-                <Text
+                <HeadingLabel icon="school-outline" embedded
                   style={[
                     styles.modalTitle,
                     {
@@ -2057,7 +2058,7 @@ function ClassworkTab({
                   ]}
                 >
                   Create Classwork
-                </Text>
+                </HeadingLabel>
 
                 <Text
                   style={[
@@ -2072,7 +2073,7 @@ function ClassworkTab({
                 </Text>
               </View>
 
-              <Pressable
+              <TextAction accessibilityLabel="Close" tone="close"
                 onPress={closeCreate}
               >
                 <Ionicons
@@ -2080,7 +2081,7 @@ function ClassworkTab({
                   size={25}
                   color={colors.text}
                 />
-              </Pressable>
+              </TextAction>
             </View>
 
             <ScrollView
@@ -2093,7 +2094,7 @@ function ClassworkTab({
             >
               {/* TYPE */}
 
-              <Text
+              <HeadingLabel icon="create-outline" accessibilityRole="text"
                 style={[
                   styles.formLabel,
                   {
@@ -2102,7 +2103,7 @@ function ClassworkTab({
                 ]}
               >
                 Classwork Type
-                </Text>
+                </HeadingLabel>
 
               <View style={styles.typeGrid}>
                 {CLASSWORK_TYPES.map(
@@ -2182,7 +2183,7 @@ function ClassworkTab({
 
               {/* TITLE */}
 
-              <Text
+              <HeadingLabel icon="create-outline" accessibilityRole="text"
                 style={[
                   styles.formLabel,
                   {
@@ -2191,7 +2192,7 @@ function ClassworkTab({
                 ]}
               >
                 Title
-              </Text>
+              </HeadingLabel>
 
               <TextInput
                 placeholder="Example: Read and Understand"
@@ -2214,7 +2215,7 @@ function ClassworkTab({
 
               {/* DESCRIPTION */}
 
-              <Text
+              <HeadingLabel icon="create-outline" accessibilityRole="text"
                 style={[
                   styles.formLabel,
                   {
@@ -2223,7 +2224,7 @@ function ClassworkTab({
                 ]}
               >
                 Instructions
-              </Text>
+              </HeadingLabel>
 
               <TextInput
                 placeholder="Tell learners what they need to do..."
@@ -2251,7 +2252,7 @@ function ClassworkTab({
 
               {/* POINTS */}
 
-              <Text
+              <HeadingLabel icon="star-outline" accessibilityRole="text"
                 style={[
                   styles.formLabel,
                   {
@@ -2260,7 +2261,7 @@ function ClassworkTab({
                 ]}
               >
                 Points
-              </Text>
+              </HeadingLabel>
 
               <TextInput
                 placeholder="10"
@@ -2284,7 +2285,7 @@ function ClassworkTab({
 
               {/* DUE DATE */}
 
-              <Text
+              <HeadingLabel icon="calendar-outline" accessibilityRole="text"
                 style={[
                   styles.formLabel,
                   {
@@ -2293,7 +2294,7 @@ function ClassworkTab({
                 ]}
               >
                 Due Date
-              </Text>
+              </HeadingLabel>
 
               <View
                 style={
@@ -2386,7 +2387,7 @@ function ClassworkTab({
             </View>
 
               {dueDate && (
-                <Pressable
+                <TextAction icon="close-circle-outline"
                   onPress={() =>
                     setDueDate(null)
                   }
@@ -2404,7 +2405,7 @@ function ClassworkTab({
                   >
                     Clear due date
                   </Text>
-                </Pressable>
+                </TextAction>
               )}
 
               {showDatePicker && (
@@ -2490,7 +2491,7 @@ function ClassworkTab({
 
               {selectedType === "Reading Assignment" && (
                 <View style={{ gap: 12, marginBottom: 16 }}>
-                  <Text style={{ color: colors.text, fontWeight: "700" }}>Reading passage</Text>
+                  <HeadingLabel icon="book-outline" accessibilityRole="text" style={{ color: colors.text, fontWeight: "700" }}>Reading passage</HeadingLabel>
                   <View style={{ flexDirection: "row", gap: 12 }}>
                     {(["file", "text"] as const).map((source) => (
                       <Pressable key={source} accessibilityRole="radio"
@@ -2515,7 +2516,7 @@ function ClassworkTab({
               {(selectedType !== "Reading Assignment" || readingSource === "file") && (<>
               {/* FILE */}
 
-            <Text
+            <HeadingLabel icon="attach-outline" accessibilityRole="text"
               style={[
                   styles.formLabel,
                   {
@@ -2524,7 +2525,7 @@ function ClassworkTab({
               ]}
             >
                 Attachment
-            </Text>
+            </HeadingLabel>
 
               <Pressable
                 onPress={pickFile}
@@ -2600,7 +2601,7 @@ function ClassworkTab({
               </Pressable>
 
               {selectedFile && (
-                <Pressable
+                <TextAction
                   onPress={() =>
                     setSelectedFile(null)
                   }
@@ -2626,7 +2627,7 @@ function ClassworkTab({
                   >
                     Remove attachment
                   </Text>
-                </Pressable>
+                </TextAction>
               )}
 
               </>)}
@@ -2636,7 +2637,7 @@ function ClassworkTab({
               {selectedType ===
                 "Reading Assignment" && (
                 <>
-                  <Text
+                  <HeadingLabel icon="book-outline" accessibilityRole="text"
                     style={[
                       styles.formLabel,
                       {
@@ -2646,7 +2647,7 @@ function ClassworkTab({
                     ]}
                   >
                     Reading Activities
-                  </Text>
+                  </HeadingLabel>
 
                   <View
                     style={
@@ -2765,7 +2766,7 @@ function ClassworkTab({
                   {materials.length >
                     0 && (
                     <>
-                      <Text
+                      <HeadingLabel icon="book-outline" accessibilityRole="text"
                         style={[
                           styles.formLabel,
                           {
@@ -2775,7 +2776,7 @@ function ClassworkTab({
                         ]}
                       >
                         Existing Material
-                      </Text>
+                      </HeadingLabel>
 
                       <Pressable
                         onPress={() =>
@@ -2935,7 +2936,7 @@ function ClassworkTab({
               {selectedType ===
                 "Quiz" && (
                 <>
-                  <Text
+                  <HeadingLabel icon="clipboard-outline" accessibilityRole="text"
                     style={[
                       styles.formLabel,
                       {
@@ -2945,7 +2946,7 @@ function ClassworkTab({
                     ]}
                   >
                     Quiz Format
-                  </Text>
+                  </HeadingLabel>
 
                   <View
                     style={
@@ -3023,7 +3024,7 @@ function ClassworkTab({
                     }
                   >
                     <View>
-                      <Text
+                      <HeadingLabel icon="clipboard-outline" accessibilityRole="text"
                         style={[
                           styles.formLabel,
                           {
@@ -3034,7 +3035,7 @@ function ClassworkTab({
                         ]}
                       >
                         Questions
-                      </Text>
+                      </HeadingLabel>
 
                       <Text
                         style={{
@@ -3168,7 +3169,7 @@ function ClassworkTab({
 
               {/* ASSIGNMENT */}
 
-              <Text
+              <HeadingLabel icon="people-outline" accessibilityRole="text"
                 style={[
                   styles.formLabel,
                   {
@@ -3177,7 +3178,7 @@ function ClassworkTab({
                 ]}
               >
                 Assign To
-              </Text>
+              </HeadingLabel>
 
               <View
                 style={[
@@ -3195,7 +3196,7 @@ function ClassworkTab({
                     flex: 1,
                   }}
                 >
-                  <Text
+                  <HeadingLabel icon="people-outline" accessibilityRole="text"
                     style={{
                       color: colors.text,
                       fontSize: 13,
@@ -3203,7 +3204,7 @@ function ClassworkTab({
                     }}
                   >
                     All learners
-                  </Text>
+                  </HeadingLabel>
 
                   <Text
                     style={{
@@ -3238,7 +3239,7 @@ function ClassworkTab({
                     styles.learnerPicker
                   }
                 >
-                  <Text
+                  <HeadingLabel icon="people-outline" accessibilityRole="text"
                     style={{
                       color: colors.textMuted,
                       fontSize: 10,
@@ -3247,7 +3248,7 @@ function ClassworkTab({
                     }}
                   >
                     SELECT LEARNERS
-                  </Text>
+                  </HeadingLabel>
 
                   {learners.length ===
                     0 && (
@@ -3501,7 +3502,7 @@ function ClassworkTab({
                   </Text>
                 </View>
 
-                <Pressable
+                <TextAction accessibilityLabel="Close" tone="close"
                   onPress={() =>
                     setDetailsItem(null)
                   }
@@ -3511,7 +3512,7 @@ function ClassworkTab({
                     size={25}
                     color={colors.text}
                   />
-                </Pressable>
+                </TextAction>
               </View>
 
               <ScrollView
@@ -4034,7 +4035,7 @@ function ClassworkTab({
                       fontWeight: "800",
                     }}
                   >
-                   
+
                    {detailsItem.type === "reading" && (
   <Pressable
     onPress={() => {
@@ -4140,7 +4141,7 @@ function QuizQuestionEditor({
           </Text>
         </View>
 
-        <Pressable
+        <TextAction accessibilityLabel="Delete"
           onPress={onRemove}
           hitSlop={7}
         >
@@ -4149,7 +4150,7 @@ function QuizQuestionEditor({
             size={18}
             color={colors.textMuted}
           />
-        </Pressable>
+        </TextAction>
       </View>
 
       {/* QUESTION TYPE */}
@@ -4309,7 +4310,7 @@ function QuizQuestionEditor({
 
       {isChoiceQuestion && (
         <View>
-          <Text
+          <HeadingLabel icon="clipboard-outline" accessibilityRole="text"
             style={{
               color: colors.textMuted,
               fontSize: 9,
@@ -4318,7 +4319,7 @@ function QuizQuestionEditor({
             }}
           >
             CHOICES
-          </Text>
+          </HeadingLabel>
 
           {(
             question.choices ?? []
@@ -4479,7 +4480,7 @@ function QuizQuestionEditor({
 
       {isTrueFalse && (
         <View>
-          <Text
+          <HeadingLabel icon="star-outline" accessibilityRole="text"
             style={{
               color: colors.textMuted,
               fontSize: 9,
@@ -4488,7 +4489,7 @@ function QuizQuestionEditor({
             }}
           >
             CORRECT ANSWER
-          </Text>
+          </HeadingLabel>
 
           <View
             style={
@@ -4552,7 +4553,7 @@ function QuizQuestionEditor({
 
       {type === "short-answer" && (
         <View>
-          <Text
+          <HeadingLabel icon="star-outline" accessibilityRole="text"
             style={{
               color: colors.textMuted,
               fontSize: 9,
@@ -4561,7 +4562,7 @@ function QuizQuestionEditor({
             }}
           >
             ACCEPTED ANSWER
-          </Text>
+          </HeadingLabel>
 
           <TextInput
             placeholder="Expected answer"
@@ -5140,7 +5141,7 @@ function MaterialsTab({
                 </Text>
               </View>
 
-              <Pressable
+              <TextAction accessibilityLabel="Delete"
                 onPress={() =>
                   handleDelete(
                     material
@@ -5155,7 +5156,7 @@ function MaterialsTab({
                     colors.textMuted
                   }
                 />
-              </Pressable>
+              </TextAction>
             </View>
 
             {material.description ? (
@@ -5175,7 +5176,7 @@ function MaterialsTab({
             ) : null}
 
             {material.fileUrl ? (
-              <Pressable
+              <TextAction icon="book-outline"
                 onPress={() =>
                   Alert.alert(
                     "Material link",
@@ -5199,7 +5200,7 @@ function MaterialsTab({
                 >
                   {material.fileUrl}
                 </Text>
-              </Pressable>
+              </TextAction>
             ) : null}
 
             <Text
@@ -6550,3 +6551,4 @@ const styles = StyleSheet.create({
     gap: 5,
   },
 });
+

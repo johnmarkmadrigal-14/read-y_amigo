@@ -1,3 +1,4 @@
+import { TextAction } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
@@ -144,7 +145,7 @@ export default function TeacherPostCard({
         </View>
 
         {!readOnly && (
-          <Pressable
+          <TextAction accessibilityLabel="More options"
             onPress={handleMenu}
             hitSlop={10}
             style={styles.menuButton}
@@ -154,7 +155,7 @@ export default function TeacherPostCard({
               size={20}
               color={colors.secondaryText}
             />
-          </Pressable>
+          </TextAction>
         )}
       </View>
 

@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -549,7 +550,7 @@ export default function AnnouncementDetailsScreen() {
           },
         ]}
       >
-        <Pressable
+        <TextAction accessibilityLabel="Back"
           onPress={() => router.back()}
           hitSlop={10}
           style={styles.headerBack}
@@ -559,9 +560,9 @@ export default function AnnouncementDetailsScreen() {
             size={24}
             color={colors.text}
           />
-        </Pressable>
+        </TextAction>
 
-        <Text
+        <HeadingLabel icon="chatbubble-outline" embedded
           style={[
             styles.headerTitle,
             {
@@ -571,7 +572,7 @@ export default function AnnouncementDetailsScreen() {
           numberOfLines={1}
         >
           Announcement
-        </Text>
+        </HeadingLabel>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -674,7 +675,7 @@ export default function AnnouncementDetailsScreen() {
           </View>
 
           {/* TITLE */}
-          <Text
+          <HeadingLabel icon="bookmark-outline" embedded
             style={[
               styles.title,
               {
@@ -683,7 +684,7 @@ export default function AnnouncementDetailsScreen() {
             ]}
           >
             {post.title}
-          </Text>
+          </HeadingLabel>
 
           {/* BODY */}
           {!!post.body && (
@@ -711,7 +712,7 @@ export default function AnnouncementDetailsScreen() {
               color={colors.primary}
             />
 
-            <Text
+            <HeadingLabel icon={null}
               style={[
                 styles.commentsTitle,
                 {
@@ -720,7 +721,7 @@ export default function AnnouncementDetailsScreen() {
               ]}
             >
               Comments
-            </Text>
+            </HeadingLabel>
           </View>
 
           <Text
@@ -910,7 +911,7 @@ export default function AnnouncementDetailsScreen() {
                         styles.commentActions
                       }
                     >
-                      <Pressable
+                      <TextAction accessibilityLabel="Edit"
                         onPress={() =>
                           startEdit(
                             comment
@@ -925,9 +926,9 @@ export default function AnnouncementDetailsScreen() {
                             colors.secondaryText
                           }
                         />
-                      </Pressable>
+                      </TextAction>
 
-                      <Pressable
+                      <TextAction accessibilityLabel="Delete"
                         onPress={() =>
                           handleDelete(
                             comment
@@ -944,7 +945,7 @@ export default function AnnouncementDetailsScreen() {
                           size={19}
                           color="#D94A4A"
                         />
-                      </Pressable>
+                      </TextAction>
                     </View>
                   )}
                 </View>
@@ -1468,4 +1469,5 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 });
+
 

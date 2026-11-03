@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
@@ -197,14 +198,14 @@ const handleCaptchaVerified = async (captchaToken: string) => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text
+        <HeadingLabel icon="person-outline"
           style={[
             typography.display.xl,
             { color: colors.primary, textAlign: "center", marginBottom: spacing.lg },
           ]}
         >
           Teacher Account
-        </Text>
+        </HeadingLabel>
 
         {stepIndex === 0 && (
           <View style={{ marginBottom: spacing.lg }}>
@@ -353,13 +354,13 @@ const handleCaptchaVerified = async (captchaToken: string) => {
                 value={password}
                 onChangeText={setPassword}
               />
-              <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
+              <TextAction accessibilityLabel="Show or hide password" onPress={() => setShowPassword((v) => !v)} hitSlop={8}>
                 <Ionicons
                   name={showPassword ? "eye-off" : "eye"}
                   size={20}
                   color={colors.textMuted}
                 />
-              </Pressable>
+              </TextAction>
             </View>
             <Text
               style={[

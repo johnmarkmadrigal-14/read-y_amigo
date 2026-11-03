@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 // app/learner/dashboard.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
@@ -190,13 +191,13 @@ export default function LearnerDashboard() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1, minWidth: 0, marginRight: spacing.sm }}>
             <Text style={[typography.reading.sm, { color: colors.textMuted }]}>
               Welcome back,
             </Text>
-            <Text style={[typography.display.lg, { color: colors.text }]}>
+            <HeadingLabel icon="person-outline" style={[typography.display.lg, { color: colors.text }]}>
               {profile?.displayName ?? "Learner"}
-            </Text>
+            </HeadingLabel>
           </View>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             <Text
@@ -207,14 +208,14 @@ export default function LearnerDashboard() {
           </View>
         </View>
 
-        <Text
+        <HeadingLabel icon="school-outline"
           style={[
             typography.reading.sm,
             { color: colors.textMuted, fontWeight: "600", marginBottom: spacing.sm },
           ]}
         >
           My Classrooms
-        </Text>
+        </HeadingLabel>
 
         {enrollments.length === 0 ? (
           <View style={styles.emptyState}>

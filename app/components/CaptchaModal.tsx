@@ -1,3 +1,4 @@
+import { TextAction } from "./InterfaceChrome";
 // components/CaptchaModal.tsx
 // Simple math CAPTCHA — no external scripts, works fully offline.
 import React, { useEffect, useState } from "react";
@@ -175,7 +176,7 @@ export function CaptchaModal({ visible, onVerified, onDismiss }: Props) {
             </Text>
           </Pressable>
 
-          <Pressable onPress={onDismiss} style={styles.cancelButton}>
+          <TextAction icon="close" tone="close" onPress={onDismiss} style={styles.cancelButton}>
             <Text
               style={[
                 typography.reading.sm,
@@ -184,7 +185,7 @@ export function CaptchaModal({ visible, onVerified, onDismiss }: Props) {
             >
               Cancel
             </Text>
-          </Pressable>
+          </TextAction>
         </View>
       </KeyboardAvoidingView>
     </Modal>

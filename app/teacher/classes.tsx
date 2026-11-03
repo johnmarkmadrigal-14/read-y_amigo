@@ -1,3 +1,4 @@
+import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
 import * as Clipboard from "expo-clipboard";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
@@ -179,12 +180,12 @@ export default function ClassesScreen() {
   return (
     <Screen scroll>
       <View style={styles.headerRow}>
-        <Text style={[typography.display.lg, { color: colors.text }]}>Classes</Text>
-        <Pressable onPress={() => router.push("/teacher/archived-classes")}>
+        <HeadingLabel icon="school-outline" style={[typography.display.lg, { color: colors.text }]}>Classes</HeadingLabel>
+        <TextAction icon="archive-outline" onPress={() => router.push("/teacher/archived-classes")}>
           <Text style={[typography.reading.sm, { color: colors.primary, fontWeight: "600" }]}>
             Archived classes
           </Text>
-        </Pressable>
+        </TextAction>
       </View>
 
       {classes.length === 0 && (
@@ -331,6 +332,8 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: spacing.lg,
