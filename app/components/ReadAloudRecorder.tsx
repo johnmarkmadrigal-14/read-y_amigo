@@ -16,6 +16,9 @@ import { AudioPlayerBar, formatTime, useAuthorizedAudioSource } from "./AudioPla
 import { Button } from "./Button";
 
 export interface ReadAloudRecorderProps {
+  readingTitle?: string;
+  readingText?: string | null;
+  readingAttachment?: { url: string; name: string; mimeType?: string } | null;
   // Uploads the recording. Should throw if the upload fails.
   onSubmit: (recording: { uri: string; durationMs: number; transcript?: string; transcriptLocale?: string }) => Promise<void>;
   // Set when the learner has already submitted this classwork.
@@ -643,3 +646,4 @@ const styles = StyleSheet.create({
   radioWaveform: { width: "100%", height: 44, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 2 },
   radioWaveBar: { flex: 1, maxWidth: 5, borderRadius: 3 },
 });
+
