@@ -1,4 +1,3 @@
-import { HeadingLabel } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
@@ -72,14 +71,6 @@ export default function LearnerClassStream({
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <HeadingLabel icon="megaphone-outline" style={[styles.title, { color: colors.text }]}>Class stream</HeadingLabel>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          Announcements and new classwork
-        </Text>
-      </View>
-
       {/* FILTERS */}
       <View style={styles.filters}>
         {(
@@ -137,9 +128,10 @@ export default function LearnerClassStream({
               onEdit={() => {}}
               onDelete={() => {}}
               onPress={(selected) =>
-                router.push(
-                  `/learner/class/announcement/${selected.id}?classId=${classId}`
-                )
+                router.push({
+                  pathname: "/learner/class/announcement/[id]",
+                  params: { id: selected.id, classId },
+                })
               }
             />
           ) : (
