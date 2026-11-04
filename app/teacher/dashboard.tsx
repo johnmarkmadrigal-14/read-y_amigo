@@ -213,7 +213,7 @@ export default function TeacherDashboard() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={dashboardLayout.content} showsVerticalScrollIndicator={false}>
-        <DashboardWelcome name={profile?.displayName ?? "Teacher"} role="Teacher" count={classes.length} />
+        <DashboardWelcome name={profile?.displayName ?? "Teacher"} role="Teacher" photo={profile?.profilePhoto} count={classes.length} />
         <View style={dashboardLayout.section}>
           <HeadingLabel icon="school-outline" style={dashboardLayout.sectionTitle}>My classes</HeadingLabel>
           <TextAction icon="archive-outline" onPress={() => router.push("/teacher/archived-classes")}>

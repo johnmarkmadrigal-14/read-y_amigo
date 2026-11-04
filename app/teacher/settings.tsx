@@ -22,7 +22,7 @@ export default function SettingsScreen() {
         style: "destructive",
         onPress: async () => {
           await logout();
-          router.replace("../login");
+          router.replace("/auth/login");
         },
       },
     ]);
@@ -36,7 +36,7 @@ export default function SettingsScreen() {
 
       <Pressable
         style={[styles.row, { borderColor: colors.border }]}
-        onPress={() => router.push("./teacher/profile")}
+        onPress={() => router.push("/teacher/profile")}
       >
         <Ionicons name="person-outline" size={20} color={colors.text} />
         <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "600" }]}>
@@ -47,7 +47,7 @@ export default function SettingsScreen() {
 
       <Pressable
         style={[styles.row, { borderColor: colors.border }]}
-        onPress={() => router.push("./teacher/reports")}
+        onPress={() => router.push("/teacher/reports")}
       >
         <Ionicons name="bar-chart-outline" size={20} color={colors.text} />
         <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "600" }]}>

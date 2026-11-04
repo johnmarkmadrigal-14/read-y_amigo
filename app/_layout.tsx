@@ -1,3 +1,4 @@
+import { ReadingPreferencesProvider } from "../components/ReadingPreferences";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
@@ -20,7 +21,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
+    <ThemeProvider><ReadingPreferencesProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
 
@@ -37,6 +38,6 @@ export default function RootLayout() {
 
         <Stack.Screen name="learner" />
       </Stack>
-    </ThemeProvider>
+    </ReadingPreferencesProvider></ThemeProvider>
   );
 }

@@ -99,7 +99,7 @@ export default function LearnerDashboard() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={dashboardLayout.content} showsVerticalScrollIndicator={false}>
-        <DashboardWelcome name={profile?.displayName ?? "Learner"} role="Learner" count={enrollments.length} />
+        <DashboardWelcome name={profile?.displayName ?? "Learner"} role="Learner" photo={profile?.profilePhoto} count={enrollments.length} />
         <View style={dashboardLayout.section}>
           <HeadingLabel icon="school-outline" style={dashboardLayout.sectionTitle}>My Classrooms</HeadingLabel>
           <Text style={[typography.display.sm, { color: colors.textMuted }]}>

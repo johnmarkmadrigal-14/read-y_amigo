@@ -30,6 +30,11 @@ export default function LearnerSettingsScreen() {
         Settings
       </HeadingLabel>
 
+      <Pressable style={[styles.row, { borderColor: colors.border }]} onPress={() => router.push("/learner/profile")}>
+        <Ionicons name="person-outline" size={20} color={colors.text} />
+        <Text style={[typography.reading.sm, { color: colors.text }]}>Profile and reading preferences</Text>
+      </Pressable>
+
       <Pressable
         style={[styles.row, { borderColor: colors.border }]}
         onPress={confirmLogout}

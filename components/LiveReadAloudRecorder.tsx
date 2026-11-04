@@ -1,3 +1,4 @@
+import { useReadingPreferences } from "./ReadingPreferences";
 import { HeadingLabel, TextAction } from "../app/components/InterfaceChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppState, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -17,6 +18,7 @@ type Phase = "idle" | "countdown" | "starting" | "recording" | "finishing";
 // expo-audio recorder alongside it can interrupt either recording on native devices.
 export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, readingText, readingAttachment }: ReadAloudRecorderProps & { onUseAudioOnly: () => void }) {
   const { colors } = useTheme();
+  const reading = useReadingPreferences();
   const [phase, setPhase] = useState<Phase>("idle");
   const [count, setCount] = useState(3);
   const [locale, setLocale] = useState("en-US");
@@ -114,7 +116,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
   async function start() {
     setReaderOpen(true);
     setTranscriptExpanded(false);
-    setFollowing(true);
+    setFollowing(reading.preferences.followReading);
     setFollowTranscript(true);
     const attempt = ++generation.current;
     setPhase("starting");
@@ -231,7 +233,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
                   const y = event.nativeEvent.layout.y;
                   setSentenceOffsets(previous => previous[index] === y ? previous : { ...previous, [index]: y });
                 }}
-                style={[typography.reading.md, {
+                style={[typography.reading.md, reading.textStyle, {
                   color: index === sentenceIndex ? colors.secondaryText : colors.text,
                   backgroundColor: index === sentenceIndex ? colors.highlight : "transparent",
                 }]}>{sentence.text}</Text>)}
@@ -255,7 +257,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
             <ScrollView ref={scroll} style={transcriptExpanded ? styles.flex : styles.transcriptPreview}
               onScrollBeginDrag={() => setFollowTranscript(false)}
               onContentSizeChange={() => { if (followTranscript) scroll.current?.scrollToEnd({ animated: true }); }}>
-              <Text selectable style={[typography.reading.md, { color: colors.text }]}>
+              <Text selectable style={[typography.reading.md, reading.textStyle, { color: colors.text }]}>
                 {transcript || "Your words will appear here…"}
               </Text>
             </ScrollView>
