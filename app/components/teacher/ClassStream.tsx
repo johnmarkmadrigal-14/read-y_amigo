@@ -1,3 +1,4 @@
+import { classroomAccents } from "../../../components/ClassroomChrome";
 import { HeadingLabel } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -366,18 +367,7 @@ export default function ClassStream({
 
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text
-            style={[
-              styles.kicker,
-              {
-                color: colors.primary,
-              },
-            ]}
-          >
-            CLASS STREAM
-          </Text>
-
-          <HeadingLabel icon="chatbubble-outline"
+          <HeadingLabel icon="megaphone-outline"
             style={[
               styles.title,
               {
@@ -385,7 +375,7 @@ export default function ClassStream({
               },
             ]}
           >
-            Updates
+            Class stream
           </HeadingLabel>
 
           <Text
@@ -433,7 +423,7 @@ export default function ClassStream({
               },
             ]}
           >
-            {saving ? "Posting..." : "Post"}
+            {saving ? "Posting..." : "New announcement"}
           </Text>
         </Pressable>
       </View>
@@ -442,7 +432,7 @@ export default function ClassStream({
 
       <View style={styles.filters}>
         <FilterButton
-          label="All"
+          label="All posts"
           selected={filter === "all"}
           onPress={() => setFilter("all")}
           colors={colors}
@@ -517,8 +507,8 @@ function FilterButton({
         styles.filterButton,
         {
           backgroundColor: selected
-            ? colors.primary
-            : colors.surface,
+            ? colors.surface
+            : colors.background,
           borderColor: selected
             ? colors.primary
             : colors.border,
@@ -530,7 +520,7 @@ function FilterButton({
           styles.filterText,
           {
             color: selected
-              ? colors.primaryText
+              ? colors.primary
               : colors.textMuted,
           },
         ]}
@@ -560,6 +550,9 @@ export function ClassworkStreamCard({
     useState(false);
 
   const type = getClassworkType(item.type);
+  const accent = classroomAccents[item.type];
+  const cardFill = colors.background === "#FFFFFF" ? accent.fill : colors.surface;
+  const cardInk = colors.background === "#FFFFFF" ? accent.ink : colors.text;
 
   const description =
     item.description?.trim() || "";
@@ -602,8 +595,7 @@ export function ClassworkStreamCard({
         style={[
           styles.classworkShadow,
           {
-            backgroundColor:
-              colors.primaryShadow,
+            backgroundColor: accent.ink,
           },
         ]}
       />
@@ -614,8 +606,8 @@ export function ClassworkStreamCard({
         style={[
           styles.classworkCard,
           {
-            backgroundColor: colors.primary,
-            borderColor: colors.primaryShadow,
+            backgroundColor: cardFill,
+            borderColor: accent.ink,
           },
         ]}
       >
@@ -626,8 +618,7 @@ export function ClassworkStreamCard({
             style={[
               styles.classworkIcon,
               {
-                backgroundColor:
-                  colors.primaryText,
+                backgroundColor: colors.background,
               },
             ]}
           >
@@ -643,20 +634,18 @@ export function ClassworkStreamCard({
               style={[
                 styles.classworkLabel,
                 {
-                  color:
-                    colors.primaryText,
+                  color: cardInk, borderColor: cardInk,
                 },
               ]}
             >
-              NEW CLASSWORK
+              {item.type.toUpperCase()}
             </Text>
 
             <Text
               style={[
                 styles.classworkType,
                 {
-                  color:
-                    colors.primaryText,
+                  color: cardInk,
                 },
               ]}
             >
@@ -668,8 +657,7 @@ export function ClassworkStreamCard({
             style={[
               styles.dateText,
               {
-                color:
-                  colors.primaryText,
+                color: cardInk,
               },
             ]}
           >
@@ -685,8 +673,7 @@ export function ClassworkStreamCard({
           style={[
             styles.classworkTitle,
             {
-              color:
-                colors.primaryText,
+              color: cardInk,
             },
           ]}
         >
@@ -703,8 +690,7 @@ export function ClassworkStreamCard({
             style={[
               styles.classworkDescription,
               {
-                color:
-                  colors.primaryText,
+                color: cardInk,
               },
             ]}
           >
@@ -727,8 +713,7 @@ export function ClassworkStreamCard({
                 style={[
                   styles.metaText,
                   {
-                    color:
-                      colors.primaryText,
+                    color: cardInk,
                   },
                 ]}
               >
@@ -752,8 +737,7 @@ export function ClassworkStreamCard({
                 style={[
                   styles.metaText,
                   {
-                    color:
-                      colors.primaryText,
+                    color: cardInk,
                   },
                 ]}
               >
@@ -778,8 +762,7 @@ export function ClassworkStreamCard({
                 style={[
                   styles.activityBadge,
                   {
-                    backgroundColor:
-                      colors.primaryText,
+                    backgroundColor: colors.background,
                   },
                 ]}
               >
@@ -810,8 +793,7 @@ export function ClassworkStreamCard({
                 style={[
                   styles.activityBadge,
                   {
-                    backgroundColor:
-                      colors.primaryText,
+                    backgroundColor: colors.background,
                   },
                 ]}
               >
@@ -845,8 +827,7 @@ export function ClassworkStreamCard({
             style={[
               styles.attachmentButton,
               {
-                backgroundColor:
-                  colors.primaryText,
+                backgroundColor: colors.background,
               },
             ]}
           >
@@ -898,8 +879,7 @@ export function ClassworkStreamCard({
             style={[
               styles.expandedDetails,
               {
-                backgroundColor:
-                  colors.primaryText,
+                backgroundColor: colors.background,
               },
             ]}
           >
@@ -1015,8 +995,7 @@ export function ClassworkStreamCard({
           style={[
             styles.viewClassworkButton,
             {
-              backgroundColor:
-                colors.primaryText,
+              backgroundColor: colors.primary,
             },
           ]}
         >
@@ -1024,16 +1003,15 @@ export function ClassworkStreamCard({
             style={[
               styles.viewClassworkText,
               {
-                color:
-                  colors.primary,
+                color: colors.primaryText,
               },
             ]}
           >
             {onView
-              ? "View Classwork"
+              ? "Open assignment"
               : expanded
               ? "Show Less"
-              : "View Classwork"}
+              : "View classwork"}
           </Text>
 
           <Ionicons
@@ -1043,7 +1021,7 @@ export function ClassworkStreamCard({
                 : "chevron-forward"
             }
             size={17}
-            color={colors.primary}
+            color={colors.primaryText}
           />
         </Pressable>
       </View>
@@ -1351,8 +1329,7 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
+    gap: 10,
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
@@ -1368,6 +1345,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
+    fontFamily: "Fredoka_600SemiBold",
     fontSize: 25,
     lineHeight: 30,
     fontWeight: "900",
@@ -1375,11 +1353,15 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     fontSize: 12,
     marginTop: 2,
   },
 
   createButton: {
+    justifyContent: "center",
+    minHeight: 44,
+    borderBottomWidth: 5,
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
@@ -1390,18 +1372,22 @@ const styles = StyleSheet.create({
   },
 
   createButtonText: {
+    fontFamily: "Fredoka_500Medium",
     fontSize: 13,
     fontWeight: "800",
   },
 
   filters: {
     flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 16,
     gap: 8,
     marginBottom: 14,
   },
 
   filterButton: {
+    minHeight: 40,
+    justifyContent: "center",
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 13,
@@ -1409,6 +1395,7 @@ const styles = StyleSheet.create({
   },
 
   filterText: {
+    fontFamily: "Fredoka_500Medium",
     fontSize: 11,
     fontWeight: "800",
   },
@@ -1441,9 +1428,9 @@ const styles = StyleSheet.create({
   },
 
   classworkCard: {
-    borderWidth: 3,
+    borderWidth: 1.5,
     borderRadius: radius.lg,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
 
   classworkHeader: {
@@ -1465,12 +1452,19 @@ const styles = StyleSheet.create({
   },
 
   classworkLabel: {
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    fontFamily: "Fredoka_500Medium",
     fontSize: 9,
     fontWeight: "900",
     letterSpacing: 1,
   },
 
   classworkType: {
+    fontFamily: "Fredoka_500Medium",
     fontSize: 11,
     fontWeight: "700",
     marginTop: 2,
@@ -1483,6 +1477,7 @@ const styles = StyleSheet.create({
   },
 
   classworkTitle: {
+    fontFamily: "Fredoka_600SemiBold",
     fontSize: 21,
     lineHeight: 26,
     fontWeight: "900",
@@ -1490,6 +1485,7 @@ const styles = StyleSheet.create({
   },
 
   classworkDescription: {
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     fontSize: 13,
     lineHeight: 20,
     marginTop: spacing.sm,
@@ -1510,6 +1506,7 @@ const styles = StyleSheet.create({
   },
 
   metaText: {
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     fontSize: 11,
     fontWeight: "800",
   },
@@ -1611,6 +1608,7 @@ const styles = StyleSheet.create({
   },
 
   viewClassworkText: {
+    fontFamily: "Fredoka_500Medium",
     fontSize: 12,
     fontWeight: "900",
   },

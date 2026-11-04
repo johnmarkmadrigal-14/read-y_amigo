@@ -1,3 +1,4 @@
+import { ClassroomHeader, ClassroomTabs, classroomAccents } from "../../../components/ClassroomChrome";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -69,11 +70,7 @@ type ClassworkDisplayType =
   | "Activity"
   | "Quiz";
 
-const BANNER_PALETTE = [
-  { bg: "#0F6E56", accent: "#E1F5EE" },
-  { bg: "#993C1D", accent: "#FAECE7" },
-  { bg: "#534AB7", accent: "#EEEDFE" },
-];
+
 
 const CLASSWORK_TYPES: {
   type: ClassworkDisplayType;
@@ -168,19 +165,7 @@ const QUESTION_TYPES: {
    HELPERS
    ========================================================= */
 
-function bannerForClassId(classId: string) {
-  let hash = 0;
 
-  for (let i = 0; i < classId.length; i++) {
-    hash =
-      (hash * 31 + classId.charCodeAt(i)) %
-      BANNER_PALETTE.length;
-  }
-
-  return BANNER_PALETTE[
-    Math.abs(hash) % BANNER_PALETTE.length
-  ];
-}
 
 // "2m ago" / "3h ago" / "Yesterday" / "Sep 10" - same rhythm as Classroom's
 // post timestamps, which fall back to a plain date after about a week.
@@ -330,11 +315,6 @@ export default function ClassDetail() {
 
   const [activeTab, setActiveTab] =
     useState<Tab>("Stream");
-
-  const [
-    sectionMenuVisible,
-    setSectionMenuVisible,
-  ] = useState(false);
 
   const [
     classInfo,
@@ -616,31 +596,6 @@ export default function ClassDetail() {
     );
   }
 
-  const banner =
-    bannerForClassId(classId);
-
-  const iconForTab = (tab: Tab) => {
-    switch (tab) {
-      case "Stream":
-        return "megaphone-outline";
-
-      case "Classwork":
-        return "clipboard-outline";
-
-      case "Materials":
-        return "folder-open-outline";
-
-      case "Learners":
-        return "people-outline";
-
-      case "Progress":
-        return "analytics-outline";
-
-      default:
-        return "grid-outline";
-    }
-  };
-
   const renderTabContent = () => {
     if (activeTab === "Stream") {
       return (
@@ -753,552 +708,13 @@ export default function ClassDetail() {
 
   return (
     <Screen>
-      {/* =====================================================
-          HERO
-          ===================================================== */}
-
-      <View
-        style={[
-          styles.hero,
-          styles.edgeToEdge,
-          {
-            backgroundColor: colors.surface,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.heroAccent,
-            {
-              backgroundColor: banner.bg,
-            },
-          ]}
-        />
-
-        <View style={styles.heroTopRow}>
-          <Pressable
-            onPress={() => router.back()}
-            style={[
-              styles.roundIcon,
-              {
-                backgroundColor:
-                  colors.background,
-              },
-            ]}
-            hitSlop={8}
-          >
-            <Ionicons
-              name="arrow-back"
-              size={20}
-              color={colors.text}
-            />
-          </Pressable>
-
-          <View
-            style={styles.heroTitleWrap}
-          >
-            <Text
-              style={[
-                styles.heroOverline,
-                {
-                  color: colors.textMuted,
-                },
-              ]}
-            >
-              MY CLASS
-            </Text>
-
-            <Text
-              style={[
-                styles.heroTitle,
-                {
-                  color: colors.text,
-                },
-              ]}
-              numberOfLines={1}
-            >
-              {classInfo?.class.title ??
-                "Class"}
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={openMenu}
-            style={[
-              styles.roundIcon,
-              {
-                backgroundColor:
-                  colors.background,
-              },
-            ]}
-            hitSlop={8}
-          >
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={21}
-              color={colors.text}
-            />
-          </Pressable>
-        </View>
-
-        <View style={styles.heroInfo}>
-          <View
-            style={[
-              styles.heroBadge,
-              {
-                backgroundColor:
-                  banner.bg,
-              },
-            ]}
-          >
-        <Ionicons
-              name="school-outline"
-              size={19}
-              color="#fff"
-            />
-          </View>
-
-          <View style={styles.heroDetails}>
-            <Text
-              style={[
-                styles.heroDescription,
-                {
-                  color: colors.textMuted,
-                },
-              ]}
-              numberOfLines={2}
-            >
-              {classInfo?.class
-                .description ||
-                "Keep your lessons, tasks, and learners organized in one place."}
-            </Text>
-
-            <View
-              style={styles.heroMetaLine}
-            >
-              <View
-                style={styles.heroMetaItem}
-              >
-                <Ionicons
-                  name="people-outline"
-                  size={14}
-                  color={
-                    colors.textMuted
-                  }
-                />
-
-                <Text
-                  style={[
-                    styles.heroMetaText,
-                    {
-                      color:
-                        colors.textMuted,
-                    },
-                  ]}
-                >
-                  {classInfo?.learnerCount ??
-                    0}{" "}
-                  learners
-                </Text>
-              </View>
-
-              <View
-                style={[
-                  styles.metaPill,
-                  {
-                    backgroundColor:
-                      colors.background,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.metaPillText,
-                    {
-                      color:
-                        colors.textMuted,
-                    },
-                  ]}
-                >
-                  CODE
-                </Text>
-
-                <Text
-                  style={[
-                    styles.metaCode,
-                    {
-                      color:
-                        colors.primary,
-                    },
-                  ]}
-                >
-                  {classInfo?.class.code}
-        </Text>
-
-        <TextAction accessibilityLabel="More options"
-          onPress={handleCopyCode}
-                  hitSlop={6}
-        >
-          <Ionicons
-                    name={
-                      copied
-                        ? "checkmark"
-                        : "copy-outline"
-                    }
-            size={14}
-                    color={
-                      colors.primary
-                    }
-          />
-        </TextAction>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* =====================================================
-          TABS
-          ===================================================== */}
-
-      <View
-        style={[
-          styles.newTabBar,
-          styles.edgeToEdge,
-          {
-            backgroundColor: colors.surface,
-            borderBottomColor:
-              colors.border,
-          },
-        ]}
-      >
-        <View style={styles.tabRow}>
-          {(
-            [
-              "Stream",
-              "Classwork",
-              "Materials",
-            ] as Tab[]
-          ).map((tab) => {
-            const selected =
-              activeTab === tab;
-
-            return (
-              <Pressable
-                key={tab}
-                onPress={() =>
-                  setActiveTab(tab)
-                }
-                style={[
-                  styles.newTab,
-                  selected &&
-                    styles.newTabSelected,
-                ]}
-              >
-                <Ionicons
-                  name={
-                    iconForTab(tab) as any
-                  }
-                  size={17}
-                  color={
-                    selected
-                      ? colors.primary
-                      : colors.textMuted
-                  }
-                />
-
-                <Text
-                  style={[
-                    styles.newTabText,
-                    {
-                      color: selected
-                        ? colors.primary
-                        : colors.textMuted,
-                    },
-                  ]}
-                >
-                  {tab}
-                </Text>
-
-                {selected && (
-                  <View
-                    style={[
-                      styles.newTabLine,
-                      {
-                        backgroundColor:
-                          colors.primary,
-                      },
-                    ]}
-                  />
-                )}
-              </Pressable>
-            );
-          })}
-
-          <Pressable
-            onPress={() =>
-              setSectionMenuVisible(
-                true
-              )
-            }
-            style={[
-              styles.newTab,
-              (activeTab === "Learners" ||
-                activeTab === "Progress") &&
-                styles.newTabSelected,
-            ]}
-          >
-            <Ionicons
-              name="grid-outline"
-              size={17}
-              color={
-                activeTab === "Learners" ||
-                activeTab === "Progress"
-                  ? colors.primary
-                  : colors.textMuted
-              }
-            />
-
-            <Text
-              style={[
-                styles.newTabText,
-                {
-                  color:
-                    activeTab ===
-                      "Learners" ||
-                    activeTab === "Progress"
-                      ? colors.primary
-                      : colors.textMuted,
-                },
-              ]}
-            >
-              More
-            </Text>
-
-            {(activeTab === "Learners" ||
-              activeTab === "Progress") && (
-              <View
-                style={[
-                  styles.newTabLine,
-                  {
-                    backgroundColor:
-                      colors.primary,
-                  },
-                ]}
-              />
-            )}
-          </Pressable>
-        </View>
-      </View>
+      <ClassroomHeader role="Teacher" title={classInfo?.class.title ?? "Classroom"}
+        description={classInfo?.class.description} count={classInfo?.learnerCount ?? 0}
+        code={classInfo?.class.code} copied={copied} onCopy={handleCopyCode}
+        onBack={() => router.back()} onMenu={openMenu} />
+      <ClassroomTabs tabs={TABS} active={activeTab} onSelect={setActiveTab} />
 
       {renderTabContent()}
-
-      {/* =====================================================
-          MORE MENU
-          ===================================================== */}
-
-      <Modal
-        visible={sectionMenuVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() =>
-          setSectionMenuVisible(false)
-        }
-      >
-        <Pressable
-          style={styles.moreOverlay}
-          onPress={() =>
-            setSectionMenuVisible(false)
-          }
-        >
-          <Pressable
-            style={[
-              styles.moreSheet,
-              {
-                backgroundColor:
-                  colors.surface,
-              },
-            ]}
-            onPress={() => {}}
-          >
-            <View
-              style={[
-                styles.sheetHandle,
-                {
-                  backgroundColor:
-                    colors.border,
-                },
-              ]}
-            />
-
-            <View style={styles.sheetHeader}>
-              <View>
-                <Text
-                  style={[
-                    styles.sheetKicker,
-                    {
-                      color:
-                        colors.textMuted,
-                    },
-                  ]}
-                >
-                  CLASS TOOLS
-                </Text>
-
-                <Text
-                  style={[
-                    styles.sheetTitle,
-                    {
-                      color: colors.text,
-                    },
-                  ]}
-                >
-                  More sections
-                </Text>
-              </View>
-
-              <Pressable
-                onPress={() =>
-                  setSectionMenuVisible(
-                    false
-                  )
-                }
-                style={[
-                  styles.sheetClose,
-                  {
-                    backgroundColor:
-                      colors.background,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="close"
-                  size={20}
-                  color={colors.text}
-                />
-              </Pressable>
-            </View>
-
-            {(
-              [
-                "Learners",
-                "Progress",
-              ] as Tab[]
-            ).map((tab) => {
-              const selected =
-                activeTab === tab;
-
-              return (
-                <Pressable
-                  key={tab}
-                  onPress={() => {
-                    setActiveTab(tab);
-                    setSectionMenuVisible(
-                      false
-                    );
-                  }}
-                  style={[
-                    styles.moreOption,
-                    {
-                      backgroundColor:
-                        selected
-                          ? colors.primary
-                          : colors.background,
-                      borderColor:
-                        selected
-                          ? colors.primary
-                          : colors.border,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.moreOptionIcon,
-                      {
-                        backgroundColor:
-                          selected
-                            ? colors.primaryText
-                            : colors.surface,
-                        opacity:
-                          selected ? 0.18 : 1,
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name={
-                        iconForTab(
-                          tab
-                        ) as any
-                      }
-                      size={20}
-                      color={
-                        selected
-                          ? colors.primaryText
-                          : colors.primary
-                      }
-                    />
-                  </View>
-
-                  <View
-                    style={
-                      styles.moreOptionText
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.moreOptionTitle,
-                        {
-                          color:
-                            selected
-                              ? colors.primaryText
-                              : colors.text,
-                        },
-                      ]}
-                    >
-                      {tab}
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.moreOptionSub,
-                        {
-                          color:
-                            selected
-                              ? colors.primaryText
-                              : colors.textMuted,
-                          opacity:
-                            selected
-                              ? 0.78
-                              : 1,
-                        },
-                      ]}
-                    >
-                      {tab === "Learners"
-                        ? "View and manage your class roster"
-                        : "See learner performance and class progress"}
-                    </Text>
-                  </View>
-
-                  <Ionicons
-                    name={
-                      selected
-                        ? "checkmark-circle"
-                        : "chevron-forward"
-                    }
-                    size={21}
-                    color={
-                      selected
-                        ? colors.primaryText
-                        : colors.textMuted
-                    }
-                  />
-                </Pressable>
-              );
-            })}
-          </Pressable>
-        </Pressable>
-      </Modal>
 
       {/* =====================================================
           EDIT CLASS
@@ -4647,6 +4063,7 @@ function ClassworkCard({
   >["colors"];
   onPress: () => void;
 }) {
+  const accent = classroomAccents[item.type];
   const type =
     displayTypeFromApi(item.type);
 
@@ -4659,10 +4076,8 @@ function ClassworkCard({
       style={[
         styles.classworkListCard,
         {
-          backgroundColor:
-            colors.surface,
-          borderColor:
-            colors.border,
+          backgroundColor: colors.background === "#FFFFFF" ? accent.fill : colors.surface,
+          borderColor: accent.ink,
         },
       ]}
     >
@@ -4670,8 +4085,7 @@ function ClassworkCard({
         style={[
           styles.listTypeIcon,
           {
-            backgroundColor:
-              colors.primary,
+            backgroundColor: accent.ink,
           },
         ]}
       >
@@ -5645,165 +5059,6 @@ function EmptyState({
    ========================================================= */
 
 const styles = StyleSheet.create({
-  edgeToEdge: {
-    marginHorizontal: -28,
-  },
-
-  hero: {
-    position: "relative",
-    paddingHorizontal: 28,
-    paddingTop: 8,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    overflow: "hidden",
-  },
-
-  heroAccent: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    width: 5,
-    bottom: 0,
-  },
-
-  heroTopRow: {
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
-  },
-
-  roundIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  heroTitleWrap: {
-    flex: 1,
-  },
-
-  heroOverline: {
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.5,
-    marginBottom: 1,
-  },
-
-  heroTitle: {
-    fontSize: 19,
-    lineHeight: 24,
-    fontWeight: "900",
-  },
-
-  heroInfo: {
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginTop: 14,
-  },
-
-  heroBadge: {
-    width: 43,
-    height: 43,
-    borderRadius: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 11,
-  },
-
-  heroDetails: {
-    flex: 1,
-  },
-
-  heroDescription: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-
-  heroMetaLine: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    marginTop: 9,
-    gap: 9,
-  },
-
-  heroMetaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-
-  heroMetaText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-
-  metaPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    borderRadius: 9,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-
-  metaPillText: {
-    fontSize: 8,
-    fontWeight: "900",
-    letterSpacing: 0.8,
-  },
-
-  metaCode: {
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1,
-  },
-
-  newTabBar: {
-    height: 56,
-    borderBottomWidth: 1,
-  },
-
-  tabRow: {
-    flex: 1,
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "stretch",
-    justifyContent: "space-between",
-  },
-
-  newTab: {
-    flex: 1,
-    height: 56,
-    minWidth: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 3,
-    position: "relative",
-    paddingHorizontal: 4,
-  },
-
-  newTabSelected: {},
-
-  newTabText: {
-    fontSize: 10.5,
-    fontWeight: "700",
-  },
-
-  newTabLine: {
-    position: "absolute",
-    bottom: 0,
-    left: 15,
-    right: 15,
-    height: 3,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
-  },
 
   streamArea: {
     flex: 1,
@@ -5835,7 +5090,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
-  pageTitle: {
+  pageTitle: { fontFamily: "Fredoka_600SemiBold",
     fontSize: 24,
     lineHeight: 29,
     fontWeight: "900",
@@ -5847,91 +5102,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 5,
     marginRight: 3,
-  },
-
-  moreOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor:
-      "rgba(0,0,0,0.42)",
-  },
-
-  moreSheet: {
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    paddingHorizontal: 18,
-    paddingTop: 9,
-    paddingBottom: 30,
-  },
-
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 18,
-  },
-
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-
-  sheetKicker: {
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1.4,
-    marginBottom: 2,
-  },
-
-  sheetTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-  },
-
-  sheetClose: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  moreOption: {
-    minHeight: 72,
-    borderRadius: 15,
-    borderWidth: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    marginBottom: 10,
-  },
-
-  moreOptionIcon: {
-    width: 43,
-    height: 43,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  moreOptionText: {
-    flex: 1,
-    marginLeft: 11,
-    marginRight: 8,
-  },
-
-  moreOptionTitle: {
-    fontSize: 14,
-    fontWeight: "900",
-    marginBottom: 2,
-  },
-
-  moreOptionSub: {
-    fontSize: 11,
-    lineHeight: 15,
   },
 
   centered: {
@@ -6106,13 +5276,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.7,
   },
 
-  listTitle: {
+  listTitle: { fontFamily: "Fredoka_600SemiBold",
     fontSize: 15,
     fontWeight: "900",
     marginTop: 2,
   },
 
-  listDescription: {
+  listDescription: { fontFamily: "AtkinsonHyperlegible_400Regular",
     fontSize: 11,
     lineHeight: 16,
     marginTop: 3,

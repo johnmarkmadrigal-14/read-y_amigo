@@ -74,10 +74,7 @@ export default function LearnerClassStream({
     <View style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={[styles.kicker, { color: colors.primary }]}>
-          CLASS STREAM
-        </Text>
-        <HeadingLabel icon="chatbubble-outline" style={[styles.title, { color: colors.text }]}>Updates</HeadingLabel>
+        <HeadingLabel icon="megaphone-outline" style={[styles.title, { color: colors.text }]}>Class stream</HeadingLabel>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           Announcements and new classwork
         </Text>
@@ -87,7 +84,7 @@ export default function LearnerClassStream({
       <View style={styles.filters}>
         {(
           [
-            { key: "all", label: "All" },
+            { key: "all", label: "All posts" },
             { key: "announcements", label: "Announcements" },
           ] as const
         ).map((option) => {
@@ -100,7 +97,7 @@ export default function LearnerClassStream({
               style={[
                 styles.filterButton,
                 {
-                  backgroundColor: selected ? colors.primary : colors.surface,
+                  backgroundColor: selected ? colors.surface : colors.background,
                   borderColor: selected ? colors.primary : colors.border,
                 },
               ]}
@@ -108,7 +105,7 @@ export default function LearnerClassStream({
               <Text
                 style={[
                   styles.filterText,
-                  { color: selected ? colors.primaryText : colors.textMuted },
+                  { color: selected ? colors.primary : colors.textMuted },
                 ]}
               >
                 {option.label}
@@ -180,21 +177,24 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 12 },
   kicker: { fontSize: 9, fontWeight: "900", letterSpacing: 1.4 },
-  title: { fontSize: 25, lineHeight: 30, fontWeight: "900", marginTop: 1 },
-  subtitle: { fontSize: 12, marginTop: 2 },
+  title: { fontFamily: "Fredoka_600SemiBold", fontSize: 25, lineHeight: 30, fontWeight: "900", marginTop: 1 },
+  subtitle: { fontFamily: "Fredoka_600SemiBold", fontSize: 12, marginTop: 2 },
   filters: {
     flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 16,
     gap: 8,
     marginBottom: 14,
   },
   filterButton: {
+    minHeight: 40,
+    justifyContent: "center",
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 13,
     paddingVertical: 7,
   },
-  filterText: { fontSize: 11, fontWeight: "800" },
+  filterText: { fontFamily: "Fredoka_500Medium", fontSize: 11, fontWeight: "800" },
   listContent: { paddingHorizontal: 16, paddingBottom: 100 },
   emptyContainer: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: 80 },
   empty: {

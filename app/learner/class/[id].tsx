@@ -1,3 +1,4 @@
+import { ClassroomHeader, ClassroomTabs, classroomAccents } from "../../../components/ClassroomChrome";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 // app/learner/class/[id].tsx
 import { Ionicons } from "@expo/vector-icons";
@@ -56,32 +57,11 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 // Same palette + hash as the teacher detail screen so a class has the same
 // color on both sides.
-const BANNER_PALETTE = [
-  { bg: "#0F6E56", accent: "#E1F5EE" },
-  { bg: "#993C1D", accent: "#FAECE7" },
-  { bg: "#534AB7", accent: "#EEEDFE" },
-];
 
-function bannerForClassId(classId: string) {
-  let hash = 0;
-  for (let i = 0; i < classId.length; i++) {
-    hash = (hash * 31 + classId.charCodeAt(i)) % BANNER_PALETTE.length;
-  }
-  return BANNER_PALETTE[Math.abs(hash) % BANNER_PALETTE.length];
-}
 
-function iconForTab(tab: Tab): keyof typeof import("@expo/vector-icons").Ionicons.glyphMap {
-  switch (tab) {
-    case "Stream":
-      return "megaphone-outline";
-    case "Classwork":
-      return "clipboard-outline";
-    case "Materials":
-      return "folder-open-outline";
-    default:
-      return "people-outline";
-  }
-}
+
+
+
 
 function materialIcon(type: ApiMaterial["type"]) {
   switch (type) {
@@ -202,7 +182,6 @@ export default function LearnerClassDetail() {
     [classId]
   );
 
-  const banner = bannerForClassId(classId);
 
   const cardStyle = [
     styles.card,
@@ -315,101 +294,10 @@ export default function LearnerClassDetail() {
 
   return (
     <Screen>
-      {/* HERO */}
-      <View
-        style={[
-          styles.hero,
-          styles.edgeToEdge,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
-      >
-        <View style={[styles.heroAccent, { backgroundColor: banner.bg }]} />
-
-        <View style={styles.heroTopRow}>
-          <Pressable
-            onPress={() => router.back()}
-            style={[styles.roundIcon, { backgroundColor: colors.background }]}
-            hitSlop={8}
-          >
-            <Ionicons name="arrow-back" size={20} color={colors.text} />
-          </Pressable>
-
-          <View style={styles.heroTitleWrap}>
-            <Text style={[styles.heroOverline, { color: colors.textMuted }]}>
-              MY CLASSROOM
-            </Text>
-            <Text
-              style={[styles.heroTitle, { color: colors.text }]}
-              numberOfLines={1}
-            >
-              {classInfo?.class.title ?? "Classroom"}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.heroInfo}>
-          <View style={[styles.heroBadge, { backgroundColor: banner.bg }]}>
-            <Ionicons name="school-outline" size={19} color="#fff" />
-          </View>
-
-          <View style={{ flex: 1 }}>
-            <Text
-              style={[styles.heroDescription, { color: colors.textMuted }]}
-              numberOfLines={2}
-            >
-              {classInfo?.class.description ||
-                "Your lessons, tasks, and classmates in one place."}
-            </Text>
-
-            <View style={styles.heroMetaItem}>
-              <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-              <Text style={[styles.heroMetaText, { color: colors.textMuted }]}>
-                {classInfo?.learnerCount ?? 0} learners
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* TABS */}
-      <View
-        style={[
-          styles.tabBar,
-          styles.edgeToEdge,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
-      >
-        {TABS.map((tab) => {
-          const selected = activeTab === tab;
-
-          return (
-            <Pressable
-              key={tab}
-              onPress={() => setActiveTab(tab)}
-              style={styles.tab}
-            >
-              <Ionicons
-                name={iconForTab(tab)}
-                size={17}
-                color={selected ? colors.primary : colors.textMuted}
-              />
-              <Text
-                style={[
-                  styles.tabText,
-                  { color: selected ? colors.primary : colors.textMuted },
-                ]}
-              >
-                {tab}
-              </Text>
-              {selected && (
-                <View
-                  style={[styles.tabLine, { backgroundColor: colors.primary }]}
-                />
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+      <ClassroomHeader role="Learner" title={classInfo?.class.title ?? "Classroom"}
+        description={classInfo?.class.description} count={classInfo?.learnerCount ?? 0}
+        onBack={() => router.back()} />
+      <ClassroomTabs tabs={TABS} active={activeTab} onSelect={setActiveTab} />
 
       {renderTabContent()}
 
@@ -501,10 +389,10 @@ function ClassworkTab({
             onPress={() => onOpen(item)}
             style={[
               styles.classworkCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              { backgroundColor: colors.background === "#FFFFFF" ? classroomAccents[item.type].fill : colors.surface, borderColor: classroomAccents[item.type].ink },
             ]}
           >
-            <View style={[styles.classworkIcon, { backgroundColor: colors.primary }]}>
+            <View style={[styles.classworkIcon, { backgroundColor: classroomAccents[item.type].ink }]}>
               <Ionicons
                 name={classworkIconName(item.type)}
                 size={21}
@@ -735,92 +623,6 @@ function EmptyText({ colors, message }: { colors: ThemeColors; message: string }
    ========================================================= */
 
 const styles = StyleSheet.create({
-  edgeToEdge: {
-    marginHorizontal: -spacing.md,
-  },
-  hero: {
-    position: "relative",
-    paddingHorizontal: spacing.md + 12,
-    paddingTop: 8,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    overflow: "hidden",
-  },
-  heroAccent: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 5,
-  },
-  heroTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  roundIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroTitleWrap: { flex: 1 },
-  heroOverline: {
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.5,
-    marginBottom: 1,
-  },
-  heroTitle: { fontSize: 19, lineHeight: 24, fontWeight: "900" },
-  heroInfo: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginTop: 14,
-  },
-  heroBadge: {
-    width: 43,
-    height: 43,
-    borderRadius: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 11,
-  },
-  heroDescription: { fontSize: 12, lineHeight: 17 },
-  heroMetaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    marginTop: 9,
-  },
-  heroMetaText: { fontSize: 11, fontWeight: "600" },
-
-  tabBar: {
-    height: 56,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    alignItems: "stretch",
-  },
-  tab: {
-    flex: 1,
-    height: 56,
-    minWidth: 0,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 3,
-    position: "relative",
-    paddingHorizontal: 4,
-  },
-  tabText: { fontSize: 10.5, fontWeight: "700" },
-  tabLine: {
-    position: "absolute",
-    bottom: 0,
-    left: 12,
-    right: 12,
-    height: 3,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
-  },
 
   streamArea: { flex: 1, minHeight: 0, paddingTop: 16 },
   contentScroll: { flex: 1 },
@@ -841,7 +643,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     marginBottom: 2,
   },
-  pageTitle: { fontSize: 24, lineHeight: 29, fontWeight: "900" },
+  pageTitle: { fontFamily: "Fredoka_600SemiBold", fontSize: 24, lineHeight: 29, fontWeight: "900" },
   pageDot: {
     width: 9,
     height: 9,
@@ -909,8 +711,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   classworkType: { fontSize: 9, fontWeight: "900", letterSpacing: 0.7 },
-  classworkTitle: { fontSize: 15, fontWeight: "900", marginTop: 2 },
-  classworkDescription: { fontSize: 11, lineHeight: 16, marginTop: 3 },
+  classworkTitle: { fontFamily: "Fredoka_600SemiBold", fontSize: 15, fontWeight: "900", marginTop: 2 },
+  classworkDescription: { fontFamily: "AtkinsonHyperlegible_400Regular", fontSize: 11, lineHeight: 16, marginTop: 3 },
   classworkMeta: {
     flexDirection: "row",
     alignItems: "center",

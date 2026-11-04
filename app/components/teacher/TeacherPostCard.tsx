@@ -94,12 +94,18 @@ export default function TeacherPostCard({
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderColor: colors.border,
           opacity: pressed ? 0.92 : 1,
         },
       ]}
     >
+      <View style={[styles.postLabel, { borderTopColor: colors.secondary }]}>
+        <Ionicons name="bookmark" size={26} color={colors.primary} accessible={false} />
+        <View style={[styles.postBadge, { backgroundColor: colors.surface, borderColor: colors.secondaryShadow }]}>
+          <Text style={[typography.display.sm, { color: colors.text }]}>ANNOUNCEMENT</Text>
+        </View>
+      </View>
       {/* HEADER */}
       <View style={styles.header}>
         <View
@@ -134,7 +140,7 @@ export default function TeacherPostCard({
             style={[
               styles.date,
               {
-                color: colors.secondaryText,
+                color: colors.textMuted,
               },
             ]}
           >
@@ -186,7 +192,7 @@ export default function TeacherPostCard({
             style={[
               styles.message,
               {
-                color: colors.secondaryText,
+                color: colors.textMuted,
               },
             ]}
             numberOfLines={3}
@@ -262,7 +268,7 @@ export default function TeacherPostCard({
             style={[
               styles.commentText,
               {
-                color: colors.secondaryText,
+                color: colors.textMuted,
               },
             ]}
           >
@@ -282,7 +288,7 @@ export default function TeacherPostCard({
               },
             ]}
           >
-            View announcement
+            View discussion
           </Text>
 
           <Ionicons
@@ -297,6 +303,8 @@ export default function TeacherPostCard({
 }
 
 const styles = StyleSheet.create({
+  postLabel: { borderTopWidth: 5, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12 },
+  postBadge: { borderWidth: 1, borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 4, marginTop: 8 },
   card: {
     borderWidth: 1,
     borderRadius: radius.lg,
@@ -325,17 +333,21 @@ const styles = StyleSheet.create({
   },
 
   teacherName: {
+    fontFamily: "Fredoka_500Medium",
     fontSize: typography.body.md.fontSize,
     fontWeight: "700",
   },
 
   date: {
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     fontSize: 12,
     marginTop: 2,
   },
 
   menuButton: {
-    padding: spacing.xs,
+    padding: 8,
+    minWidth: 44,
+    minHeight: 44,
   },
 
   content: {
@@ -350,6 +362,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
+    fontFamily: "Fredoka_600SemiBold",
     flex: 1,
     marginLeft: spacing.sm,
     fontSize: 17,
@@ -358,10 +371,11 @@ const styles = StyleSheet.create({
   },
 
   message: {
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     fontSize: 14,
     lineHeight: 21,
     marginTop: spacing.sm,
-    marginLeft: 28,
+    marginLeft: 0,
   },
 
   attachment: {
@@ -389,6 +403,9 @@ const styles = StyleSheet.create({
   },
 
   footer: {
+    flexWrap: "wrap",
+    gap: 8,
+    paddingVertical: 8,
     minHeight: 48,
     borderTopWidth: 1,
     paddingHorizontal: spacing.md,
@@ -403,6 +420,7 @@ const styles = StyleSheet.create({
   },
 
   commentText: {
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     fontSize: 13,
     marginLeft: 6,
   },
@@ -413,6 +431,7 @@ const styles = StyleSheet.create({
   },
 
   viewText: {
+    fontFamily: "Fredoka_500Medium",
     fontSize: 13,
     fontWeight: "700",
     marginRight: 3,
