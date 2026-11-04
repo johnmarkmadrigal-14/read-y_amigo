@@ -5,7 +5,7 @@ import {
   useAudioPlayer,
   useAudioPlayerStatus,
 } from "expo-audio";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { getFileUrl, getStoredToken } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
@@ -54,12 +54,46 @@ interface AudioPlayerBarProps {
   source: AudioSource | null;
   title: string;
   subtitle?: string;
+  onDurationLoaded?: (ms: number) => void;
+  onLoadError?: (error?: Error) => void;
 }
 
-export function AudioPlayerBar({ source, title, subtitle }: AudioPlayerBarProps) {
+export function AudioPlayerBar(props: AudioPlayerBarProps) {
+  // Separate player lifetime for each source: old status can never verify a new take.
+  return <LoadedAudioPlayerBar key={JSON.stringify(props.source)} {...props} />;
+}
+
+function LoadedAudioPlayerBar({ source, title, subtitle, onDurationLoaded, onLoadError }: AudioPlayerBarProps) {
   const { colors } = useTheme();
   const player = useAudioPlayer(source);
   const status = useAudioPlayerStatus(player);
+
+  const callbacks = useRef({ onDurationLoaded, onLoadError });
+  useEffect(() => { callbacks.current = { onDurationLoaded, onLoadError }; }, [onDurationLoaded, onLoadError]);
+  const reported = useRef<number | null>(null);
+  const failed = useRef(false);
+  useEffect(() => {
+    if (!source) return;
+    const timer = setTimeout(() => {
+      if (reported.current === null && !failed.current) {
+        failed.current = true;
+        callbacks.current.onLoadError?.(new Error("Audio metadata could not be loaded."));
+      }
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [source]);
+  useEffect(() => {
+    if (status.error) {
+      if (!failed.current) callbacks.current.onLoadError?.(new Error(status.error));
+      failed.current = true;
+      return;
+    }
+    const ms = Math.round(status.duration * 1000);
+    if (source && status.isLoaded && Number.isSafeInteger(ms) && ms > 0 && reported.current !== ms) {
+      reported.current = ms;
+      callbacks.current.onDurationLoaded?.(ms);
+    }
+  }, [source, status.isLoaded, status.duration, status.error]);
 
   useEffect(() => {
     setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(

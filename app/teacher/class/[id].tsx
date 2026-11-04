@@ -1,3 +1,6 @@
+import { PassageEditor } from "../../../components/PassageEditor";
+import { countPassageWords, type ReadingPassage } from "../../../components/readingRate";
+import type { DocumentSource } from "../../../components/documentExtraction/source";
 import { ClassroomHeader, ClassroomTabs, classroomAccents } from "../../../components/ClassroomChrome";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,6 +46,7 @@ import {
     getClasswork,
     getLearners,
   getMaterials,
+  getFileUrl,
     getMyProfile,
     getProgress,
     updateClass,
@@ -929,6 +933,31 @@ function ClassworkTab({
       type: string;
     } | null>(null);
 
+  const [passageReview, setPassageReview] = useState<{ key: string; value: ReadingPassage } | null>(null);
+  const readingMaterial = materials.find(material => material._id === selectedMaterialId);
+  // Include inactive selections too: any source/file/material change invalidates review.
+  const passageKey = JSON.stringify([createVisible, selectedType, readingSource, selectedFile,
+    selectedMaterialId, readingMaterial?.fileUrl, readingMaterial?.title, readingMaterial?.type, readingMaterial?.updatedAt]);
+  const [reviewKey, setReviewKey] = useState(passageKey);
+  // Reset during render so switching away and back cannot revive old confirmation.
+  if (reviewKey !== passageKey) {
+    setReviewKey(passageKey);
+    setPassageReview(null);
+  }
+  const readingPassage = reviewKey === passageKey && passageReview?.key === passageKey ? passageReview.value : null;
+  const passageConfirmed = !!readingPassage?.confirmed && !!readingPassage.text.trim()
+    && readingPassage.text.length <= 100000
+    && countPassageWords(readingPassage.text) > 0 && countPassageWords(readingPassage.text) <= 100000
+    && Number.isSafeInteger(readingPassage.wordCount) && readingPassage.wordCount > 0 && readingPassage.wordCount <= 100000
+    && (readingPassage.countMethod === "manual" || readingPassage.wordCount === countPassageWords(readingPassage.text))
+    && (readingSource !== "text" || readingPassage.text === readingText);
+  const passageDocument: DocumentSource | undefined = readingSource !== "file" ? undefined
+    : selectedFile ? { uri: selectedFile.uri, name: selectedFile.name, mimeType: selectedFile.type }
+    : readingMaterial?.fileUrl ? { uri: getFileUrl(readingMaterial.fileUrl),
+      name: /\.(pdf|docx|txt|doc|png|jpe?g)(?:[?#]|$)/i.test(readingMaterial.fileUrl)
+        ? readingMaterial.fileUrl : readingMaterial.title }
+    : undefined;
+
   const [submitting, setSubmitting] =
     useState(false);
 
@@ -937,6 +966,7 @@ function ClassworkTab({
     setTitle("");
     setReadingSource("file");
     setReadingText("");
+    setPassageReview(null);
     setSelectedFile(null);
     setDescription("");
     setPoints("10");
@@ -1007,6 +1037,7 @@ function ClassworkTab({
 
       if (!file) return;
 
+      setSelectedMaterialId(null);
       setSelectedFile({
         uri: file.uri,
         name:
@@ -1084,6 +1115,10 @@ function ClassworkTab({
   };
 
   const handleCreate = async () => {
+    if (selectedType === "Reading Assignment" && !passageConfirmed) {
+      Alert.alert("Confirm the reading passage", "Review the passage, remove headings and questions, and confirm its word count before publishing.");
+      return;
+    }
     if (selectedType === "Reading Assignment" && (readingSource === "text" ? !readingText.trim() : (!selectedFile && !selectedMaterialId))) {
       Alert.alert("Reading passage required", readingSource === "text" ? "Enter the text your learners will read." : "Attach the file your learners will read.");
       return;
@@ -1175,6 +1210,7 @@ function ClassworkTab({
         points: numericPoints,
         readingSource: apiType === "reading" ? readingSource : undefined,
         readingText: apiType === "reading" && readingSource === "text" ? readingText.trim() : undefined,
+        readingPassage: apiType === "reading" && readingPassage ? { ...readingPassage, text: readingPassage.text.trim(), confirmed: true as const } : undefined,
         material:
           apiType === "reading" && readingSource === "text" ? undefined : selectedMaterialId || undefined,
         readingActivities:
@@ -1875,14 +1911,14 @@ function ClassworkTab({
                       </Pressable>
                     ))}
                   </View>
-                  {readingSource === "text" && (
-                    <TextInput accessibilityLabel="Reading passage text" multiline maxLength={100000}
-                      value={readingText} onChangeText={setReadingText}
-                      placeholder="Type or paste the passage learners will read..."
-                      placeholderTextColor={colors.textMuted} textAlignVertical="top"
-                      style={{ minHeight: 200, padding: 16, borderWidth: 1, borderRadius: 12,
-                        borderColor: colors.border, color: colors.text, fontSize: 18, lineHeight: 28 }} />
-                  )}
+                  {createVisible && <PassageEditor key={passageKey}
+                    initialText={readingSource === "text" ? readingText : ""}
+                    source={passageDocument} value={readingPassage}
+                    onChange={passage => {
+                      setPassageReview({ key: passageKey, value: passage });
+                      if (readingSource === "text") setReadingText(passage.text);
+                    }} />}
+
                 </View>
               )}
               {(selectedType !== "Reading Assignment" || readingSource === "file") && (<>
@@ -2207,11 +2243,10 @@ function ClassworkTab({
                               key={
                                 material._id
                               }
-                              onPress={() =>
-                                setSelectedMaterialId(
-                                  material._id
-                                )
-                              }
+                              onPress={() => {
+                                setSelectedFile(null);
+                                setSelectedMaterialId(material._id);
+                              }}
                               style={[
                                 styles.materialSelectCard,
                                 {
@@ -2780,7 +2815,7 @@ function ClassworkTab({
                   onPress={handleCreate}
                   disabled={
                     submitting ||
-                    !title.trim()
+                    (!title.trim() || (selectedType === "Reading Assignment" && !passageConfirmed))
                   }
                   style={[
                     styles.smallButton,
@@ -2790,7 +2825,7 @@ function ClassworkTab({
                         colors.primary,
                       opacity:
                         submitting ||
-                        !title.trim()
+                        (!title.trim() || (selectedType === "Reading Assignment" && !passageConfirmed))
                           ? 0.55
                           : 1,
                     },
@@ -3067,8 +3102,15 @@ function ClassworkTab({
                   </View>
                 </View>
 
-                {!!detailsItem.readingText && (
-                  <Text selectable style={{ color: colors.text, fontSize: 18, lineHeight: 30, padding: 16 }}>{detailsItem.readingText}</Text>
+                {detailsItem.readingPassage?.confirmed ? (
+                  <View style={[styles.detailSection, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                    <Text style={[typography.reading.sm, { color: colors.textMuted }]}>
+                      Confirmed passage · {detailsItem.readingPassage.wordCount} words ({detailsItem.readingPassage.countMethod})
+                    </Text>
+                    <Text selectable style={[typography.reading.md, { color: colors.text, lineHeight: 30, marginTop: spacing.sm }]}>{detailsItem.readingPassage.text}</Text>
+                  </View>
+                ) : !!detailsItem.readingText && (
+                  <Text selectable style={[typography.reading.md, { color: colors.text, lineHeight: 30, padding: 16 }]}>{detailsItem.readingText}</Text>
                 )}
                 {detailsItem.readingSource !== "text" && detailsItem.attachment && (
                   <View
@@ -3104,7 +3146,7 @@ function ClassworkTab({
                           },
                         ]}
                       >
-                        ATTACHMENT
+                        {detailsItem.readingPassage?.confirmed ? "ORIGINAL ATTACHMENT (SUPPLEMENTARY)" : "ATTACHMENT"}
                       </Text>
 
                       <Text

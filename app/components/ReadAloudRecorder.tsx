@@ -9,29 +9,34 @@ import {
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 import Constants from "expo-constants";
-import { Alert, Animated, Easing, Platform, StyleSheet, Text, View } from "react-native";
+import { AppState, Alert, Animated, Easing, Platform, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 import { radius, spacing, typography } from "../theme/tokens";
 import { AudioPlayerBar, formatTime, useAuthorizedAudioSource } from "./AudioPlayerBar";
 import { Button } from "./Button";
 
+import { ReadingMeasurement as MeasurementPreview } from "../../components/ReadingMeasurement";
+import { validateReadingMeasurement } from "../../components/readingRate";
+import type { ReadingPassage, ReadingMeasurement, RecordingPayload, ReadingRateResult } from "../../components/readingRate";
+
 export interface ReadAloudRecorderProps {
+  readingPassage?: ReadingPassage | null;
   readingTitle?: string;
   readingText?: string | null;
   readingAttachment?: { url: string; name: string; mimeType?: string } | null;
   // Uploads the recording. Should throw if the upload fails.
-  onSubmit: (recording: { uri: string; durationMs: number; transcript?: string; transcriptLocale?: string }) => Promise<void>;
+  onSubmit: (recording: RecordingPayload) => Promise<void>;
   // Set when the learner has already submitted this classwork.
   submitted?: {
     audioPath: string;
     durationMs?: number;
     submittedAt: string;
+    readingRate?: ReadingRateResult | null;
   } | null;
 }
 
 type Phase = "idle" | "countdown" | "recording" | "paused";
 
-const MIN_DURATION_MS = 1000;
 const COUNTDOWN_FROM = 3;
 const BAR_COUNT = 28;
 const METER_FLOOR_DB = -60; // anything quieter than this shows as silence
@@ -193,7 +198,7 @@ export function ReadAloudRecorder(props: ReadAloudRecorderProps) {
   </View>;
 }
 
-function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
+function AudioOnlyRecorder({ onSubmit, submitted, readingPassage }: ReadAloudRecorderProps) {
   const { colors } = useTheme();
 
   const recorder = useAudioRecorder(recorderOptions);
@@ -205,14 +210,18 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
   const [levels, setLevels] = useState<number[]>(() => Array(BAR_COUNT).fill(0));
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
+  const [measurement, setMeasurement] = useState<ReadingMeasurement>();
+  const [interrupted, setInterrupted] = useState(false);
+  const [take, setTake] = useState(0);
+  const takeRef = useRef(0);
+  const recordingObserved = useRef(false);
+  const [metadataError, setMetadataError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
 
   const submittedSource = useAuthorizedAudioSource(submitted?.audioPath);
 
-  const durationRef = useRef(0);
-  durationRef.current = recorderState.durationMillis;
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -223,6 +232,16 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
   }, []);
 
   const isActive = phase === "recording" || phase === "paused";
+  useEffect(() => {
+    const listener = AppState.addEventListener("change", state => {
+      if (state !== "active" && isActive) setInterrupted(true);
+    });
+    return () => listener.remove();
+  }, [isActive]);
+  useEffect(() => {
+    if (recorderState.isRecording) recordingObserved.current = true;
+    if (phase === "recording" && recordingObserved.current && !busy && !recorderState.isRecording) setInterrupted(true);
+  }, [phase, busy, recorderState.isRecording]);
 
   // Pulsing record dot — only pulses while actually recording.
   const pulse = useRef(new Animated.Value(0)).current;
@@ -267,6 +286,14 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
 
   const startRecording = async () => {
     setBusy(true);
+    recordingObserved.current = false;
+    takeRef.current += 1;
+    setTake(takeRef.current);
+    setDurationMs(0);
+    setMeasurement(undefined);
+    setInterrupted(false);
+    setMetadataError(false);
+    setRecordingUri(null);
     try {
       const { granted } = await AudioModule.requestRecordingPermissionsAsync();
       if (!granted) {
@@ -309,6 +336,7 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
 
   const pauseRecording = () => {
     try {
+      setInterrupted(true);
       recorder.pause();
       setPhase("paused");
       tap(Haptics.ImpactFeedbackStyle.Light);
@@ -336,20 +364,19 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
   const stopRecording = async () => {
     setBusy(true);
     try {
-      const elapsed = durationRef.current;
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
       tap(Haptics.ImpactFeedbackStyle.Medium);
 
       const uri = recorder.uri;
 
-      if (!uri || elapsed < MIN_DURATION_MS) {
+      if (!uri) {
         Alert.alert("That was too short", "Tap Read now and read the passage out loud.");
         return;
       }
 
       setRecordingUri(uri);
-      setDurationMs(elapsed);
+      // Playback metadata verifies the saved media duration, never the live timer.
     } catch (err) {
       Alert.alert(
         "Couldn't stop recording",
@@ -379,7 +406,9 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
           onPress: async () => {
             setSubmitting(true);
             try {
-              await onSubmit({ uri: recordingUri, durationMs });
+              await onSubmit({ uri: recordingUri, durationMs, recordingInterrupted: interrupted,
+                readingMeasurement: measurement && readingPassage && !validateReadingMeasurement(readingPassage, { ...measurement, interrupted: false }, durationMs)
+                  ? { ...measurement, interrupted } : undefined });
               success();
               setCelebrate(true);
             } catch (err) {
@@ -410,6 +439,9 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
             <Text style={[typography.reading.sm, { color: colors.textMuted, lineHeight: 20 }]}>Your recording is saved and ready to play.</Text>
           </View>
         </View>
+        {submitted.readingRate && <Text style={{ color: colors.text }}>
+          {submitted.readingRate.wpm.toFixed(1)} WPM · {submitted.readingRate.status === "reviewed" ? "Reviewed" : "Provisional"}
+        </Text>}
         <View style={styles.submittedDetails}>
           {typeof submitted.durationMs === "number" && (
             <View style={[styles.submittedDetail, { backgroundColor: colors.surface }]}>
@@ -560,10 +592,17 @@ function AudioOnlyRecorder({ onSubmit, submitted }: ReadAloudRecorderProps) {
             <AudioPlayerBar
               source={recordingUri}
               title="Your reading"
-              subtitle={`Reading time: ${formatTime(durationMs)}`}
+              key={take}
+              subtitle={durationMs > 0 ? `Saved audio: ${formatTime(durationMs)}` : "Duration not verified"}
+              onDurationLoaded={ms => { if (mountedRef.current && takeRef.current === take) { setDurationMs(ms); setMetadataError(false); } }}
+              onLoadError={() => { if (mountedRef.current && takeRef.current === take) { setDurationMs(0); setMetadataError(true); } }}
             />
           </View>
 
+          {metadataError && <Text style={{ color: colors.textMuted }}>Audio duration could not be verified. You can still submit without WPM.</Text>}
+          {interrupted && !readingPassage && <Text style={{ color: colors.textMuted }}>Recording was interrupted. Submit this audio or read again continuously for valid speed.</Text>}
+          {readingPassage && <MeasurementPreview key={take} passage={readingPassage} durationMs={durationMs}
+            interrupted={interrupted} value={measurement} onChange={setMeasurement} disabled={submitting} />}
           <Button
             label={submitting ? "Submitting..." : "Submit"}
             variant="primary"

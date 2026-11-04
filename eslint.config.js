@@ -5,6 +5,7 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    // The separately deployed backend has its own dependencies and Node tests.
+    ignores: ['dist/*', 'backend-reading-update/**'],
   },
 ]);

@@ -176,10 +176,10 @@ export default function LearnerClassworkScreen() {
         </Text>
       )}
 
-      {hasTextPassage && (
+      {(hasTextPassage || item.readingPassage?.confirmed) && (
         <View style={styles.section}>
           <HeadingLabel icon="book-outline" accessibilityRole="text" style={{ color: colors.text, fontWeight: "700", marginBottom: 12 }}>Reading passage</HeadingLabel>
-          <Text selectable style={{ fontFamily: typography.reading.md.fontFamily, color: colors.text, ...reading.textStyle }}>{item.readingText || "The reading passage is unavailable. Please contact your teacher."}</Text>
+          <Text selectable style={{ fontFamily: typography.reading.md.fontFamily, color: colors.text, ...reading.textStyle }}>{(item.readingPassage?.confirmed ? item.readingPassage.text : item.readingText) || "The reading passage is unavailable. Please contact your teacher."}</Text>
         </View>
       )}
       {attachment && (
@@ -237,6 +237,22 @@ export default function LearnerClassworkScreen() {
         </View>
       )}
 
+      {item.readingPassage?.confirmed && (
+        <View style={[styles.section, { padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }]}>
+          <HeadingLabel icon="speedometer-outline" style={{ color: colors.text, fontWeight: "700" }}>Reading speed</HeadingLabel>
+          <Text style={[typography.reading.sm, { color: colors.textMuted, marginTop: spacing.sm }]}>
+            {item.readingPassage.wordCount} words in the teacher-confirmed passage. Read continuously; hesitations stay in your reading time.
+          </Text>
+          {submission?.readingRate ? (
+            <Text style={[typography.reading.md, { color: colors.primary, marginTop: spacing.sm }]}>
+              {submission.readingRate.wpm.toFixed(1)} WPM · {submission.readingRate.status === "reviewed" ? "Teacher reviewed" : "Awaiting teacher review"}
+            </Text>
+          ) : submission ? (
+            <Text style={[typography.reading.sm, { color: colors.textMuted, marginTop: spacing.sm }]}>Reading speed is unavailable until a valid continuous reading and its timing can be verified.</Text>
+          ) : null}
+        </View>
+      )}
+
       {canReadAloud && (
         <View style={styles.section}>
           <View style={styles.sectionHeading}>
@@ -247,7 +263,8 @@ export default function LearnerClassworkScreen() {
           </View>
           <ReadAloudRecorder
             readingTitle={item.title}
-            readingText={hasTextPassage ? item.readingText : null}
+            readingText={item.readingPassage?.confirmed ? item.readingPassage.text : hasTextPassage ? item.readingText : null}
+            readingPassage={item.readingPassage}
             readingAttachment={attachment ? { ...attachment, url: getFileUrl(attachment.url) } : null}
             submitted={
               submission
@@ -255,6 +272,7 @@ export default function LearnerClassworkScreen() {
                     audioPath: submission.audio.url,
                     durationMs: submission.audio.durationMs,
                     submittedAt: submission.submittedAt,
+                    readingRate: submission.readingRate,
                   }
                 : null
             }
