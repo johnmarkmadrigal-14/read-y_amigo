@@ -1,3 +1,4 @@
+import { AppInformationLinks } from "../../components/AppInformationScreen";
 import { HeadingLabel } from "../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -34,6 +35,8 @@ export default function LearnerSettingsScreen() {
         <Ionicons name="person-outline" size={20} color={colors.text} />
         <Text style={[typography.reading.sm, { color: colors.text }]}>Profile and reading preferences</Text>
       </Pressable>
+
+      <AppInformationLinks role="learner" />
 
       <Pressable
         style={[styles.row, { borderColor: colors.border }]}

@@ -144,6 +144,9 @@ export default function TeacherLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen name="about" options={{ href: null }} />
+      <Tabs.Screen name="phil-iri" options={{ href: null }} />
+
     </Tabs>
   );
 }

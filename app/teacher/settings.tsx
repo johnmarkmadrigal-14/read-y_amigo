@@ -1,3 +1,4 @@
+import { AppInformationLinks } from "../../components/AppInformationScreen";
 import { HeadingLabel } from "../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -66,6 +67,8 @@ export default function SettingsScreen() {
         </Text>
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} style={styles.chevron} />
       </Pressable>
+
+      <AppInformationLinks role="teacher" />
 
       <Pressable style={[styles.row, { borderColor: colors.border }]} onPress={confirmLogout}>
         <Ionicons name="log-out-outline" size={20} color={colors.primary} />
