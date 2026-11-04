@@ -1,3 +1,4 @@
+import { UserAvatar } from "../../components/UserAvatar";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
@@ -10,13 +11,11 @@ const CLASS_PALETTE = [
   { fill: "#EEEDFE", shadow: "#534AB7", text: "#26215C" },
 ];
 
-export function DashboardWelcome({ name, role, count }: {
-  name: string; role: "Teacher" | "Learner"; count: number;
+export function DashboardWelcome({ name, role, count, photo }: {
+  name: string; photo?: string; role: "Teacher" | "Learner"; count: number;
 }) {
   const { colors } = useTheme();
   const teacher = role === "Teacher";
-  const initials = name.trim().split(/\s+/).slice(0, 2)
-    .map(part => part[0]?.toUpperCase() ?? "").join("") || "?";
   return (
     <>
       <View style={styles.brandRow}>
@@ -28,9 +27,7 @@ export function DashboardWelcome({ name, role, count }: {
         <View style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.secondaryShadow }]}>
           <Text style={[typography.display.sm, { color: colors.text }]}>{role}</Text>
         </View>
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={[typography.display.md, { color: colors.primaryText }]}>{initials}</Text>
-        </View>
+        <UserAvatar name={name} photo={photo} size={42} />
       </View>
       <View style={styles.greeting}>
         <Text style={[typography.reading.sm, { color: colors.textMuted }]}>

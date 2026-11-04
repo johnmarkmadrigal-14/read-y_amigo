@@ -17,7 +17,11 @@ const USER_KEY = "auth_user";
 // TYPES
 // =========================
 
+export type ReadingPreferences = { textSize: "small" | "standard" | "large"; followReading: boolean };
+
 export type ApiUser = {
+  profilePhoto?: string;
+  readingPreferences?: ReadingPreferences;
   _id: string;
   role: "teacher" | "learner";
   displayName: string;
@@ -448,6 +452,7 @@ export async function getMyProfile() {
 }
 
 export async function updateMyProfile(payload: {
+  readingPreferences?: ReadingPreferences;
   firstName?: string;
   secondName?: string;
   middleInitial?: string;
@@ -463,6 +468,39 @@ export async function updateMyProfile(payload: {
   await saveItem(USER_KEY, JSON.stringify(data.user));
 
   return data.user;
+}
+
+// Use the existing document picker and XMLHttpRequest upload path on native.
+export async function uploadProfilePhoto(asset: { uri: string; name: string; mimeType?: string; file?: File }) {
+  const token = await getStoredToken();
+  if (!token) throw new Error("Please log in again.");
+  const form = new FormData();
+  if (asset.file) form.append("photo", asset.file);
+  else form.append("photo", { uri: asset.uri, name: asset.name, type: asset.mimeType || "image/jpeg" } as unknown as Blob);
+  const user = await new Promise<ApiUser>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_ROOT}/auth/me/photo`);
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.timeout = 60000;
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && data.user) resolve(data.user);
+        else reject(new Error(data.error || "Couldn't save your profile picture."));
+      } catch { reject(new Error("Couldn't save your profile picture. Check that the backend profile update is installed.")); }
+    };
+    xhr.onerror = () => reject(new Error("Couldn't upload the picture. Check your connection."));
+    xhr.ontimeout = () => reject(new Error("Upload timed out. Please try again."));
+    xhr.send(form);
+  });
+  await saveItem(USER_KEY, JSON.stringify(user));
+  return user;
+}
+
+export async function removeProfilePhoto() {
+  const { user } = await authRequest<{ user: ApiUser }>("/auth/me/photo", { method: "DELETE" });
+  await saveItem(USER_KEY, JSON.stringify(user));
+  return user;
 }
 
 // =========================

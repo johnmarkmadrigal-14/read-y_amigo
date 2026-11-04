@@ -49,6 +49,8 @@ export default function LearnerLayout() {
         }}
       />
 
+      <Tabs.Screen name="profile" options={{ href: null }} />
+
       {/* Hidden from tab bar — reachable via router.push only */}
       <Tabs.Screen name="join-classroom" options={{ href: null }} />
       <Tabs.Screen name="classroom-joined" options={{ href: null }} />

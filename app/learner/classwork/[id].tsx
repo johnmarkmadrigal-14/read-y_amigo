@@ -1,6 +1,7 @@
+import { useReadingPreferences } from "../../../components/ReadingPreferences";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { FileViewer } from "../../components/FileViewer";
@@ -33,6 +34,9 @@ function iconForFile(name: string): keyof typeof Ionicons.glyphMap {
 
 export default function LearnerClassworkScreen() {
   const { colors } = useTheme();
+  const reading = useReadingPreferences();
+  const { refresh: refreshReadingPreferences } = reading;
+  useFocusEffect(useCallback(() => { void refreshReadingPreferences(); }, [refreshReadingPreferences]));
   const { id, classId } = useLocalSearchParams<{ id: string; classId: string }>();
 
   const [item, setItem] = useState<ApiClasswork | null>(null);
@@ -175,7 +179,7 @@ export default function LearnerClassworkScreen() {
       {hasTextPassage && (
         <View style={styles.section}>
           <HeadingLabel icon="book-outline" accessibilityRole="text" style={{ color: colors.text, fontWeight: "700", marginBottom: 12 }}>Reading passage</HeadingLabel>
-          <Text selectable style={{ color: colors.text, fontSize: 20, lineHeight: 32 }}>{item.readingText || "The reading passage is unavailable. Please contact your teacher."}</Text>
+          <Text selectable style={{ fontFamily: typography.reading.md.fontFamily, color: colors.text, ...reading.textStyle }}>{item.readingText || "The reading passage is unavailable. Please contact your teacher."}</Text>
         </View>
       )}
       {attachment && (
