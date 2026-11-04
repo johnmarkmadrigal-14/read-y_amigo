@@ -1,5 +1,5 @@
 import { ClassroomHeader, ClassroomTabs, classroomAccents } from "../../../components/ClassroomChrome";
-import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
+import { TextAction } from "../../components/InterfaceChrome";
 // app/learner/class/[id].tsx
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -250,23 +250,6 @@ export default function LearnerClassDetail() {
           <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} />
         }
       >
-        <View style={styles.pageHeading}>
-          <View>
-            <Text style={[styles.pageKicker, { color: colors.primary }]}>
-              CLASS{" "}
-              {activeTab === "Classwork"
-                ? "TASKS"
-                : activeTab === "Materials"
-                ? "RESOURCES"
-                : "ROSTER"}
-            </Text>
-            <HeadingLabel icon="bookmark-outline" style={[styles.pageTitle, { color: colors.text }]}>
-              {activeTab}
-            </HeadingLabel>
-          </View>
-          <View style={[styles.pageDot, { backgroundColor: colors.primary }]} />
-        </View>
-
         {activeTab === "Classwork" && (
           <ClassworkTab
             items={classwork}
@@ -630,26 +613,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 18,
     paddingBottom: 100,
-  },
-  pageHeading: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  pageKicker: {
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1.4,
-    marginBottom: 2,
-  },
-  pageTitle: { fontFamily: "Fredoka_600SemiBold", fontSize: 24, lineHeight: 29, fontWeight: "900" },
-  pageDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    marginBottom: 5,
-    marginRight: 3,
   },
 
   centered: {

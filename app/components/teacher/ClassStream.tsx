@@ -310,9 +310,10 @@ export default function ClassStream({
         <TeacherPostCard
           post={item.data}
           onPress={(selectedPost) => {
-            router.push(
-              `/teacher/class/announcement/${selectedPost.id}?classId=${selectedPost.classId}`
-            );
+            router.push({
+              pathname: "/teacher/class/announcement/[id]",
+              params: { id: selectedPost.id, classId },
+            });
           }}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -366,30 +367,6 @@ export default function ClassStream({
       {/* HEADER */}
 
       <View style={styles.header}>
-        <View style={styles.headerText}>
-          <HeadingLabel icon="megaphone-outline"
-            style={[
-              styles.title,
-              {
-                color: colors.text,
-              },
-            ]}
-          >
-            Class stream
-          </HeadingLabel>
-
-          <Text
-            style={[
-              styles.subtitle,
-              {
-                color: colors.textMuted,
-              },
-            ]}
-          >
-            Announcements and new classwork
-          </Text>
-        </View>
-
         <Pressable
           onPress={openCreate}
           disabled={saving}

@@ -1,7 +1,7 @@
 import { HeadingLabel, TextAction } from "../../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -65,6 +65,7 @@ export default function LearnerAnnouncementScreen() {
     : params.classId;
 
   const [post, setPost] = useState<ApiStreamPost | null>(null);
+  const [commentsError, setCommentsError] = useState<string | null>(null);
   const [comments, setComments] = useState<ApiPostComment[]>([]);
   const [currentUser, setCurrentUser] = useState<ApiUser | null>(null);
 
@@ -76,38 +77,33 @@ export default function LearnerAnnouncementScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      if (!postId || !classId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        const [user, announcement, postComments] = await Promise.all([
-          getStoredUser(),
-          getLearnerStreamPost(classId, postId),
-          getPostComments(classId, postId),
-        ]);
-
-        setCurrentUser(user);
-        setPost(announcement);
-        setComments(postComments);
-      } catch (error) {
-        console.error("Failed to load announcement:", error);
-        Alert.alert(
-          "Error",
-          error instanceof Error
-            ? error.message
-            : "Unable to load this announcement."
-        );
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const loadData = useCallback(async () => {
+    if (!postId || !classId) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      const [user, announcement, postComments] = await Promise.allSettled([
+        getStoredUser(), getLearnerStreamPost(classId, postId), getPostComments(classId, postId),
+      ]);
+      if (announcement.status === "rejected") throw announcement.reason;
+      setCurrentUser(user.status === "fulfilled" ? user.value : null);
+      setPost(announcement.value);
+      setComments(postComments.status === "fulfilled" ? postComments.value : []);
+      setCommentsError(postComments.status === "rejected"
+        ? "Couldn't load comments. You can still read the announcement." : null);
+    } catch (error) {
+      console.error("Failed to load announcement:", error);
+      Alert.alert("Error", error instanceof Error ? error.message : "Unable to load this announcement.");
+    } finally {
+      setLoading(false);
+    }
   }, [postId, classId]);
+
+  useEffect(() => {
+    (async () => { await loadData(); })();
+  }, [loadData]);
 
   const postedAt = useMemo(() => {
     if (!post?.createdAt) return "";
@@ -127,12 +123,12 @@ export default function LearnerAnnouncementScreen() {
   const isMine = (comment: ApiPostComment) => {
     if (!currentUser?._id) return false;
     const authorId =
-      typeof comment.author === "string" ? comment.author : comment.author._id;
+      typeof comment.author === "string" ? comment.author : comment.author?._id;
     return authorId === currentUser._id;
   };
 
   const isTeacher = (comment: ApiPostComment) =>
-    typeof comment.author === "object" && comment.author.role === "teacher";
+    typeof comment.author === "object" && comment.author !== null && comment.author.role === "teacher";
 
   const sendComment = async () => {
     const trimmed = commentText.trim();
@@ -328,12 +324,22 @@ export default function LearnerAnnouncementScreen() {
               </HeadingLabel>
             </View>
             <Text style={[styles.commentCount, { color: colors.textMuted }]}>
-              {comments.length}
+              {commentsError ? "—" : comments.length}
             </Text>
           </View>
 
+
+          {commentsError && (
+            <View style={{ padding: spacing.md, gap: spacing.sm }}>
+              <Text accessibilityRole="alert" style={{ color: colors.textMuted }}>{commentsError}</Text>
+              <TextAction icon="refresh" onPress={loadData}>
+                <Text style={{ color: colors.primary }}>Retry comments</Text>
+              </TextAction>
+            </View>
+          )}
+
           {/* COMMENTS */}
-          {comments.length === 0 ? (
+          {commentsError ? null : comments.length === 0 ? (
             <View
               style={[
                 styles.emptyComments,

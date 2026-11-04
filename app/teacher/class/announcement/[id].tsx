@@ -1,7 +1,7 @@
 import { HeadingLabel, TextAction } from "../../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -54,6 +54,7 @@ export default function AnnouncementDetailsScreen() {
   const [post, setPost] =
     useState<ApiStreamPost | null>(null);
 
+  const [commentsError, setCommentsError] = useState<string | null>(null);
   const [comments, setComments] =
     useState<ApiPostComment[]>([]);
 
@@ -81,29 +82,31 @@ export default function AnnouncementDetailsScreen() {
   /*
    * LOAD ANNOUNCEMENT + COMMENTS + USER
    */
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!postId || !classId) {
       setLoading(false);
       return;
     }
 
-        try {
+    try {
       setLoading(true);
 
       const storedUser = await getStoredUser();
       const isLearner = storedUser?.role === "learner";
 
       // Learners can't use the teacher-only /classes/* stream route.
-      const [announcement, postComments] = await Promise.all([
+      const [announcement, postComments] = await Promise.allSettled([
         isLearner
           ? getLearnerStreamPost(classId, postId)
           : getStreamPost(classId, postId),
         getPostComments(classId, postId),
       ]);
-
+      if (announcement.status === "rejected") throw announcement.reason;
       setCurrentUser(storedUser);
-      setPost(announcement);
-      setComments(postComments);
+      setPost(announcement.value);
+      setComments(postComments.status === "fulfilled" ? postComments.value : []);
+      setCommentsError(postComments.status === "rejected"
+        ? "Couldn't load comments. You can still read the announcement." : null);
     } catch (error) {
       console.error(
         "Failed to load announcement:",
@@ -117,11 +120,11 @@ export default function AnnouncementDetailsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId, classId]);
 
   useEffect(() => {
     loadData();
-  }, [postId, classId]);
+  }, [loadData]);
 
   /*
    * DATE
@@ -204,9 +207,7 @@ export default function AnnouncementDetailsScreen() {
   const getCommentAuthorName = (
     comment: ApiPostComment
   ) => {
-    if (
-      typeof comment.author === "string"
-    ) {
+    if (!comment.author || typeof comment.author === "string") {
       return "User";
     }
 
@@ -733,12 +734,22 @@ export default function AnnouncementDetailsScreen() {
               },
             ]}
           >
-            {comments.length}
+            {commentsError ? "—" : comments.length}
           </Text>
         </View>
 
+
+          {commentsError && (
+            <View style={{ padding: spacing.md, gap: spacing.sm }}>
+              <Text accessibilityRole="alert" style={{ color: colors.textMuted }}>{commentsError}</Text>
+              <TextAction icon="refresh" onPress={loadData}>
+                <Text style={{ color: colors.primary }}>Retry comments</Text>
+              </TextAction>
+            </View>
+          )}
+
         {/* COMMENTS */}
-        {comments.length === 0 ? (
+        {commentsError ? null : comments.length === 0 ? (
           <View
             style={[
               styles.emptyComments,
