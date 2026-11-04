@@ -14,7 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ClassCard } from "../components/ClassCard";
+import { DashboardAction, DashboardEmpty, DashboardWelcome, ReadingClassCard, dashboardLayout } from "../components/ReadingDashboard";
 import { Screen } from "../components/Screen";
 import {
   ApiClass,
@@ -26,20 +26,6 @@ import {
 } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
 import { radius, spacing, typography } from "../theme/tokens";
-
-// Cycled through by index so each class card gets a distinct color, without
-// the backend needing to know or store anything about styling.
-const CARD_PALETTE = [
-  { fill: "#E1F5EE", shadow: "#0F6E56", text: "#04342C" },
-  { fill: "#FAECE7", shadow: "#993C1D", text: "#4A1B0C" },
-  { fill: "#EEEDFE", shadow: "#534AB7", text: "#26215C" },
-];
-
-function getInitials(displayName: string) {
-  const parts = displayName.trim().split(/\s+/);
-  const initials = parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "");
-  return initials.join("") || "?";
-}
 
 export default function TeacherDashboard() {
   const { colors } = useTheme();
@@ -226,102 +212,23 @@ export default function TeacherDashboard() {
 
   return (
     <Screen>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <View style={{ flex: 1, minWidth: 0, marginRight: spacing.sm }}>
-            <Text style={[typography.reading.sm, { color: colors.textMuted }]}>
-              Good morning,
-            </Text>
-            <HeadingLabel icon="person-outline" style={[typography.display.lg, { color: colors.text }]}>
-              {profile?.displayName ?? "Teacher"}
-            </HeadingLabel>
-          </View>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={[typography.display.sm, { color: colors.primaryText }]}>
-              {getInitials(profile?.displayName ?? "")}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.sectionHeaderRow}>
-          <HeadingLabel icon="school-outline"
-            style={[
-              typography.reading.sm,
-              { color: colors.textMuted, fontWeight: "600" },
-            ]}
-          >
-            My classes
-          </HeadingLabel>
+      <ScrollView contentContainerStyle={dashboardLayout.content} showsVerticalScrollIndicator={false}>
+        <DashboardWelcome name={profile?.displayName ?? "Teacher"} role="Teacher" count={classes.length} />
+        <View style={dashboardLayout.section}>
+          <HeadingLabel icon="school-outline" style={dashboardLayout.sectionTitle}>My classes</HeadingLabel>
           <TextAction icon="archive-outline" onPress={() => router.push("/teacher/archived-classes")}>
-            <Text style={[typography.reading.sm, { color: colors.primary, fontWeight: "600" }]}>
-              Archived classes
-            </Text>
+            <Text style={[typography.display.sm, { color: colors.primary }]}>Archived classes</Text>
           </TextAction>
         </View>
-
-        {classes.length === 0 && (
-          <Text
-            style={[
-              typography.reading.sm,
-              { color: colors.textMuted, marginBottom: spacing.md },
-            ]}
-          >
-            You haven't created any classes yet.
-          </Text>
-        )}
-
-        {classes.map((classItem, index) => {
-          const palette = CARD_PALETTE[index % CARD_PALETTE.length];
-          return (
-            <ClassCard
-              key={classItem._id}
-              variant="banner"
-              title={classItem.title}
-              subtitle={classItem.description || "Tap to view class details"}
-              fill={palette.fill}
-              shadowColor={palette.shadow}
-              textColor={palette.text}
-              onPress={() =>
-                router.push({
-                  pathname: "/teacher/class/[id]",
-                  params: { id: classItem._id },
-                })
-              }
-              onMenuPress={() => handleCardMenu(classItem)}
-              footer={
-                <View style={styles.metaRow}>
-                  <View style={[styles.codeBadge, { borderColor: palette.shadow }]}>
-                    <Text
-                      style={[
-                        typography.reading.sm,
-                        { color: palette.text, fontWeight: "700", letterSpacing: 1 },
-                      ]}
-                    >
-                      {classItem.code}
-                    </Text>
-                  </View>
-                  <Text style={[typography.reading.sm, { color: palette.text, opacity: 0.7 }]}>
-                    {classItem.learnerCount ?? 0} learner
-                    {classItem.learnerCount === 1 ? "" : "s"}
-                  </Text>
-                </View>
-              }
-            />
-          );
-        })}
-
-        <Pressable
-          onPress={() => router.push("/teacher/create-class")}
-          style={[styles.addClass, { borderColor: colors.border }]}
-        >
-          <Ionicons name="add" size={18} color={colors.text} />
-          <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "600" }]}>
-            Create a new class
-          </Text>
-        </Pressable>
+        {classes.length === 0 && <DashboardEmpty teacher />}
+        {classes.map((classItem, index) => (
+          <ReadingClassCard key={classItem._id} index={index} title={classItem.title}
+            description={classItem.description || "Tap to view class details"}
+            code={classItem.code} learnerCount={classItem.learnerCount ?? 0}
+            onOpen={() => router.push({ pathname: "/teacher/class/[id]", params: { id: classItem._id } })}
+            onMenu={() => handleCardMenu(classItem)} onCopy={() => handleCopyCode(classItem)} />
+        ))}
+        <DashboardAction label="Create a new class" onPress={() => router.push("/teacher/create-class")} />
       </ScrollView>
 
       <Modal
@@ -370,7 +277,7 @@ export default function TeacherDashboard() {
 
             {editingClass && (
               <Text style={[typography.reading.sm, { color: colors.textMuted, marginTop: spacing.md }]}>
-                Join code: {editingClass.code} (can't be changed)
+                Join code: {editingClass.code} (can&apos;t be changed)
               </Text>
             )}
 
@@ -466,59 +373,6 @@ export default function TeacherDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    // Horizontal padding kept intentionally tiny - just enough that cards
-    // aren't literally touching the screen edge, unlike the vertical
-    // spacing which still uses the normal scale.
-    paddingHorizontal: 6,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: spacing.lg,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sectionHeaderRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: spacing.sm,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: spacing.sm,
-  },
-  codeBadge: {
-    borderWidth: 1.5,
-    borderRadius: radius.sm,
-    paddingVertical: 2,
-    paddingHorizontal: spacing.sm,
-  },
-  addClass: {
-    borderWidth: 3,
-    borderStyle: "dashed",
-    borderRadius: radius.lg,
-    paddingVertical: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.xs ?? 8,
-    marginTop: spacing.sm,
-  },
   centered: {
     flex: 1,
     alignItems: "center",
