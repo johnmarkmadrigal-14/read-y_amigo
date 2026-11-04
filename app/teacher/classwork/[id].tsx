@@ -1,3 +1,4 @@
+import { ReadingRateReview } from "../../../components/ReadingRateReview";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -22,8 +23,7 @@ function learnerName(submission: ApiSubmission) {
   );
 }
 
-function SubmissionCard({ submission }: { submission: ApiSubmission }) {
-  const { colors } = useTheme();
+function SubmissionCard({ submission, onSaved }: { submission: ApiSubmission; onSaved: (submission: ApiSubmission) => void }) {
   const source = useAuthorizedAudioSource(submission.audio.url);
 
   return (
@@ -35,6 +35,7 @@ function SubmissionCard({ submission }: { submission: ApiSubmission }) {
           submission.audio.durationMs ? `${formatTime(submission.audio.durationMs)}  •  ` : ""
         }Submitted ${new Date(submission.submittedAt).toLocaleString()}`}
       />
+      <ReadingRateReview key={`${submission._id}:${submission.reviewedAt ?? "new"}`} submission={submission} onSaved={onSaved} />
     </View>
   );
 }
@@ -130,7 +131,7 @@ export default function TeacherClassworkSubmissions() {
         </Text>
       ) : (
         data.submissions.map((submission) => (
-          <SubmissionCard key={submission._id} submission={submission} />
+          <SubmissionCard key={submission._id} submission={submission} onSaved={updated => setData(current => current ? { ...current, submissions: current.submissions.map(item => item._id === updated._id ? { ...updated, learner: item.learner } : item) } : current)} />
         ))
       )}
 

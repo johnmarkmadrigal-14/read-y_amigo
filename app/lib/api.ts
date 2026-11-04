@@ -1,3 +1,4 @@
+import type { ReadingPassage, ReadingMeasurement, RecordingPayload, ReadingRateResult } from "../../components/readingRate";
 import {
   saveItem,
   getItem,
@@ -154,6 +155,7 @@ export type ApiClasswork = {
   attachment?: ApiAttachment | null;
   readingSource?: "file" | "text";
   readingText?: string;
+  readingPassage?: ReadingPassage;
 
   material?: string | ApiMaterial | null;
 
@@ -569,6 +571,12 @@ export async function getReports() {
 }
 
 export type ApiSubmission = {
+  recordingInterrupted?: boolean;
+  readingPassage?: ReadingPassage;
+  readingMeasurement?: ReadingMeasurement;
+  readingRate?: ReadingRateResult | null;
+  reviewedAt?: string;
+  reviewedBy?: string;
   transcript?: string;
   transcriptLocale?: "en-US" | "fil-PH";
   _id: string;
@@ -588,13 +596,14 @@ export type ApiSubmission = {
     mimeType?: string;
     size?: number;
     durationMs?: number;
+    durationVerified?: boolean;
   };
   status: "submitted";
   submittedAt: string;
 };
 
 export type ApiClassworkSubmissions = {
-  classwork: { _id: string; title: string };
+  classwork: { _id: string; title: string; readingPassage?: ReadingPassage };
   submissions: ApiSubmission[];
   notSubmitted: { _id: string; displayName: string }[];
 };
@@ -688,6 +697,7 @@ export async function deletePostComment(
 export type CreateClassworkPayload = {
   readingSource?: "file" | "text";
   readingText?: string;
+  readingPassage?: ReadingPassage;
   title: string;
   description?: string;
   type: ClassworkType;
@@ -711,6 +721,9 @@ export async function getClasswork(classId: string) {
 function buildClassworkFormData(payload: CreateClassworkPayload) {
   const formData = new FormData();
 
+  if (payload.type === "reading" && payload.readingPassage) {
+    formData.append("readingPassage", JSON.stringify(payload.readingPassage));
+  }
   if (payload.type === "reading") {
     formData.append("readingSource", payload.readingSource ?? "file");
     formData.append("readingText", payload.readingSource === "text" ? (payload.readingText ?? "").trim() : "");
@@ -986,7 +999,7 @@ export async function getLearnerMaterials(classId: string) {
 // Uses XMLHttpRequest for the audio upload in React Native / Expo.
 export async function submitReading(
   classworkId: string,
-  recording: { uri: string; durationMs: number; transcript?: string; transcriptLocale?: string }
+  recording: RecordingPayload
 ): Promise<ApiSubmission> {
   const token = await getStoredToken();
 
@@ -1004,6 +1017,8 @@ export async function submitReading(
 
   const formData = new FormData();
   formData.append("durationMs", String(Math.round(recording.durationMs)));
+  formData.append("recordingInterrupted", String(recording.recordingInterrupted === true));
+  if (recording.readingMeasurement) formData.append("readingMeasurement", JSON.stringify(recording.readingMeasurement));
   if (recording.transcript !== undefined) formData.append("transcript", recording.transcript);
   if (recording.transcriptLocale) formData.append("transcriptLocale", recording.transcriptLocale);
   formData.append(
@@ -1088,4 +1103,13 @@ export async function getClassworkSubmissions(classworkId: string) {
   return authRequest<ApiClassworkSubmissions>(
     `/submissions/classwork/${classworkId}`
   );
+}
+
+// Teacher: confirms the words read and reading interval after listening.
+export async function reviewReadingRate(submissionId: string, measurement: ReadingMeasurement) {
+  const { submission } = await authRequest<{ submission: ApiSubmission }>(
+    `/submissions/${submissionId}/reading-rate`,
+    { method: "PATCH", body: measurement }
+  );
+  return submission;
 }
