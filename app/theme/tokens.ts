@@ -92,15 +92,45 @@ export const radius = {
 } as const;
 
 export const typography = {
+
   display: {
     sm: { fontFamily: 'Fredoka_500Medium', fontSize: 14 },
     md: { fontFamily: 'Fredoka_500Medium', fontSize: 18 },
     lg: { fontFamily: 'Fredoka_600SemiBold', fontSize: 24 },
     xl: { fontFamily: 'Fredoka_700Bold', fontSize: 35, letterSpacing: 0.5 },
   },
-  reading: {
-    sm: { fontFamily: 'AtkinsonHyperlegible_400Regular', fontSize: 16, lineHeight: 26 },
-    md: { fontFamily: 'AtkinsonHyperlegible_400Regular', fontSize: 20, lineHeight: 32 },
-    lg: { fontFamily: 'AtkinsonHyperlegible_700Bold', fontSize: 24, lineHeight: 36 },
+
+  body: {
+    sm: {
+      fontFamily: 'Fredoka_500Medium',
+      fontSize: 14,
+    },
+    md: {
+      fontFamily: 'Fredoka_500Medium',
+      fontSize: 18,
+    },
+    lg: {
+      fontFamily: 'Fredoka_600SemiBold',
+      fontSize: 24,
+    },
   },
+
+  reading: {
+    sm: {
+      fontFamily: 'AtkinsonHyperlegible_400Regular',
+      fontSize: 16,
+      lineHeight: 26,
+    },
+    md: {
+      fontFamily: 'AtkinsonHyperlegible_400Regular',
+      fontSize: 20,
+      lineHeight: 32,
+    },
+    lg: {
+      fontFamily: 'AtkinsonHyperlegible_700Bold',
+      fontSize: 24,
+      lineHeight: 36,
+    },
+  },
+
 } as const;

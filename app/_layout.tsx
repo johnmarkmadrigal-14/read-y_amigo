@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { ReadingPreferencesProvider } from "../components/ReadingPreferences";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 import { useAppFonts } from "./theme/fonts";
 import { ThemeProvider } from "./theme/ThemeProvider";
 
@@ -20,7 +21,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
+    <ThemeProvider><ReadingPreferencesProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
 
@@ -29,14 +30,14 @@ export default function RootLayout() {
         <Stack.Screen name="auth/teacher-signup" />
         <Stack.Screen name="auth/learner-signup" />
 
-        <Stack.Screen name="teacher/dashboard" />
-        <Stack.Screen name="teacher/create-classroom" />
-        <Stack.Screen name="teacher/classroom-created" />
+        {/* teacher/ has its own _layout.tsx (the Tabs navigator) - hand the
+            whole group off to it instead of listing each screen here.
+            Listing them individually caused screens like classroom-created
+            to render as top-level Stack screens outside the tab bar. */}
+        <Stack.Screen name="teacher" />
 
-        <Stack.Screen name="learner/dashboard" />
-        <Stack.Screen name="learner/join-classroom" />
-        <Stack.Screen name="learner/classroom-joined" />
+        <Stack.Screen name="learner" />
       </Stack>
-    </ThemeProvider>
+    </ReadingPreferencesProvider></ThemeProvider>
   );
 }

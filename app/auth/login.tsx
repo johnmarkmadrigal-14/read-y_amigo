@@ -1,40 +1,68 @@
+import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
+
 import { router } from "expo-router";
 import { useState } from "react";
-import { Image, Text, View } from "react-native";
+import { Image, Platform, Text, View } from "react-native";
 import { Button } from "../components/Button";
 import { Screen } from "../components/Screen";
 import { TextField } from "../components/TextField";
+import { login } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
 import { spacing, typography } from "../theme/tokens";
 
 export default function LoginScreen() {
   const { colors } = useTheme();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleLogin() {
-    if (!email || !password) {
-      setError("Enter your email and password");
+    const trimmedIdentifier = identifier.trim();
+
+    if (!trimmedIdentifier || !password) {
+      setError("Enter your email/username and password.");
       return;
     }
+
     setError(null);
     setLoading(true);
+
     try {
-      // TODO: replace with your real auth call to backend/
-      await new Promise((res) => setTimeout(res, 800));
-      router.replace("/auth/choose-role");
+      const result = await login(trimmedIdentifier, password);
+
+      if (!result?.user) {
+        throw new Error("Invalid login response from the server.");
+      }
+
+      if (result.user.role === "teacher") {
+        router.replace("/teacher/dashboard");
+      } else if (result.user.role === "learner") {
+        router.replace("/learner/dashboard");
+      } else {
+        throw new Error("Your account has an unrecognized role.");
+      }
     } catch (e) {
-      setError("Couldn't log in. Check your details and try again.");
+      const message =
+        e instanceof Error
+          ? e.message
+          : "Couldn't log in. Check your details and try again.";
+
+      setError(message);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Screen>
-      <View style={{ alignItems: "center", marginTop: spacing.xl, marginBottom: spacing.xl }}>
+    <Screen scroll>
+      <View
+        style={{
+          alignItems: "center",
+          marginTop: spacing.xl,
+          marginBottom: spacing.xl,
+        }}
+      >
         <Image
           source={require("../../assets/images/logo.png")}
           style={{
@@ -44,50 +72,99 @@ export default function LoginScreen() {
           }}
           resizeMode="contain"
         />
-        <Text style={{ ...typography.display.lg, color: colors.text }}>Welcome back!</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 2 }}>
+
+        <HeadingLabel icon="person-outline" style={{ ...typography.display.lg, color: colors.text }}>
+          Welcome back!
+        </HeadingLabel>
+
+        <Text
+          style={{
+            color: colors.textMuted,
+            fontSize: 13,
+            marginTop: 2,
+          }}
+        >
           Log in to continue the story.
         </Text>
       </View>
 
       <TextField
-        label="Email"
-        placeholder="you@email.com"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+        label="Email or Username"
+        placeholder="you@email.com or username"
+        autoCapitalize="none"
+        value={identifier}
+        onChangeText={setIdentifier}
       />
+
       <TextField
         label="Password"
-        placeholder="••••••••"
+        placeholder="Enter your password"
         isPassword
         value={password}
         onChangeText={setPassword}
       />
 
       {error && (
-        <Text style={{ color: colors.retryText, fontSize: 13, marginBottom: spacing.sm }}>
+        <Text
+          accessibilityRole="alert"
+          style={{
+            color: colors.retryText,
+            fontSize: 13,
+            marginBottom: spacing.sm,
+          }}
+        >
           {error}
         </Text>
       )}
 
-      <View style={{ alignItems: "flex-end", marginBottom: spacing.lg }}>
-        <Text style={{ color: colors.primary, fontSize: 12 }} onPress={() => {}}>
+      <View
+        style={{
+          alignItems: "flex-end",
+          marginBottom: spacing.lg,
+        }}
+      >
+        <TextAction icon="lock-closed-outline" onPress={() => {
+            // Connect your forgot-password screen here.
+          }}><Text
+          style={{ color: colors.primary, fontSize: 12 }}
+
+        >
           Forgot password?
-        </Text>
+        </Text></TextAction>
       </View>
 
-      <Button label="Log in" onPress={handleLogin} loading={loading} />
+      <Button
+        label="Log in"
+        onPress={handleLogin}
+        loading={loading}
+      />
 
-      <View style={{ flexDirection: "row", justifyContent: "center", marginTop: spacing.lg }}>
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>New here? </Text>
-        <Text
-          style={{ color: colors.primary, fontSize: 13, fontWeight: "600" }}
-          onPress={() => router.push("/auth/choose-role")}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: spacing.sm,
+          marginTop: spacing.lg,
+        }}
+      >
+        <Text style={{ color: colors.textMuted, fontSize: 13 }}>
+          New here?{" "}
+        </Text>
+
+        <TextAction icon="person-outline" onPress={() => router.push("/auth/choose-role")}><Text
+          style={{
+            color: colors.primary,
+            fontSize: 13,
+            fontWeight: "600",
+          }}
+
         >
           Create an account
-        </Text>
+        </Text></TextAction>
       </View>
     </Screen>
   );
 }
+

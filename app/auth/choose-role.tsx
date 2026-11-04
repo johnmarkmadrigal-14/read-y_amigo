@@ -1,3 +1,4 @@
+import { HeadingLabel } from "../components/InterfaceChrome";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -5,6 +6,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { Button } from "../components/Button";
 import { Screen } from "../components/Screen";
 import { useTheme } from "../theme/ThemeProvider";
 import { radius, spacing, typography } from "../theme/tokens";
@@ -52,9 +54,9 @@ export default function ChooseRole() {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.xs }]}>
+        <HeadingLabel icon="person-outline" style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.xs }]}>
           Who are you?
-        </Text>
+        </HeadingLabel>
 
         <Text
           style={[
@@ -79,11 +81,12 @@ export default function ChooseRole() {
           onPress={() => router.push("/auth/learner-signup")}
         />
 
-        <Pressable onPress={() => router.back()} style={{ marginTop: spacing.sm }}>
-          <Text style={[typography.reading.sm, { textAlign: "center", color: colors.success }]}>
-            ← Back
-          </Text>
-        </Pressable>
+        <Button
+          label="← Back"
+          variant="secondary"
+          onPress={() => router.back()}
+          style={{ marginTop: spacing.md, width: "80%" }}
+        />
       </View>
     </Screen>
   );
