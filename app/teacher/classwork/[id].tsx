@@ -1,3 +1,4 @@
+import { MiscueReview } from "../../../components/MiscueReview";
 import { ReadingRateReview } from "../../../components/ReadingRateReview";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,6 +36,7 @@ function SubmissionCard({ submission, onSaved }: { submission: ApiSubmission; on
           submission.audio.durationMs ? `${formatTime(submission.audio.durationMs)}  •  ` : ""
         }Submitted ${new Date(submission.submittedAt).toLocaleString()}`}
       />
+      <MiscueReview key={`${submission._id}:${submission.miscueReview?.reviewedAt ?? "new"}`} submission={submission} onSaved={onSaved} />
       <ReadingRateReview key={`${submission._id}:${submission.reviewedAt ?? "new"}`} submission={submission} onSaved={onSaved} />
     </View>
   );

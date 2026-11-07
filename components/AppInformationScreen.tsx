@@ -115,7 +115,7 @@ export function AppInformationScreen({ role, topic }: { role: Role; topic: Topic
         </Section>
         <Section title="What is available now" icon="checkmark-circle-outline">
           <Paragraph>Passage preparation, word counting, recorded reading, a live transcript on supported devices, and teacher-reviewed reading speed are available. The transcript is a reading aid and can contain recognition errors.</Paragraph>
-          <Paragraph>Automatic miscue scoring, comprehension grading, and the final Phil-IRI profile are not part of the current reading-speed update.</Paragraph>
+          <Paragraph>Teachers can compare the saved transcript with the confirmed passage, review suggested miscues against the audio, and save observations. Suggestions are not automatic errors. Comprehension grading and the final Phil-IRI profile are not yet available.</Paragraph>
         </Section>
         <TextAction icon="book-outline" onPress={() => router.push(`/${role}/phil-iri`)}>
           <Text style={[typography.reading.sm, { color: colors.primary }]}>Explore the Phil-IRI guide</Text>

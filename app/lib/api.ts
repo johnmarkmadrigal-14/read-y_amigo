@@ -1,3 +1,4 @@
+import type { MiscueReview } from "../../components/miscueComparison";
 import type { ReadingPassage, ReadingMeasurement, RecordingPayload, ReadingRateResult } from "../../components/readingRate";
 import {
   saveItem,
@@ -571,6 +572,7 @@ export async function getReports() {
 }
 
 export type ApiSubmission = {
+  miscueReview?: MiscueReview;
   recordingInterrupted?: boolean;
   readingPassage?: ReadingPassage;
   readingMeasurement?: ReadingMeasurement;
@@ -1111,5 +1113,12 @@ export async function reviewReadingRate(submissionId: string, measurement: Readi
     `/submissions/${submissionId}/reading-rate`,
     { method: "PATCH", body: measurement }
   );
+  return submission;
+}
+
+export async function saveMiscueReview(submissionId: string, review: MiscueReview, previousReviewedAt: string | null) {
+  const { submission } = await authRequest<{ submission: ApiSubmission }>(`/submissions/${submissionId}/miscue-review`, {
+    method: 'PATCH', body: { ...review, previousReviewedAt },
+  });
   return submission;
 }

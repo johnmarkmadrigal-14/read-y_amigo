@@ -1,0 +1,185 @@
+diff --git a/TRANSCRIPT_MISCUE_REVIEW.md b/TRANSCRIPT_MISCUE_REVIEW.md
+new file mode 100644
+index 0000000..8a8b68a
+--- /dev/null
++++ b/TRANSCRIPT_MISCUE_REVIEW.md
+@@ -0,0 +1,22 @@
++# Part 2: transcript comparison and teacher observations
++
++The teacher submission card now has a transcript/miscue review beneath the existing audio player. Expand the numbered passage and saved transcript, listen, enter the last passage word reached, and compare. Word positions use the v1 tokenizer, not a manually overridden word count. Unread trailing words are excluded. The comparison scope is saved with the review.
++
++Case and punctuation differences are ignored while Unicode letters, accents, internal apostrophes/hyphens and numeric tokens are preserved. Bounded dynamic programming aligns word sequences without a dependency. Consecutive edits of the same type are grouped; adjacent duplicated transcript phrases can be suggested as repetitions. Alignment is ambiguous for some repeated words and corrections. Empty transcripts never generate mass omissions. Large comparisons fail with a manual-review option (2 million alignment cells / 1,000 events).
++
++Every suggestion starts pending. Listen using the existing audio player, then confirm, dismiss or reclassify, with optional notes/audio time. For combined events, dismiss the individual suggestions and add a teacher observation covering the relevant passage word range. Manual observations support mispronunciation, hesitation, self-correction and dialect variation, including audio-only submissions. Marking self-correction or dialect variation records an observation, not an error. Repetition is not automatically a scored error. No edit distance, event total, or confirmed-observation total becomes a Phil-IRI error count, reading accuracy, comprehension score or profile. The existing speed calculation is independent.
++
++Reviews require a confirmed submission passage snapshot and saved recording. Older recordings without a snapshot remain playable but comparison is unavailable. The authenticated owning teacher can save through PATCH /submissions/:submissionId/miscue-review. The server validates types, spans, limits, listening acknowledgement and prior review timestamp, authors reviewer/time, and atomically rejects stale concurrent saves. Learners cannot save teacher reviews. Existing GET submission endpoints return the saved review.
++
++The recognizer is retained. Only finalized results remain after recognition ends; an unfinalized trailing hypothesis is excluded. Standard recognition can use network speech services. An optional 'Require on-device recognition' switch checks device support and the exact installed locale before starting. If support cannot be verified, it stops with guidance; no silent online fallback. Some services return no installed locales even when offline models exist. Test English and Filipino separately on target phones. No Whisper models, paid APIs, new packages or native configuration changes were added.
++
++## Updating
++
++Pull teacher-role-feature in the frontend. Merge the matching backend miscue-review change and restart the backend before saving reviews. There are no dependency or lockfile changes, database migration or dev-client rebuild requirements for these JavaScript changes. Normal runtime compatibility and installed native speech module are still required.
++
++## Validation
++
++Frontend: node --test tests/*.test.mjs; npx tsc --noEmit; targeted ESLint.
++Backend: npm test, including real HTTP route tests with stubbed database access for ownership, learner denial, validation, save/serialization and stale-write rejection. These do not connect to a production database.
++
++Device acceptance: record a short passage with a skipped word, substitution and repeated phrase; submit, listen and compare; dismiss recognizer mistakes; add a manual audio observation; save and reload; verify another teacher/learner cannot save. Check an incomplete reading excludes the unread tail, audio-only recording permits manual review, and on-device mode is blocked when a language model cannot be verified. Actual microphone recognition and Filipino offline support need phone testing.
+diff --git a/models/Submission.js b/models/Submission.js
+index da8bed2..d602b48 100644
+--- a/models/Submission.js
++++ b/models/Submission.js
+@@ -41,6 +41,17 @@ const submissionSchema = new mongoose.Schema(
+     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+     reviewedAt: Date,
+ 
++    miscueReview: { type: new mongoose.Schema({
++      algorithmVersion: { type: String, enum: ['v1'], required: true },
++      listened: Boolean,
++      comparedThrough: Number,
++      events: [{ _id: false, id: String, kind: String, status: String,
++        passageStart: Number, passageEnd: Number, transcriptStart: Number, transcriptEnd: Number,
++        source: String, note: String }],
++      reviewedAt: Date,
++      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
++    }, { _id: false }), default: undefined },
++
+     transcript: { type: String, default: "", maxlength: 100000 },
+     transcriptLocale: { type: String, enum: ["en-US", "fil-PH"] },
+ 
+diff --git a/routes/submissions.js b/routes/submissions.js
+index 152530c..0b62584 100644
+--- a/routes/submissions.js
++++ b/routes/submissions.js
+@@ -277,4 +277,29 @@ router.patch("/:submissionId/reading-rate", requireRole("teacher"), async (req,
+   }
+ });
+ 
++// Teacher observations are stored separately from speed and never become automatic scores.
++router.patch('/:submissionId/miscue-review', requireRole('teacher'), async (req, res) => {
++  try {
++    if (!mongoose.isValidObjectId(req.params.submissionId)) return res.status(400).json({ error: 'Invalid submission id.' });
++    const submission = await Submission.findById(req.params.submissionId);
++    if (!submission) return res.status(404).json({ error: 'Submission not found.' });
++    const classroom = await Class.findById(submission.class);
++    if (!classroom || String(classroom.teacher) !== req.userId) return res.status(403).json({ error: "You don't have access to this submission." });
++    if (!submission.audio?.fileId) return res.status(400).json({ error: 'A saved recording is required.' });
++    const current = submission.miscueReview?.reviewedAt?.toISOString() ?? null;
++    if (req.body.previousReviewedAt !== current) return res.status(409).json({ error: 'This review changed. Reload before saving.' });
++    const review = require('../utils/miscueReview').validateMiscueReview(req.body, submission.readingPassage, submission.transcript);
++    review.reviewedBy = req.userId;
++    review.reviewedAt = new Date(Math.max(Date.now(), (submission.miscueReview?.reviewedAt?.getTime() ?? 0) + 1));
++    const filter = { _id: submission._id, 'miscueReview.reviewedAt': submission.miscueReview?.reviewedAt ?? { $exists: false } };
++    const updated = await Submission.findOneAndUpdate(filter, { $set: { miscueReview: review } }, { new: true, runValidators: true });
++    if (!updated) return res.status(409).json({ error: 'This review changed. Reload before saving.' });
++    return res.json({ submission: updated });
++  } catch (err) {
++    if (err.status === 400) return res.status(400).json({ error: err.message });
++    console.error(err);
++    return res.status(500).json({ error: 'Could not save miscue review.' });
++  }
++});
++
+ module.exports = router;
+\ No newline at end of file
+diff --git a/tests/miscue-review-routes.test.js b/tests/miscue-review-routes.test.js
+new file mode 100644
+index 0000000..bfb2558
+--- /dev/null
++++ b/tests/miscue-review-routes.test.js
+@@ -0,0 +1,45 @@
++const { test } = require('node:test');
++const assert = require('node:assert/strict');
++const express = require('express');
++const mongoose = require('mongoose');
++const id = () => String(new mongoose.Types.ObjectId());
++const teacher = id(), learner = id(), submissionId = id();
++const auth = require.resolve('../middleware/auth');
++require.cache[auth] = { id: auth, filename: auth, loaded: true, exports: {
++ requireAuth: (req,res,next) => { req.userId = req.headers['x-user']; req.role = req.headers['x-role']; next(); },
++ requireRole: role => (req,res,next) => req.role === role ? next() : res.status(403).json({ error: 'role' }),
++}};
++const Class = require('../models/Class');
++const Submission = require('../models/Submission');
++let stored, race = false;
++Class.findById = async () => ({ teacher });
++Submission.findById = async () => stored;
++Submission.findOneAndUpdate = async (filter, update) => {
++ if (race) return null;
++ stored.miscueReview = update.$set.miscueReview;
++ await stored.validate();
++ return stored;
++};
++test('review route protects ownership, persists observations and rejects stale edits', async () => {
++ stored = new Submission({ _id: submissionId, class: id(), classwork: id(), learner,
++  audio: { fileId: id(), url: '/audio' }, readingPassage: { text:'The boy', wordCount:2, countMethod:'automatic', confirmed:true, tokenizerVersion:'v1', confirmedBy:teacher, confirmedAt:new Date() }, transcript:'The boy' });
++ const app = express(); app.use(express.json()); app.use(require('../routes/submissions'));
++ const server = app.listen(0,'127.0.0.1'); await new Promise(r => server.once('listening',r));
++ const url = `http://127.0.0.1:${server.address().port}/${submissionId}/miscue-review`;
++ const body = { algorithmVersion:'v1', listened:true, events:[], previousReviewedAt:null, reviewedBy:learner };
++ const send = (data=body,user=teacher,role='teacher') => fetch(url,{ method:'PATCH', headers:{ 'Content-Type':'application/json','x-user':user,'x-role':role }, body:JSON.stringify(data) });
++ try {
++  assert.equal((await send(body,learner,'learner')).status,403);
++  assert.equal((await send(body,id())).status,403);
++  assert.equal((await send({ ...body,listened:false })).status,400);
++  let r = await send(); assert.equal(r.status,200);
++  const saved = (await r.json()).submission.miscueReview;
++  assert.equal(saved.reviewedBy,teacher); assert.ok(saved.reviewedAt); assert.equal(stored.readingRate,null);
++  assert.equal((await send()).status,409);
++  r = await send({ ...body,previousReviewedAt:saved.reviewedAt }); assert.equal(r.status,200);
++  race = true;
++  assert.equal((await send({ ...body,previousReviewedAt:stored.miscueReview.reviewedAt.toISOString() })).status,409);
++  race = false; stored.readingPassage = undefined;
++  assert.equal((await send({ ...body,previousReviewedAt:stored.miscueReview.reviewedAt.toISOString() })).status,400);
++ } finally { server.closeAllConnections(); await new Promise(r=>server.close(r)); }
++});
+diff --git a/tests/miscueReview.test.js b/tests/miscueReview.test.js
+new file mode 100644
+index 0000000..978bc69
+--- /dev/null
++++ b/tests/miscueReview.test.js
+@@ -0,0 +1,16 @@
++const { test } = require('node:test');
++const assert = require('node:assert/strict');
++const { validateMiscueReview } = require('../utils/miscueReview');
++const passage = { confirmed: true, text: 'The little boy' };
++const event = { id: 'v1-0', kind: 'omission', status: 'confirmed', source: 'comparison', passageStart: 1, passageEnd: 2, transcriptStart: 1, transcriptEnd: 1, note: '' };
++const body = { algorithmVersion: 'v1', listened: true, events: [event] };
++test('persists review decisions with explicit listening acknowledgement', () => {
++ assert.equal(validateMiscueReview(body, passage, 'The boy').events[0].kind, 'omission');
++ for (const kind of ['self-correction','dialect-variation','hesitation']) assert.equal(validateMiscueReview({ ...body, events: [{ ...event, kind }] }, passage, 'The boy').events[0].kind,kind);
++});
++test('rejects forged metadata, malformed positions and unreviewed audio', () => {
++ for (const patch of [{ listened: false }, { algorithmVersion: 'v2' }, { events: [event,event] }, { events: [{ ...event, passageEnd: 4 }] }, { events: [{ ...event, status: 'scored' }] }, { events: [{ ...event, passageStart: 1.5 }] }]) assert.throws(() => validateMiscueReview({ ...body, ...patch },passage,'The boy'));
++ assert.throws(() => validateMiscueReview(body,{ ...passage, confirmed: false },'The boy'));
++ const result = validateMiscueReview({ ...body, reviewedBy: 'learner', score: 100 },passage,'The boy');
++ assert.equal(result.reviewedBy, undefined); assert.equal(result.score, undefined);
++});
+diff --git a/utils/miscueReview.js b/utils/miscueReview.js
+new file mode 100644
+index 0000000..165e4ff
+--- /dev/null
++++ b/utils/miscueReview.js
+@@ -0,0 +1,21 @@
++const kinds = ['omission', 'substitution', 'insertion', 'repetition', 'mispronunciation', 'hesitation', 'self-correction', 'dialect-variation'];
++function wordCount(text) {
++  return (text.normalize('NFC').match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}]*(?:(?:['’\-‐‑][\p{L}\p{N}][\p{L}\p{M}\p{N}]*)|(?:[.,](?=\p{N})\p{N}+))*/gu) || []).length;
++}
++function validateMiscueReview(body, passage, transcript) {
++  const fail = () => { throw Object.assign(new Error('Invalid miscue review. Listen to the recording and check event types, decisions and word positions.'), { status: 400 }); };
++  if (!passage?.confirmed || body?.algorithmVersion !== 'v1' || body.listened !== true || !Array.isArray(body.events) || body.events.length > 1000) fail();
++  const p = wordCount(passage.text), t = wordCount(transcript || '');
++  if (body.comparedThrough !== undefined && (!Number.isSafeInteger(body.comparedThrough) || body.comparedThrough < 1 || body.comparedThrough > p)) fail();
++  const ids = new Set();
++  const events = body.events.map(e => {
++    if (!e || typeof e.id !== 'string' || !e.id || e.id.length > 100 || ids.has(e.id) || !kinds.includes(e.kind) || !['pending', 'confirmed', 'dismissed'].includes(e.status) || !['comparison', 'teacher'].includes(e.source) || typeof e.note !== 'string' || e.note.length > 2000) fail();
++    ids.add(e.id);
++    for (const [start, end, max] of [[e.passageStart, e.passageEnd, p], [e.transcriptStart, e.transcriptEnd, t]])
++      if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end < start || end > max) fail();
++    if (e.passageStart === e.passageEnd && e.transcriptStart === e.transcriptEnd) fail();
++    return Object.fromEntries(['id', 'kind', 'status', 'passageStart', 'passageEnd', 'transcriptStart', 'transcriptEnd', 'source', 'note'].map(k => [k, e[k]]));
++  });
++  return { algorithmVersion: 'v1', listened: true, events, ...(body.comparedThrough === undefined ? {} : { comparedThrough: body.comparedThrough }) };
++}
++module.exports = { validateMiscueReview };

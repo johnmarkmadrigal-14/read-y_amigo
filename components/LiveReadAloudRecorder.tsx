@@ -1,7 +1,7 @@
 import { useReadingPreferences } from "./ReadingPreferences";
 import { HeadingLabel, TextAction } from "../app/components/InterfaceChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppState, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { AppState, Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { ExpoSpeechRecognitionModule as Speech, useSpeechRecognitionEvent } from "expo-speech-recognition";
 import type { ReadAloudRecorderProps } from "../app/components/ReadAloudRecorder";
 import { AudioPlayerBar, formatTime } from "../app/components/AudioPlayerBar";
@@ -26,6 +26,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
   const [phase, setPhase] = useState<Phase>("idle");
   const [count, setCount] = useState(3);
   const [locale, setLocale] = useState("en-US");
+  const [onDevice, setOnDevice] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [uri, setUri] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -128,6 +129,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
   });
   useSpeechRecognitionEvent("end", () => {
     if (active.current && !stopRequested.current) setInterrupted(true);
+    setTranscript(finalized.current); // Compare only final recognition results, never a leftover interim hypothesis.
     active.current = false;
     if (mounted.current) {
       setPhase(awaitingAudio.current ? "finishing" : "idle");
@@ -164,6 +166,14 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
       finally { permissionPending.current = false; }
       if (!mounted.current || generation.current !== attempt) return;
       if (!permission.granted) throw new Error("Allow microphone and speech recognition access in Settings to show your reading words.");
+      if (onDevice) {
+        if (!Speech.supportsOnDeviceRecognition()) throw new Error("On-device recognition is unavailable on this phone. Use standard recognition or audio-only recording.");
+        const supported = await Speech.getSupportedLocales({});
+        if (!mounted.current || generation.current !== attempt) return;
+        const canonical = (value: string) => value.toLowerCase().replace(/_/g, '-');
+        if (!supported.installedLocales.some(value => canonical(value) === canonical(locale)))
+          throw new Error("The selected language could not be verified as installed for on-device recognition. Install its speech model in device settings, use standard recognition, or record audio only.");
+      }
       setPhase("countdown");
       for (let n = 3; n > 0; n--) {
         setCount(n);
@@ -179,7 +189,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
       active.current = true;
       awaitingAudio.current = true;
       setPhase("starting");
-      Speech.start({ lang: locale, interimResults: true, continuous: true,
+      Speech.start({ lang: locale, requiresOnDeviceRecognition: onDevice, interimResults: true, continuous: true,
         recordingOptions: { persist: true, outputSampleRate: 16000, outputEncoding: "pcmFormatInt16" } });
     } catch (err) {
       active.current = false;
@@ -228,6 +238,11 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
   if (submitted) return <Text style={{ color: colors.text }}>Great reading! Your teacher can listen now.</Text>;
   return <View style={{ gap: spacing.md }}>
     <Text style={{ color: colors.textMuted }}>Words appear as you read. Automatic transcription may make mistakes.</Text>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+      <Switch accessibilityLabel="Require on-device speech recognition" value={onDevice} onValueChange={setOnDevice} disabled={phase !== 'idle' || submitting || !!uri} />
+      <Text style={{ color: colors.text, flex: 1 }}>Require on-device recognition (installed language required)</Text>
+    </View>
+    <Text style={{ color: colors.textMuted }}>Standard recognition may use online speech services. On-device mode stops if an installed language cannot be verified; it does not silently switch online.</Text>
     <View style={{ flexDirection: "row", gap: 12 }}>
       {[["en-US", "English"], ["fil-PH", "Filipino"]].map(([code, label]) =>
         <Pressable key={code} disabled={phase !== "idle" || submitting} onPress={() => setLocale(code)}
