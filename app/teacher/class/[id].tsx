@@ -3430,50 +3430,49 @@ function ClassworkTab({
                   </View>
                 </View>
 
-                <Pressable
-                  onPress={() =>
-                    setDetailsItem(null)
-                  }
-                  style={[
-                    styles.fullButton,
-                    {
-                      backgroundColor:
-                        colors.primary,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{
-                      color:
-                        colors.primaryText,
-                      fontWeight: "800",
-                    }}
+                <View style={styles.detailActions}>
+                  {detailsItem.type === "reading" && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="View submissions"
+                      onPress={() => {
+                        const target = detailsItem;
+                        setDetailsItem(null);
+                        router.push({
+                          pathname: "/teacher/classwork/[id]",
+                          params: { id: target._id },
+                        });
+                      }}
+                      style={[
+                        styles.fullButton,
+                        {
+                          backgroundColor: colors.surface,
+                          borderWidth: 1,
+                          borderColor: colors.primary,
+                          marginTop: 0,
+                          minHeight: 48,
+                        },
+                      ]}
+                    >
+                      <Text style={[typography.reading.sm, { color: colors.primary, fontWeight: "800", textAlign: "center" }]}>
+                        View submissions
+                      </Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Done"
+                    onPress={() => setDetailsItem(null)}
+                    style={[
+                      styles.fullButton,
+                      { backgroundColor: colors.primary, marginTop: 0, minHeight: 48 },
+                    ]}
                   >
-
-                   {detailsItem.type === "reading" && (
-  <Pressable
-    onPress={() => {
-      const target = detailsItem;
-      setDetailsItem(null);
-      router.push({
-        pathname: "/teacher/classwork/[id]",
-        params: { id: target._id },
-      });
-    }}
-    style={[
-      styles.fullButton,
-      { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary },
-    ]}
-  >
-    <Text style={{ color: colors.primary, fontWeight: "800" }}>
-      View submissions
-    </Text>
-  </Pressable>
-)}
-
-                    Done
-                  </Text>
-                </Pressable>
+                    <Text style={[typography.reading.sm, { color: colors.primaryText, fontWeight: "800", textAlign: "center" }]}>
+                      Done
+                    </Text>
+                  </Pressable>
+                </View>
               </ScrollView>
             </View>
           ) : null}
@@ -5641,6 +5640,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 11,
     marginBottom: 7,
+  },
+
+  detailActions: {
+    gap: 12,
+    marginTop: 12,
   },
 
   fullButton: {
