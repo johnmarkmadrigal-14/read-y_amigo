@@ -1,3 +1,4 @@
+import { comprehensionCompletion } from '../../components/comprehension/api';
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useFocusEffect } from "expo-router";
@@ -190,18 +191,22 @@ export default function LearnerTodoScreen() {
       const perClass = await Promise.all(
         activeClasses.map(async (cls) => {
           try {
-            const [classwork, submissions] = await Promise.all([
+            const [classwork, submissions, comprehension] = await Promise.all([
               getLearnerClasswork(cls._id),
               // If submissions fail to load, just treat nothing as done.
               getMySubmissions(cls._id).catch(() => []),
+              comprehensionCompletion(cls._id).catch(() => ({ classworkIds: [] as string[] })),
             ]);
 
             const doneIds = new Set(submissions.map((s) => String(s.classwork)));
 
+            const comprehensionDone = new Set(comprehension.classworkIds);
             return classwork.map((cw) => ({
               ...cw,
               classTitle: cls.title,
-              done: doneIds.has(cw._id),
+              done: cw.type === 'reading' && cw.readingActivities?.includes('comprehension')
+                ? comprehensionDone.has(cw._id) && (!cw.readingActivities.includes('read-aloud') || doneIds.has(cw._id))
+                : doneIds.has(cw._id),
             }));
           } catch {
             // One failing class shouldn't hide the rest of the to-do list.

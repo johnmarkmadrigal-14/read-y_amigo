@@ -1,3 +1,6 @@
+import { QuizBuilder } from '../../../components/comprehension/QuizBuilder';
+import { publishComprehension, validateComprehension } from '../../../components/comprehension/api';
+import type { QuizDraft } from '../../../components/comprehension/types';
 import { PassageEditor } from "../../../components/PassageEditor";
 import { countPassageWords, type ReadingPassage } from "../../../components/readingRate";
 import type { DocumentSource } from "../../../components/documentExtraction/source";
@@ -958,6 +961,7 @@ function ClassworkTab({
         ? readingMaterial.fileUrl : readingMaterial.title }
     : undefined;
 
+  const [comprehensionDraft, setComprehensionDraft] = useState<QuizDraft | null>(null);
   const [submitting, setSubmitting] =
     useState(false);
 
@@ -979,6 +983,7 @@ function ClassworkTab({
     setReadingActivities(["read-aloud"]);
     setSelectedQuizType("multiple-choice");
     setQuestions([]);
+    setComprehensionDraft(null);
     setSelectedFile(null);
   };
 
@@ -1009,6 +1014,7 @@ function ClassworkTab({
   const toggleReadingActivity = (
     activity: ReadingActivity
   ) => {
+    setComprehensionDraft(null);
     setReadingActivities((current) => {
       if (current.includes(activity)) {
         return current.filter(
@@ -1123,6 +1129,11 @@ function ClassworkTab({
       Alert.alert("Reading passage required", readingSource === "text" ? "Enter the text your learners will read." : "Attach the file your learners will read.");
       return;
     }
+    const needsComprehension = selectedType === 'Reading Assignment' && readingActivities.includes('comprehension');
+    if (needsComprehension && (!comprehensionDraft || !readingPassage || comprehensionDraft.passage.text !== readingPassage.text || comprehensionDraft.passage.wordCount !== readingPassage.wordCount)) {
+      Alert.alert('Review the comprehension quiz', 'Paste or choose your questions, preview them, and select Use this reviewed quiz for the confirmed passage.');
+      return;
+    }
     if (!title.trim()) {
       Alert.alert(
         "Title required",
@@ -1196,6 +1207,7 @@ function ClassworkTab({
     setSubmitting(true);
 
     try {
+      if (needsComprehension && comprehensionDraft) await validateComprehension(comprehensionDraft);
       const apiType =
         apiTypeFromDisplay(selectedType);
 
@@ -1231,19 +1243,17 @@ function ClassworkTab({
           : selectedLearners,
       };
 
-      if (selectedFile && !(apiType === "reading" && readingSource === "text")) {
-        await createClassworkWithFile(
-          classId,
-          {
-            ...payload,
-            file: selectedFile,
-          }
-        );
-      } else {
-        await createClasswork(
-          classId,
-          payload
-        );
+      const created = selectedFile && !(apiType === "reading" && readingSource === "text")
+        ? await createClassworkWithFile(classId, { ...payload, file: selectedFile })
+        : await createClasswork(classId, payload);
+      if (needsComprehension && comprehensionDraft) {
+        try { await publishComprehension(created._id, comprehensionDraft.passage, comprehensionDraft.quiz); }
+        catch (quizError) {
+          setCreateVisible(false); resetForm(); await onCreated();
+          router.push({ pathname: '/teacher/classwork/comprehension-setup/[id]', params: { id: created._id } });
+          Alert.alert('Finish comprehension setup', 'The reading assignment was created. The quiz is not published yet. Complete setup on the next screen. ' + (quizError instanceof Error ? quizError.message : ''));
+          return;
+        }
       }
 
       setCreateVisible(false);
@@ -1493,6 +1503,7 @@ function ClassworkTab({
             </View>
 
             <ScrollView
+              keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={
                 false
               }
@@ -1915,6 +1926,7 @@ function ClassworkTab({
                     initialText={readingSource === "text" ? readingText : ""}
                     source={passageDocument} value={readingPassage}
                     onChange={passage => {
+                      setComprehensionDraft(null);
                       setPassageReview({ key: passageKey, value: passage });
                       if (readingSource === "text") setReadingText(passage.text);
                     }} />}
@@ -2336,6 +2348,13 @@ function ClassworkTab({
                     </>
                   )}
                 </>
+              )}
+
+              {selectedType === 'Reading Assignment' && readingActivities.includes('comprehension') && (
+                passageConfirmed && readingPassage ? <View style={{ marginVertical: 16 }}>
+                  <QuizBuilder key={JSON.stringify([readingPassage.text, readingPassage.wordCount])} passage={readingPassage} onChange={setComprehensionDraft} disabled={submitting} />
+                  {comprehensionDraft?.passage.text === readingPassage.text && comprehensionDraft.passage.wordCount === readingPassage.wordCount && <Text style={[typography.reading.sm, { color: colors.successText, marginTop: 8 }]}>✓ Reviewed quiz ready to publish</Text>}
+                </View> : <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Confirm the reading passage first to set up its comprehension quiz.</Text>
               )}
 
               {/* QUIZ */}
@@ -3431,6 +3450,15 @@ function ClassworkTab({
                 </View>
 
                 <View style={styles.detailActions}>
+                  {detailsItem.type === 'reading' && detailsItem.readingActivities?.includes('comprehension') && <>
+                    <TextAction onPress={() => { const target = detailsItem; setDetailsItem(null); router.push({ pathname: '/teacher/classwork/comprehension-setup/[id]', params: { id: target._id } }); }}>
+                      <Text style={[typography.reading.sm, { color: colors.primary }]}>Comprehension setup</Text>
+                    </TextAction>
+                    <TextAction onPress={() => { const target = detailsItem; setDetailsItem(null); router.push({ pathname: '/teacher/classwork/comprehension/[id]', params: { id: target._id } }); }}>
+                      <Text style={[typography.reading.sm, { color: colors.primary }]}>Comprehension results</Text>
+                    </TextAction>
+                  </>}
+
                   {detailsItem.type === "reading" && (
                     <Pressable
                       accessibilityRole="button"

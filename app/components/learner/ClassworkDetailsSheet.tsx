@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { HeadingLabel, TextAction } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -320,6 +321,12 @@ export default function ClassworkDetailsSheet({
                   ))}
                 </View>
               ) : null}
+
+              {item.type === 'reading' && <Pressable accessibilityRole="button" onPress={() => {
+                const target = item; onClose(); router.push({ pathname: '/learner/classwork/[id]', params: { id: target._id, classId: target.class } });
+              }} style={[styles.doneButton, { borderWidth: 1.5, borderColor: colors.primary, backgroundColor: colors.background, marginBottom: 12 }]}>
+                <Text style={{ color: colors.primary, fontWeight: '800' }}>Open reading activity</Text>
+              </Pressable>}
 
               <Pressable
                 onPress={onClose}

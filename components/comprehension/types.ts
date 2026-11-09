@@ -1,0 +1,14 @@
+import type { ReadingPassage } from '../readingRate';
+export type QuestionType = 'multiple-choice' | 'true-false' | 'checkboxes' | 'short-answer' | 'essay';
+export type QuizQuestion = { id?: string; type: QuestionType; question: string; choices?: string[]; correctAnswer?: number | number[];
+  points: number; expectedAnswer?: string; rubric?: string; supportingParagraph?: string };
+export type QuizConfig = { version?: string; passageAccess: 'during-quiz' | 'after-submission'; questions: QuizQuestion[] };
+export type QuizDraft = { passage: ReadingPassage; quiz: QuizConfig };
+export type QuizSet = { _id: string; title: string; passageHash: string; quiz: QuizConfig };
+export type Answer = { questionId: string; answer: number | number[] | string };
+export type Grade = { questionId: string; correct: boolean | null; awardedPoints: number | null; feedback?: string };
+export type Attempt = { _id: string; title?: string; classwork: string; learner: string | { _id: string; displayName?: string; firstName?: string; secondName?: string };
+  readingSubmission?: string; attemptLabel: string; revision: number; status: 'draft' | 'pending-review' | 'graded';
+  quiz: QuizConfig; passage?: ReadingPassage; answers: Answer[]; grades: Grade[];
+  result: { status: string; correctAnswers: number; totalQuestions: number; pendingQuestions: number; percentage: number | null; earnedPoints: number; maxPoints: number } | null;
+  submittedAt?: string; reviewedAt?: string };

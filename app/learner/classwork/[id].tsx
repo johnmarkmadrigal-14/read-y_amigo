@@ -1,3 +1,4 @@
+import { QuizLaunch } from '../../../components/comprehension/LearnerQuiz';
 import { useReadingPreferences } from "../../../components/ReadingPreferences";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
@@ -237,7 +238,7 @@ export default function LearnerClassworkScreen() {
         </View>
       )}
 
-      {item.readingPassage?.confirmed && (
+      {canReadAloud && item.readingPassage?.confirmed && (
         <View style={[styles.section, { padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }]}>
           <HeadingLabel icon="speedometer-outline" style={{ color: colors.text, fontWeight: "700" }}>Reading speed</HeadingLabel>
           <Text style={[typography.reading.sm, { color: colors.textMuted, marginTop: spacing.sm }]}>
@@ -338,6 +339,9 @@ export default function LearnerClassworkScreen() {
           )}
         </View>
       )}
+      {item.type === 'reading' && item.readingActivities?.includes('comprehension') && <View style={{ marginBottom: 24 }}>
+        <QuizLaunch classworkId={item._id} classId={classId} readingSubmitted={!!submission} />
+      </View>}
     </Screen>
   );
 }

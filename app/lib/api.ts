@@ -290,7 +290,7 @@ async function publicRequest<T>(
 }
 
 // Endpoints that need the logged-in user's token.
-async function authRequest<T>(
+export async function authRequest<T>(
   path: string,
   options: {
     method?: string;
