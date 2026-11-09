@@ -134,7 +134,7 @@ export default function TeacherLayout() {
         }}
       />
 
-      <Tabs.Screen name="classwork/[id]" options={{ href: null }} />
+      <Tabs.Screen name="classwork" options={{ href: null }} />
 
       {/* ANNOUNCEMENT DETAILS - HIDDEN FROM BOTTOM NAV
           The screen still works when opened from ClassStream. */}

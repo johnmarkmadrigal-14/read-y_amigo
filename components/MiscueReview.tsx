@@ -8,7 +8,7 @@ import { radius, spacing, typography } from '../app/theme/tokens';
 import { passageSection } from './miscueReviewLayout';
 import { compareTranscript, comparisonWords, miscueKinds, type MiscueEvent } from './miscueComparison';
 
-export function MiscueReview({ submission, onSaved }: { submission: ApiSubmission; onSaved: (s: ApiSubmission) => void }) {
+export function MiscueReview({ submission, onSaved, embedded = false }: { submission: ApiSubmission; onSaved: (s: ApiSubmission) => void; embedded?: boolean }) {
   const { colors } = useTheme();
   const [events, setEvents] = useState<MiscueEvent[]>(submission.miscueReview?.events ?? []);
   const [generated, setGenerated] = useState(!!submission.miscueReview);
@@ -90,8 +90,8 @@ export function MiscueReview({ submission, onSaved }: { submission: ApiSubmissio
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not save review.'); }
     finally { setSaving(false); }
   }
-  return <View style={{ ...card, marginTop: spacing.sm, backgroundColor: colors.background }}>
-    <HeadingLabel icon="reader-outline" style={{ color: colors.text, fontWeight: '700' }}>Reading review</HeadingLabel>
+  return <View style={{ ...card, marginTop: embedded ? 0 : spacing.sm, borderWidth: embedded ? 0 : 1, padding: embedded ? 0 : spacing.md, backgroundColor: colors.background }}>
+    {!embedded && <HeadingLabel icon="reader-outline" style={{ color: colors.text, fontWeight: '700' }}>Reading review</HeadingLabel>}
     <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Listen with the audio player above, then review the suggested differences.</Text>
     {submission.miscueReview?.reviewedAt && <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Last saved: {new Date(submission.miscueReview.reviewedAt).toLocaleString()}</Text>}
     {!submission.readingPassage?.confirmed ? <Text style={textStyle}>This older submission has no confirmed passage snapshot. Comparison is unavailable.</Text> : <>

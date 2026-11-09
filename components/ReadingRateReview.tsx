@@ -8,8 +8,9 @@ import { radius, spacing, typography } from "../app/theme/tokens";
 
 // Timing is reviewed against the saved recording; silence within the reading
 // interval is retained. The server validates bounds and calculates the result.
-export function ReadingRateReview({ submission, onSaved }: {
+export function ReadingRateReview({ submission, onSaved, embedded = false }: {
   submission: ApiSubmission;
+  embedded?: boolean;
   onSaved: (submission: ApiSubmission) => void;
 }) {
   const { colors } = useTheme();
@@ -58,8 +59,8 @@ export function ReadingRateReview({ submission, onSaved }: {
     finally { setSaving(false); }
   }
   return (
-    <View style={{ gap: spacing.sm, padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, marginTop: spacing.sm }}>
-      <HeadingLabel icon="speedometer-outline" style={{ color: colors.text, fontWeight: "700" }}>Reading speed review</HeadingLabel>
+    <View style={{ gap: spacing.sm, padding: embedded ? 0 : spacing.md, borderWidth: embedded ? 0 : 1, borderColor: colors.border, borderRadius: radius.md, marginTop: embedded ? 0 : spacing.sm }}>
+      {!embedded && <HeadingLabel icon="speedometer-outline" style={{ color: colors.text, fontWeight: "700" }}>Reading speed review</HeadingLabel>}
       {submission.readingRate && <Text style={[typography.display.md, { color: colors.primary }]}>
         {submission.readingRate.wpm.toFixed(1)} WPM · {submission.readingRate.status === "reviewed" ? "Teacher reviewed" : "Provisional"}
       </Text>}

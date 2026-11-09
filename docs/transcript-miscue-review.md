@@ -39,3 +39,11 @@ Device acceptance: record a short passage with a skipped word, substitution and 
 - Observation counts remain review totals, not a Phil-IRI accuracy score. The review guide retains the audio and scoring guidance.
 
 Validation: `npx tsc --noEmit`, targeted ESLint, and `node --test tests/*.test.mjs`. The layout tests verify consistent word positions, Unicode, punctuation, paragraph breaks, and section boundaries.
+
+## Submissions list and learner detail
+
+The teacher classwork submissions route now shows compact learner cards, Submitted/Not yet totals, a name search, and filters. A virtualized list renders the cards without mounting an audio player or review forms for every learner. The pending filter lists learners without an Open submission action.
+
+Open submission navigates to `/teacher/classwork/submission/[id]?classworkId=...` inside a nested classwork stack, hidden from the teacher tab bar. The detail uses the existing classwork-submissions API, retains populated learner details after review saves, and provides loading, retry, missing-submission, and incomplete-link states. Back returns to the list; the list refreshes on focus while retaining its search and filter.
+
+Only the selected learner's recording is mounted. Reading review opens by default and Reading speed review starts collapsed. After a review section is opened, collapsing it hides the form without unmounting it, retaining draft notes, timing and decisions. Each section still saves separately through its existing endpoint. Embedded rendering removes duplicate section headings/borders without changing the review controls or scoring behavior. No backend, package, or native build changes are required.
