@@ -29,3 +29,13 @@ Frontend: node --test tests/*.test.mjs; npx tsc --noEmit; targeted ESLint.
 Backend: npm test, including real HTTP route tests with stubbed database access for ownership, learner denial, validation, save/serialization and stale-write rejection. These do not connect to a production database.
 
 Device acceptance: record a short passage with a skipped word, substitution and repeated phrase; submit, listen and compare; dismiss recognizer mistakes; add a manual audio observation; save and reload; verify another teacher/learner cannot save. Check an incomplete reading excludes the unread tail, audio-only recording permits manual review, and on-device mode is blocked when a language model cannot be verified. Actual microphone recognition and Filipino offline support need phone testing.
+
+## Teacher review layout
+
+- Passage, Transcript, and Review tabs keep each submission's content separate.
+- Passage shows the original punctuation and paragraph spacing in sections of 70 comparison words. Word numbers are optional. Tap a word to see its global position, prefill a teacher observation, or set reading coverage before comparison.
+- Review displays one observation at a time, with All/Pending/Confirmed/Dismissed filters, highlighted passage/transcript excerpts, an expandable type selector, notes, and Confirm/Dismiss controls. Decisions stay on the current observation in the All list so notes can still be edited; Previous/Next moves through the selected list.
+- Manual observations remain available without a transcript. Listening acknowledgment resets when observations change. Saving uses the existing API payload and revision check; this layout requires no backend or native dependency changes.
+- Observation counts remain review totals, not a Phil-IRI accuracy score. The review guide retains the audio and scoring guidance.
+
+Validation: `npx tsc --noEmit`, targeted ESLint, and `node --test tests/*.test.mjs`. The layout tests verify consistent word positions, Unicode, punctuation, paragraph breaks, and section boundaries.
