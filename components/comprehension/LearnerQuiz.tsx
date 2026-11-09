@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, AppState, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Screen } from '../../app/components/Screen';
 import { useTheme } from '../../app/theme/ThemeProvider';
 import { radius, typography } from '../../app/theme/tokens';
 import { comprehensionInfo, saveComprehension, startComprehension } from './api';
 import type { Answer, Attempt, QuizQuestion } from './types';
+import { QuizAction as QuizButton, QuizDisclosure, ui } from './QuizUI';
 
 export function QuizLaunch({ classworkId, classId, readingSubmitted }: { classworkId: string; classId: string; readingSubmitted: boolean }) {
   const { colors } = useTheme();
@@ -59,13 +60,6 @@ export function AttemptResult({ attempt }: { attempt: Attempt }) {
     })}
   </View>;
 }
-function QuizButton({ label, onPress, disabled = false, primary = false }: { label: string; onPress: () => void; disabled?: boolean; primary?: boolean }) {
-  const { colors } = useTheme();
-  return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{ disabled }} onPress={onPress}
-    style={[styles.action, { borderWidth: 1.5, borderColor: colors.primary, backgroundColor: primary ? colors.primary : colors.background, opacity: disabled ? 0.45 : 1 }]}>
-    <Text style={[typography.reading.sm, { color: primary ? colors.primaryText : colors.primary, textAlign: 'center' }]}>{label}</Text>
-  </Pressable>;
-}
 function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void }) {
   const { colors } = useTheme();
   const [attempt, setAttempt] = useState(initial);
@@ -74,7 +68,6 @@ function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void 
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [showPassage, setShowPassage] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const lock = useRef(false);
   const text = [typography.reading.sm, { color: colors.text }];
@@ -105,36 +98,56 @@ function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void 
     return () => handler.remove();
   }, [dirty, attempt.status, persist]);
   const q = attempt.quiz.questions[index], answer = answers.find(a => a.questionId === q.id)?.answer;
-  return <View style={styles.stack}>
-    <QuizButton label="Return to reading activity" onPress={() => { void exit(); }} disabled={busy} />
-    <Text style={[typography.display.lg, { color: colors.text }]}>Comprehension quiz</Text>
-    <Text style={[typography.display.md, { color: colors.text }]}>{attempt.title || 'Reading activity'}</Text>
-    <Text style={text}>{attempt.attemptLabel} · {attempt.readingSubmission ? '✓ Read-aloud submitted' : 'Comprehension-only reading activity'}</Text>
-    {attempt.status !== 'draft' ? <AttemptResult attempt={attempt} /> : <>
-      <Text style={text}>Question {index + 1} of {attempt.quiz.questions.length}</Text>
-      <View style={[styles.progress, { backgroundColor: colors.border }]}><View style={{ height: 8, width: `${(index + 1) / attempt.quiz.questions.length * 100}%`, backgroundColor: colors.secondary }} /></View>
-      {attempt.passage ? <>
-        <QuizButton label={showPassage ? 'Hide passage' : 'View passage'} onPress={() => setShowPassage(v => !v)} disabled={busy} />
-        {showPassage && <Text selectable style={text}>{attempt.passage.text}</Text>}
-      </> : <Text style={[...text, { color: colors.textMuted }]}>Passage hidden in the quiz until submission.</Text>}
-      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-        <Text style={[typography.display.md, { color: colors.text }]}>{q.question}</Text>
-        {q.choices?.map((choice, choiceIndex) => {
-          const selected = Array.isArray(answer) ? answer.includes(choiceIndex) : answer === choiceIndex;
-          return <Pressable key={choiceIndex} accessibilityRole={q.type === 'checkboxes' ? 'checkbox' : 'radio'} accessibilityState={{ checked: selected, disabled: busy }} aria-checked={selected}
-            disabled={busy} onPress={() => change(q.type === 'checkboxes' ? selected ? (answer as number[]).filter(i => i !== choiceIndex) : [...(Array.isArray(answer) ? answer : []), choiceIndex] : choiceIndex)}
-            style={[styles.action, { borderWidth: selected ? 2 : 1, borderColor: selected ? colors.primary : colors.border, backgroundColor: colors.background }]}>
-            <Text style={text}>{selected ? '● ' : '○ '}{String.fromCharCode(65 + choiceIndex)}. {choice}</Text>
-          </Pressable>;
-        })}
-        {(q.type === 'short-answer' || q.type === 'essay') && <TextInput accessibilityLabel="Your written answer" value={typeof answer === 'string' ? answer : ''} onChangeText={change}
-          editable={!busy} multiline maxLength={20000} placeholder="Type your answer…" placeholderTextColor={colors.textMuted}
-          style={[styles.card, typography.reading.sm, { minHeight: q.type === 'essay' ? 180 : 100, color: colors.text, borderColor: colors.border, backgroundColor: colors.background, textAlignVertical: 'top' }]} />}
-        <Text style={[...text, { color: colors.textMuted }]}>{q.type === 'checkboxes' ? 'Select all correct answers. Exact matching is required.' : q.choices ? 'Choose one answer.' : 'Your teacher will review this response.'}</Text>
+  return <KeyboardAvoidingView style={ui.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <View style={ui.header}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Return to reading activity" disabled={busy} onPress={() => { void exit(); }} style={styles.back}>
+        <Text style={{ color: colors.primary, fontSize: 28 }}>‹</Text>
+      </Pressable>
+      <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>Comprehension quiz</Text>
+      {attempt.status === 'draft' && <View style={{ maxWidth: 100 }}><QuizButton label="Save progress" onPress={() => { void persist(); }} disabled={busy} compact /></View>}
+    </View>
+    <ScrollView style={ui.fill} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.scroll}>
+      <View style={[ui.titleCard, { backgroundColor: colors.surface }]}>
+        <Text style={[typography.display.lg, { color: colors.text }]}>{attempt.title || 'Reading activity'}</Text>
+        <Text style={[typography.reading.sm, { color: colors.textMuted }]}>{attempt.attemptLabel}</Text>
       </View>
-      <View style={styles.row}>
-        <View style={styles.flex}><QuizButton label="Previous" onPress={() => { void (async () => { if (!dirty || await persist()) setIndex(i => i - 1); })(); }} disabled={busy || index === 0} /></View>
-        <View style={styles.flex}><QuizButton label={index < attempt.quiz.questions.length - 1 ? 'Next' : 'Submit quiz'} primary disabled={busy} onPress={() => {
+      {attempt.status !== 'draft' ? <AttemptResult attempt={attempt} /> : <>
+        <View style={ui.row}>
+          <Text style={[...text, ui.flex]}>Question {index + 1} of {attempt.quiz.questions.length}</Text>
+          <Text accessibilityLiveRegion="polite" style={[typography.reading.sm, { color: busy || dirty ? colors.textMuted : colors.successText }]}>{busy ? 'Saving…' : dirty ? 'Unsaved' : '✓ Saved'}</Text>
+        </View>
+        <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: attempt.quiz.questions.length, now: index + 1 }} style={[styles.progress, { backgroundColor: colors.border }]}>
+          <View style={{ height: 8, width: `${(index + 1) / attempt.quiz.questions.length * 100}%`, backgroundColor: colors.secondary }} />
+        </View>
+        {attempt.passage ? <QuizDisclosure title="View reading passage"><Text selectable style={text}>{attempt.passage.text}</Text></QuizDisclosure>
+          : <View style={[styles.notice, { backgroundColor: colors.surface }]}><Text style={[typography.reading.sm, { color: colors.textMuted }]}>Passage hidden in the quiz until submission.</Text></View>}
+        <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+          <Text style={[typography.reading.sm, { color: colors.secondaryText, backgroundColor: colors.secondary, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }]}>{q.type.replace(/-/g, ' ').toUpperCase()}</Text>
+          <Text style={[typography.display.lg, { color: colors.text }]}>{q.question}</Text>
+          <Text style={[...text, { color: colors.textMuted }]}>{q.type === 'checkboxes' ? 'Select all correct answers. Exact matching is required.' : q.choices ? 'Choose one answer.' : 'Your teacher will review this response.'}</Text>
+          {q.choices?.map((choice, choiceIndex) => {
+            const selected = Array.isArray(answer) ? answer.includes(choiceIndex) : answer === choiceIndex;
+            return <Pressable key={choiceIndex} accessibilityRole={q.type === 'checkboxes' ? 'checkbox' : 'radio'} accessibilityLabel={`${String.fromCharCode(65 + choiceIndex)}. ${choice}`} accessibilityState={{ checked: selected, disabled: busy }} aria-checked={selected}
+              disabled={busy} onPress={() => change(q.type === 'checkboxes' ? selected ? (answer as number[]).filter(i => i !== choiceIndex) : [...(Array.isArray(answer) ? answer : []), choiceIndex] : choiceIndex)}
+              style={[styles.choice, { borderWidth: selected ? 2 : 1, borderColor: selected ? colors.primary : colors.border, backgroundColor: colors.background }]}>
+              <View style={[styles.choiceMark, { borderColor: selected ? colors.primary : colors.textMuted, borderRadius: q.type === 'checkboxes' ? 4 : 12 }]}>
+                {selected && <View style={{ width: 10, height: 10, borderRadius: q.type === 'checkboxes' ? 2 : 5, backgroundColor: colors.primary }} />}
+              </View>
+              <Text style={[...text, ui.flex]}>{String.fromCharCode(65 + choiceIndex)}. {choice}</Text>
+            </Pressable>;
+          })}
+          {(q.type === 'short-answer' || q.type === 'essay') && <TextInput accessibilityLabel="Your written answer" value={typeof answer === 'string' ? answer : ''} onChangeText={change}
+            editable={!busy} multiline maxLength={20000} placeholder="Type your answer…" placeholderTextColor={colors.textMuted}
+            style={[ui.input, typography.reading.sm, { minHeight: q.type === 'essay' ? 180 : 120, color: colors.text, borderColor: colors.border, backgroundColor: colors.background, textAlignVertical: 'top' }]} />}
+        </View>
+      </>}
+    </ScrollView>
+    {attempt.status === 'draft' && <View style={[ui.footer, { borderColor: colors.border, backgroundColor: colors.background }]}>
+      {!!error && <Text accessibilityRole="alert" style={[...text, { color: colors.retryText }]}>{error} Reopen the quiz if another session changed this attempt.</Text>}
+      <Text style={[typography.reading.sm, { color: colors.textMuted, textAlign: 'center' }]}>Your answers save as you go.</Text>
+      <View style={ui.row}>
+        <View style={ui.flex}><QuizButton label="Previous" onPress={() => { void (async () => { if (!dirty || await persist()) setIndex(i => i - 1); })(); }} disabled={busy || index === 0} /></View>
+        <View style={ui.flex}><QuizButton label={index < attempt.quiz.questions.length - 1 ? 'Next' : 'Submit quiz'} primary disabled={busy} onPress={() => {
           if (index < attempt.quiz.questions.length - 1) { void (async () => { if (!dirty || await persist()) setIndex(i => i + 1); })(); return; }
           const missing = attempt.quiz.questions.filter(question => !answered(question, answers)).length;
           if (missing) { setError(`Answer all questions before submitting. ${missing} unanswered.`); return; }
@@ -142,11 +155,8 @@ function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void 
           Alert.alert('Submit comprehension quiz?', 'Your responses will be locked after submission.', [{ text: 'Keep answering', style: 'cancel', onPress: () => setConfirming(false) }, { text: 'Submit', onPress: () => { setConfirming(false); void persist(true); } }], { cancelable: true, onDismiss: () => setConfirming(false) });
         }} /></View>
       </View>
-      <QuizButton label="Save progress" onPress={() => { void persist(); }} disabled={busy} />
-      <Text accessibilityLiveRegion="polite" style={[...text, { color: colors.textMuted }]}>{busy ? 'Saving…' : dirty ? 'Unsaved changes' : 'Progress saved'}</Text>
-    </>}
-    {!!error && <Text accessibilityRole="alert" style={[...text, { color: colors.retryText }]}>{error} Reopen the quiz if another session changed this attempt.</Text>}
-  </View>;
+    </View>}
+  </KeyboardAvoidingView>;
 }
 export function LearnerQuizScreen() {
   const { colors } = useTheme();
@@ -159,15 +169,19 @@ export function LearnerQuizScreen() {
     return () => { active = false; };
   }, [id, retry]);
   const exit = () => router.replace({ pathname: '/learner/classwork/[id]', params: { id, classId } });
-  return <Screen><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
-    {response?.attempt ? <QuizRunner key={response.attempt._id} initial={response.attempt} onExit={exit} /> : <View style={styles.stack}>
+  return <Screen>
+    {response?.attempt ? <QuizRunner key={response.attempt._id} initial={response.attempt} onExit={exit} /> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ui.scroll}><View style={styles.stack}>
       <Pressable accessibilityRole="button" onPress={exit} style={styles.action}><Text style={[typography.reading.sm, { color: colors.primary }]}>Return to reading activity</Text></Pressable>
       {response?.error ? <><Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.retryText }]}>{response.error}</Text>
         <Pressable accessibilityRole="button" onPress={() => { setResponse(null); setRetry(v => v + 1); }} style={styles.action}><Text style={[typography.reading.sm, { color: colors.primary }]}>Try again</Text></Pressable></> : <ActivityIndicator color={colors.primary} />}
-    </View>}
-  </ScrollView></Screen>;
+    </View></ScrollView>}
+  </Screen>;
 }
 const styles = StyleSheet.create({
+  back: { minWidth: 44, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  notice: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10 },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, minHeight: 58, borderRadius: 12 },
+  choiceMark: { width: 24, height: 24, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   stack: { gap: 16 }, card: { gap: 12, padding: 16, borderWidth: 1.5, borderRadius: radius.md },
   action: { minHeight: 48, padding: 12, borderRadius: radius.sm, justifyContent: 'center' },
   row: { flexDirection: 'row', gap: 12 }, flex: { flex: 1, minWidth: 0 }, progress: { height: 8, borderRadius: 4, overflow: 'hidden' },

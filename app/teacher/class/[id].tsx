@@ -2352,7 +2352,7 @@ function ClassworkTab({
 
               {selectedType === 'Reading Assignment' && readingActivities.includes('comprehension') && (
                 passageConfirmed && readingPassage ? <View style={{ marginVertical: 16 }}>
-                  <QuizBuilder key={JSON.stringify([readingPassage.text, readingPassage.wordCount])} passage={readingPassage} onChange={setComprehensionDraft} disabled={submitting} />
+                  <QuizBuilder key={JSON.stringify([readingPassage.text, readingPassage.wordCount])} passage={readingPassage} title={title.trim() || "Reading assignment"} onChange={setComprehensionDraft} disabled={submitting} />
                   {comprehensionDraft?.passage.text === readingPassage.text && comprehensionDraft.passage.wordCount === readingPassage.wordCount && <Text style={[typography.reading.sm, { color: colors.successText, marginTop: 8 }]}>✓ Reviewed quiz ready to publish</Text>}
                 </View> : <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Confirm the reading passage first to set up its comprehension quiz.</Text>
               )}
