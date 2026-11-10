@@ -1,3 +1,4 @@
+import { WordAccuracyReview } from './progress/WordAccuracyReview';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -55,6 +56,9 @@ function LearnerSubmission({ submission, assignment, onSaved }: {
       subtitle={submission.audio.durationMs ? `Duration ${formatTime(submission.audio.durationMs)}` : 'Learner recording'} />
     <ReviewSection title="Reading review" subtitle="Passage, transcript and observations" initialExpanded>
       <MiscueReview embedded key={`${submission._id}:${submission.miscueReview?.reviewedAt ?? 'new'}`} submission={submission} onSaved={onSaved} />
+    </ReviewSection>
+    <ReviewSection title="Word accuracy review" subtitle="Confirm assessed words and scored errors">
+      <WordAccuracyReview key={`${submission._id}:${submission.wordAccuracy?.reviewedAt ?? 'new'}`} submission={submission} onSaved={onSaved} />
     </ReviewSection>
     <ReviewSection title="Reading speed review" subtitle="Word count and reading time">
       <ReadingRateReview embedded key={`${submission._id}:${submission.reviewedAt ?? 'new'}`} submission={submission} onSaved={onSaved} />
