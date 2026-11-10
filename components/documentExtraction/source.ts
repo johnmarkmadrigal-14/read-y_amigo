@@ -10,9 +10,9 @@ export function detectDocumentKind(name: string, mimeType?: string): DocumentKin
   if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '') || mimeType?.startsWith('image/')) return 'image';
   return 'unsupported';
 }
-export async function fetchDocumentData(uri: string): Promise<{ base64: string; mimeType?: string }> {
+export async function fetchDocumentData(uri: string, headers?: Record<string, string>): Promise<{ base64: string; mimeType?: string }> {
   if (/^(file|content):/i.test(uri)) return { base64: await new File(uri).base64() };
-  const response = await fetch(uri);
+  const response = await fetch(uri, headers ? { headers } : undefined);
   if (!response.ok) throw new Error(`Couldn't download the file (error ${response.status}).`);
   const blob = await response.blob();
   return new Promise((resolve, reject) => {
@@ -22,9 +22,9 @@ export async function fetchDocumentData(uri: string): Promise<{ base64: string; 
     reader.readAsDataURL(blob);
   });
 }
-export async function fetchDocumentText(uri: string): Promise<string> {
+export async function fetchDocumentText(uri: string, headers?: Record<string, string>): Promise<string> {
   if (/^(file|content):/i.test(uri)) return new File(uri).text();
-  const response = await fetch(uri);
+  const response = await fetch(uri, headers ? { headers } : undefined);
   if (!response.ok) throw new Error(`Couldn't download the file (error ${response.status}).`);
   return response.text();
 }

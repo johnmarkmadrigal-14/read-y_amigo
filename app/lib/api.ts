@@ -176,6 +176,9 @@ export type ApiClasswork = {
   updatedAt?: string;
 };
 
+export type ClassroomPerson = { _id: string; displayName: string; firstName?: string; secondName?: string; middleInitial?: string;
+  fullName?: string; profilePhoto?: string; age?: number | null; role?: 'teacher' | 'learner' };
+
 // Teacher-side view of an enrollment: `learner` is populated.
 export type ApiEnrollment = {
   readingSummary?: ReadingSummary;
@@ -183,12 +186,7 @@ export type ApiEnrollment = {
   _id: string;
   class: string;
 
-  learner: {
-    _id: string;
-    displayName: string;
-    firstName: string;
-    secondName: string;
-  };
+  learner: ClassroomPerson & { firstName: string; secondName: string };
 
   streakDays: number;
   comprehensionAvg: number;
@@ -559,6 +557,7 @@ export async function getReports() {
 }
 
 export type ApiSubmission = {
+  verification?: { verifiedAt: string; verifiedBy: string };
   wordAccuracy?: { wordsAssessed: number; errorCount: number; percentage: number; listened: boolean; reviewedAt: string; reviewedBy: string };
   miscueReview?: MiscueReview;
   recordingInterrupted?: boolean;
@@ -1115,3 +1114,29 @@ export async function reviewWordAccuracy(submissionId: string, review: { wordsAs
   const { submission } = await authRequest<{ submission: ApiSubmission }>(`/submissions/${submissionId}/word-accuracy`, { method: 'PATCH', body: review });
   return submission;
 }
+
+export async function submitActivity(classworkId: string, text: string, file?: { uri: string; name: string; type: string; blob?: Blob }) {
+  const token = await getStoredToken();
+  if (!token) throw new Error("You're not logged in. Please log in again.");
+  const form = new FormData(); form.append('text', text);
+  if (file) {
+    if (file.blob) form.append('file', file.blob, file.name);
+    else form.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
+  }
+  return new Promise<import('../../components/workflow/data').ActivitySubmission>((resolve, reject) => {
+    const xhr = new XMLHttpRequest(); xhr.open('POST', `${API_ROOT}/activities/classwork/${classworkId}`);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`); xhr.timeout = 60000;
+    xhr.onload = () => {
+      let data: any = {}; try { data = JSON.parse(xhr.responseText || '{}'); } catch {}
+      if (xhr.status >= 200 && xhr.status < 300 && data.submission) resolve(data.submission);
+      else reject(new Error(data.error || 'Could not submit the activity.'));
+    };
+    xhr.onerror = () => reject(new Error('Could not reach the backend. Check your connection.'));
+    xhr.ontimeout = () => reject(new Error('The upload took too long. Please try again.'));
+    xhr.send(form);
+  });
+}
+export const verifyReading = (submission: ApiSubmission) => authRequest<{ submission: ApiSubmission }>(`/submissions/${submission._id}/verify`, {
+  method: 'PATCH', body: { confirmed: true, previousVerifiedAt: submission.verification?.verifiedAt || null },
+});
+export const getClassroomPeople = (classId: string) => authRequest<{ learners: ApiEnrollment[]; teacher: ClassroomPerson | null }>(`/learner/classes/${classId}/learners`);

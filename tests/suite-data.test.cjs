@@ -16,3 +16,14 @@ test('shared quiz client dispatches standalone writes and grading separately fro
  await api.saveComprehension(attempt,[],true);assert.equal(calls.at(-1).path,'/quizzes/attempts/a/submit');await api.gradeComprehension(attempt,[]);assert.equal(calls.at(-1).path,'/quizzes/attempts/a/grade');await api.teacherAttempts('w',true);assert.equal(calls.at(-1).path,'/quizzes/classwork/w/attempts');
  await api.saveComprehension({...attempt,assessmentType:'passage'},[],false);assert.equal(calls.at(-1).path,'/comprehension/attempts/a/draft');await api.standaloneQuizResults('c');assert.equal(calls.at(-1).path,'/quizzes/mine?classId=c');assert.equal(calls.at(-1).options,undefined,'listing results is read-only');
 });
+test('workflow destinations open the specific submission or quiz attempt, and joins open Learners',()=>{
+ const {workDestination,readingReviewed}=load('components/workflow/data.ts');
+ const row={classId:'c',classworkId:'w',submissionId:'s',attemptId:'a'};
+ assert.deepEqual(workDestination({...row,kind:'reading'}),{pathname:'/teacher/classwork/submission/[id]',params:{id:'s',classworkId:'w'}});
+ assert.deepEqual(workDestination({...row,kind:'activity'}),{pathname:'/teacher/classwork/activity/[id]',params:{id:'s'}});
+ for(const kind of ['comprehension','quiz'])assert.equal(workDestination({...row,kind}).params.attemptId,'a');
+ assert.equal(workDestination({...row,kind:'joined'}).params.tab,'Learners');
+ assert.equal(readingReviewed({readingRate:{status:'reviewed'}}),false);
+ assert.equal(readingReviewed({readingRate:{status:'reviewed'},wordAccuracy:{reviewedAt:'2026-11-10'}}),true);
+ assert.equal(readingReviewed({verification:{verifiedAt:'2026-11-10'}}),true);
+});

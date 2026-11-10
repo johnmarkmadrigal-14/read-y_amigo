@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { UserAvatar } from "../../components/UserAvatar";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
@@ -27,7 +28,9 @@ export function DashboardWelcome({ name, role, count, photo }: {
         <View style={[styles.badge, { backgroundColor: colors.surface, borderColor: colors.secondaryShadow }]}>
           <Text style={[typography.display.sm, { color: colors.text }]}>{role}</Text>
         </View>
-        <UserAvatar name={name} photo={photo} size={42} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Open your profile" onPress={() => router.push(teacher ? '/teacher/profile' : '/learner/profile')} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <UserAvatar name={name} photo={photo} size={42} />
+        </Pressable>
       </View>
       <View style={styles.greeting}>
         <Text style={[typography.reading.sm, { color: colors.textMuted }]}>

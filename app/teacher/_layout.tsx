@@ -39,7 +39,7 @@ export default function TeacherLayout() {
       <Tabs.Screen
         name="todo"
         options={{
-          title: "To-do",
+          title: "To-check",
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name="checkbox-outline"

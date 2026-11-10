@@ -1,3 +1,4 @@
+import { LearnerActivity } from '../../../components/workflow/ActivityUI';
 import { QuizLaunch } from '../../../components/comprehension/LearnerQuiz';
 import { useReadingPreferences } from "../../../components/ReadingPreferences";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
@@ -237,6 +238,8 @@ export default function LearnerClassworkScreen() {
           )}
         </View>
       )}
+
+      {item.type === 'activity' && <LearnerActivity key={item._id} classId={classId} classworkId={item._id} deadlinePassed={deadlinePassed} />}
 
       {canReadAloud && item.readingPassage?.confirmed && (
         <View style={[styles.section, { padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }]}>

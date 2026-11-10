@@ -9,6 +9,7 @@ import { detectDocumentKind, fetchDocumentText } from "../../components/document
 
 interface FileViewerProps {
   url: string;
+  headers?: Record<string, string>;
   name: string;
   mimeType?: string;
   height?: number;
@@ -17,7 +18,7 @@ interface FileViewerProps {
 export function FileViewer(props: FileViewerProps) {
   return <FileViewerSession key={JSON.stringify([props.url, props.name, props.mimeType])} {...props} />;
 }
-function FileViewerSession({ url, name, mimeType, height = 440 }: FileViewerProps) {
+function FileViewerSession({ url, name, mimeType, headers, height = 440 }: FileViewerProps) {
   const { colors } = useTheme();
   const kind = detectDocumentKind(name, mimeType);
 
@@ -28,7 +29,7 @@ function FileViewerSession({ url, name, mimeType, height = 440 }: FileViewerProp
   useEffect(() => {
     let cancelled = false;
     if (kind === "text") {
-      fetchDocumentText(url)
+      fetchDocumentText(url, headers)
         .then((t) => {
           if (cancelled) return;
           setText(t);
@@ -44,7 +45,7 @@ function FileViewerSession({ url, name, mimeType, height = 440 }: FileViewerProp
     return () => {
       cancelled = true;
     };
-  }, [url, kind]);
+  }, [url, kind, headers]);
 
   return (
     <View
@@ -55,7 +56,7 @@ function FileViewerSession({ url, name, mimeType, height = 440 }: FileViewerProp
     >
       {kind === "image" && (
         <Image
-          source={{ uri: url }}
+          source={{ uri: url, headers }}
           style={styles.fill}
           resizeMode="contain"
           onLoadEnd={() => setLoading(false)}
@@ -67,7 +68,7 @@ function FileViewerSession({ url, name, mimeType, height = 440 }: FileViewerProp
       )}
 
       {(kind === "pdf" || kind === "docx") && (
-        <DocumentWebView uri={url} kind={kind}
+        <DocumentWebView uri={url} headers={headers} kind={kind}
           onDone={() => setLoading(false)}
           onError={message => { setError(message); setLoading(false); }} />
       )}

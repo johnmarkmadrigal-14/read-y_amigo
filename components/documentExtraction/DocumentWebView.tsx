@@ -5,6 +5,7 @@ import { fetchDocumentData } from './source';
 
 type Props = {
   uri: string;
+  headers?: Record<string, string>;
   kind: 'pdf' | 'docx' | 'auto';
   extractOnly?: boolean;
   onText?: (text: string) => void;
@@ -15,7 +16,7 @@ export function DocumentWebView(props: Props) {
   // A fresh instance isolates bridge messages, downloads, and timers per source.
   return <DocumentSession key={JSON.stringify([props.uri, props.kind, props.extractOnly])} {...props} />;
 }
-function DocumentSession({ uri, kind, extractOnly = false, onText, onDone, onError }: Props) {
+function DocumentSession({ uri, headers, kind, extractOnly = false, onText, onDone, onError }: Props) {
   const web = useRef<WebView>(null);
   const ready = useRef(false);
   const data = useRef<{ base64: string; mimeType?: string } | null>(null);
@@ -39,7 +40,7 @@ function DocumentSession({ uri, kind, extractOnly = false, onText, onDone, onErr
   useEffect(() => {
     active.current = true;
     const timer = setTimeout(() => fail('This document took too long to read. Paste the passage manually or try a smaller file.'), 60000);
-    fetchDocumentData(uri).then(value => {
+    fetchDocumentData(uri, headers).then(value => {
       if (!active.current || settled.current) return;
       data.current = value;
       inject();
