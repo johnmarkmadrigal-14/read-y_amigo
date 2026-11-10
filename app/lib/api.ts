@@ -1,3 +1,4 @@
+import type { ReadingSummary } from '../../components/progress/data';
 import type { MiscueReview } from "../../components/miscueComparison";
 import type { ReadingPassage, ReadingMeasurement, RecordingPayload, ReadingRateResult } from "../../components/readingRate";
 import {
@@ -176,6 +177,8 @@ export type ApiClasswork = {
 
 // Teacher-side view of an enrollment: `learner` is populated.
 export type ApiEnrollment = {
+  readingSummary?: ReadingSummary;
+  latestReadingAt?: string;
   _id: string;
   class: string;
 
@@ -572,6 +575,7 @@ export async function getReports() {
 }
 
 export type ApiSubmission = {
+  wordAccuracy?: { wordsAssessed: number; errorCount: number; percentage: number; listened: boolean; reviewedAt: string; reviewedBy: string };
   miscueReview?: MiscueReview;
   recordingInterrupted?: boolean;
   readingPassage?: ReadingPassage;
@@ -1120,5 +1124,10 @@ export async function saveMiscueReview(submissionId: string, review: MiscueRevie
   const { submission } = await authRequest<{ submission: ApiSubmission }>(`/submissions/${submissionId}/miscue-review`, {
     method: 'PATCH', body: { ...review, previousReviewedAt },
   });
+  return submission;
+}
+
+export async function reviewWordAccuracy(submissionId: string, review: { wordsAssessed: number; errorCount: number; listened: boolean; previousReviewedAt: string | null }) {
+  const { submission } = await authRequest<{ submission: ApiSubmission }>(`/submissions/${submissionId}/word-accuracy`, { method: 'PATCH', body: review });
   return submission;
 }

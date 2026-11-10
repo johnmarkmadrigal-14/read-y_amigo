@@ -1,9 +1,10 @@
+import { LearnerQuizList } from '../../../components/progress/LearnerQuizList';
 import { ClassroomHeader, ClassroomTabs, classroomAccents } from "../../../components/ClassroomChrome";
 import { TextAction } from "../../components/InterfaceChrome";
 // app/learner/class/[id].tsx
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -161,9 +162,7 @@ export default function LearnerClassDetail() {
     [classId]
   );
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   // Reading + activity classwork opens the full-screen view (in-app file
   // viewer + "Read now" recorder). Quizzes still use the details sheet.
@@ -252,6 +251,7 @@ export default function LearnerClassDetail() {
       >
         {activeTab === "Classwork" && (
           <ClassworkTab
+            classId={classId}
             items={classwork}
             colors={colors}
             onOpen={openClasswork}
@@ -297,10 +297,12 @@ export default function LearnerClassDetail() {
    ========================================================= */
 
 function ClassworkTab({
+  classId,
   items,
   colors,
   onOpen,
 }: {
+  classId: string;
   items: ApiClasswork[];
   colors: ThemeColors;
   onOpen: (item: ApiClasswork) => void;
@@ -346,7 +348,7 @@ function ClassworkTab({
         })}
       </View>
 
-      {filtered.length === 0 ? (
+      {selectedFilter === "quiz" ? <LearnerQuizList classId={classId} items={items} onOpenStandalone={onOpen} /> : filtered.length === 0 ? (
         <View style={styles.empty}>
           <View
             style={[

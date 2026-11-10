@@ -1,3 +1,5 @@
+import { comprehensionLevel, finalPercentage } from '../progress/data';
+import { ProgressBadge } from '../progress/ProgressUI';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -47,6 +49,7 @@ export function AttemptResult({ attempt }: { attempt: Attempt }) {
       <Text style={[typography.reading.md, { color: colors.primary }]}>{result.percentage === null ? `${result.pendingQuestions} written responses awaiting grading` : `${result.correctAnswers} / ${result.totalQuestions} correct · ${result.percentage.toFixed(1)}%`}</Text>
       <Text style={[typography.reading.sm, { color: colors.textMuted }]}>{result.percentage === null ? 'Your final comprehension percentage will appear after every question is graded.' : `Classroom points: ${result.earnedPoints} / ${result.maxPoints}. These are separate from the comprehension percentage.`}</Text>
     </>}
+    {comprehensionLevel(finalPercentage(attempt)) && <ProgressBadge tone={comprehensionLevel(finalPercentage(attempt)) === 'Independent' ? 'green' : 'orange'}>Comprehension level: {comprehensionLevel(finalPercentage(attempt))}</ProgressBadge>}
     <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Responses are submitted and cannot be edited.</Text>
     {attempt.quiz.questions.map(q => {
       const response = attempt.answers.find(a => a.questionId === q.id)?.answer;

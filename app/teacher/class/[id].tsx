@@ -1,3 +1,4 @@
+import { TeacherProgress } from '../../../components/progress/TeacherProgress';
 import { QuizBuilder } from '../../../components/comprehension/QuizBuilder';
 import { publishComprehension, validateComprehension } from '../../../components/comprehension/api';
 import type { QuizDraft } from '../../../components/comprehension/types';
@@ -10,8 +11,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 
 import ClassStream from "../../components/teacher/ClassStream";
 
@@ -416,9 +417,7 @@ export default function ClassDetail() {
     }
   }, [classId]);
 
-  useEffect(() => {
-    loadEverything();
-  }, [loadEverything]);
+  useFocusEffect(useCallback(() => { void loadEverything(); }, [loadEverything]));
 
   const handleCopyCode = async () => {
     if (!classInfo?.class.code) return;
@@ -659,11 +658,7 @@ export default function ClassDetail() {
         )}
 
         {activeTab === "Progress" && (
-          <ProgressTab
-            progress={progress}
-            cardStyle={cardStyle}
-            colors={colors}
-          />
+          <TeacherProgress classId={classId} progress={progress} />
         )}
       </ScrollView>
     );
@@ -1284,8 +1279,8 @@ function ClassworkTab({
 
     return items.filter(
       (item) =>
-        displayTypeFromApi(item.type) ===
-        selectedFilter
+        displayTypeFromApi(item.type) === selectedFilter ||
+        (selectedFilter === "Quiz" && item.type === "reading" && item.readingActivities?.includes("comprehension"))
     );
   }, [items, selectedFilter]);
 
@@ -1432,9 +1427,9 @@ function ClassworkTab({
             key={item._id}
             item={item}
             colors={colors}
-            onPress={() =>
-              setDetailsItem(item)
-            }
+            onPress={() => selectedFilter === "Quiz" && item.type === "reading"
+              ? router.push({ pathname: "/teacher/classwork/comprehension/[id]", params: { id: item._id } })
+              : setDetailsItem(item)}
           />
         ))
       )}
@@ -4985,69 +4980,6 @@ function LearnersTab({
 /* =========================================================
    PROGRESS
    ========================================================= */
-
-function ProgressTab({
-  progress,
-  cardStyle,
-  colors,
-}: {
-  progress: ApiEnrollment[];
-  cardStyle: any;
-  colors: ReturnType<
-    typeof useTheme
-  >["colors"];
-}) {
-  if (progress.length === 0) {
-    return (
-      <EmptyState
-        colors={colors}
-        message="No progress data yet."
-      />
-    );
-  }
-
-  return (
-    <View>
-      {progress.map((enrollment) => (
-        <View
-          key={enrollment._id}
-          style={cardStyle}
-        >
-          <Text
-            style={[
-              typography.reading.sm,
-              {
-                color: colors.text,
-                fontWeight: "600",
-              },
-            ]}
-          >
-            {
-              enrollment.learner
-                .displayName
-            }
-          </Text>
-
-          <Text
-            style={[
-              typography.reading.sm,
-              {
-                color:
-                  colors.textMuted,
-                marginTop: 4,
-              },
-            ]}
-          >
-            {
-              enrollment.comprehensionAvg
-            }
-            % comprehension
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
 
 /* =========================================================
    EMPTY
