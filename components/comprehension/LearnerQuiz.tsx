@@ -6,7 +6,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Screen } from '../../app/components/Screen';
 import { useTheme } from '../../app/theme/ThemeProvider';
 import { radius, typography } from '../../app/theme/tokens';
-import { comprehensionInfo, saveComprehension, startComprehension } from './api';
+import { comprehensionInfo, saveComprehension, startComprehension, startStandaloneQuiz } from './api';
 import type { Answer, Attempt, QuizQuestion } from './types';
 import { QuizAction as QuizButton, QuizDisclosure, ui } from './QuizUI';
 
@@ -43,13 +43,14 @@ export function answered(question: QuizQuestion, answers: Answer[]) {
 }
 export function AttemptResult({ attempt }: { attempt: Attempt }) {
   const { colors } = useTheme(), result = attempt.result;
+  const standalone = attempt.assessmentType === 'standalone';
   return <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-    <Text style={[typography.display.lg, { color: colors.text }]}>{attempt.status === 'pending-review' ? 'Pending teacher review' : 'Comprehension result'}</Text>
+    <Text style={[typography.display.lg, { color: colors.text }]}>{attempt.status === 'pending-review' ? 'Pending teacher review' : standalone ? 'Quiz result' : 'Comprehension result'}</Text>
     {result && <>
       <Text style={[typography.reading.md, { color: colors.primary }]}>{result.percentage === null ? `${result.pendingQuestions} written responses awaiting grading` : `${result.correctAnswers} / ${result.totalQuestions} correct · ${result.percentage.toFixed(1)}%`}</Text>
-      <Text style={[typography.reading.sm, { color: colors.textMuted }]}>{result.percentage === null ? 'Your final comprehension percentage will appear after every question is graded.' : `Classroom points: ${result.earnedPoints} / ${result.maxPoints}. These are separate from the comprehension percentage.`}</Text>
+      <Text style={[typography.reading.sm, { color: colors.textMuted }]}>{result.percentage === null ? 'Your final percentage will appear after every question is graded.' : `Classroom points: ${result.earnedPoints} / ${result.maxPoints}. These are separate from the correct-answer percentage.`}</Text>
     </>}
-    {comprehensionLevel(finalPercentage(attempt)) && <ProgressBadge tone={comprehensionLevel(finalPercentage(attempt)) === 'Independent' ? 'green' : 'orange'}>Comprehension level: {comprehensionLevel(finalPercentage(attempt))}</ProgressBadge>}
+    {!standalone && comprehensionLevel(finalPercentage(attempt)) && <ProgressBadge tone={comprehensionLevel(finalPercentage(attempt)) === 'Independent' ? 'green' : 'orange'}>Comprehension level: {comprehensionLevel(finalPercentage(attempt))}</ProgressBadge>}
     <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Responses are submitted and cannot be edited.</Text>
     {attempt.quiz.questions.map(q => {
       const response = attempt.answers.find(a => a.questionId === q.id)?.answer;
@@ -63,7 +64,7 @@ export function AttemptResult({ attempt }: { attempt: Attempt }) {
     })}
   </View>;
 }
-function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void }) {
+export function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void }) {
   const { colors } = useTheme();
   const [attempt, setAttempt] = useState(initial);
   const [answers, setAnswers] = useState(initial.answers);
@@ -100,13 +101,14 @@ function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void 
     const handler = AppState.addEventListener('change', state => { if (state !== 'active' && dirty && attempt.status === 'draft') void persist(); });
     return () => handler.remove();
   }, [dirty, attempt.status, persist]);
+  const standalone = attempt.assessmentType === 'standalone';
   const q = attempt.quiz.questions[index], answer = answers.find(a => a.questionId === q.id)?.answer;
   return <KeyboardAvoidingView style={ui.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <View style={ui.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Return to reading activity" disabled={busy} onPress={() => { void exit(); }} style={styles.back}>
+      <Pressable accessibilityRole="button" accessibilityLabel={standalone ? 'Return to classroom' : 'Return to reading activity'} disabled={busy} onPress={() => { void exit(); }} style={styles.back}>
         <Text style={{ color: colors.primary, fontSize: 28 }}>‹</Text>
       </Pressable>
-      <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>Comprehension quiz</Text>
+      <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>{standalone ? 'Classroom quiz' : 'Comprehension quiz'}</Text>
       {attempt.status === 'draft' && <View style={{ maxWidth: 100 }}><QuizButton label="Save progress" onPress={() => { void persist(); }} disabled={busy} compact /></View>}
     </View>
     <ScrollView style={ui.fill} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.scroll}>
@@ -122,8 +124,8 @@ function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void 
         <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: attempt.quiz.questions.length, now: index + 1 }} style={[styles.progress, { backgroundColor: colors.border }]}>
           <View style={{ height: 8, width: `${(index + 1) / attempt.quiz.questions.length * 100}%`, backgroundColor: colors.secondary }} />
         </View>
-        {attempt.passage ? <QuizDisclosure title="View reading passage"><Text selectable style={text}>{attempt.passage.text}</Text></QuizDisclosure>
-          : <View style={[styles.notice, { backgroundColor: colors.surface }]}><Text style={[typography.reading.sm, { color: colors.textMuted }]}>Passage hidden in the quiz until submission.</Text></View>}
+        {!standalone && (attempt.passage ? <QuizDisclosure title="View reading passage"><Text selectable style={text}>{attempt.passage.text}</Text></QuizDisclosure>
+          : <View style={[styles.notice, { backgroundColor: colors.surface }]}><Text style={[typography.reading.sm, { color: colors.textMuted }]}>Passage hidden in the quiz until submission.</Text></View>)}
         <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
           <Text style={[typography.reading.sm, { color: colors.secondaryText, backgroundColor: colors.secondary, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }]}>{q.type.replace(/-/g, ' ').toUpperCase()}</Text>
           <Text style={[typography.display.lg, { color: colors.text }]}>{q.question}</Text>
@@ -155,26 +157,28 @@ function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void 
           const missing = attempt.quiz.questions.filter(question => !answered(question, answers)).length;
           if (missing) { setError(`Answer all questions before submitting. ${missing} unanswered.`); return; }
           setConfirming(true);
-          Alert.alert('Submit comprehension quiz?', 'Your responses will be locked after submission.', [{ text: 'Keep answering', style: 'cancel', onPress: () => setConfirming(false) }, { text: 'Submit', onPress: () => { setConfirming(false); void persist(true); } }], { cancelable: true, onDismiss: () => setConfirming(false) });
+          Alert.alert(standalone ? 'Submit classroom quiz?' : 'Submit comprehension quiz?', 'Your responses will be locked after submission.', [{ text: 'Keep answering', style: 'cancel', onPress: () => setConfirming(false) }, { text: 'Submit', onPress: () => { setConfirming(false); void persist(true); } }], { cancelable: true, onDismiss: () => setConfirming(false) });
         }} /></View>
       </View>
     </View>}
   </KeyboardAvoidingView>;
 }
-export function LearnerQuizScreen() {
+export function LearnerQuizScreen({ standalone = false }: { standalone?: boolean } = {}) {
   const { colors } = useTheme();
   const { id, classId } = useLocalSearchParams<{ id: string; classId: string }>();
   const [response, setResponse] = useState<{ attempt?: Attempt; error?: string } | null>(null);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
-    startComprehension(id).then(data => { if (active) setResponse(data); }).catch(err => { if (active) setResponse({ error: err instanceof Error ? err.message : 'Could not start the quiz.' }); });
+    (standalone ? startStandaloneQuiz(id) : startComprehension(id)).then(data => { if (active) setResponse(data); }).catch(err => { if (active) setResponse({ error: err instanceof Error ? err.message : 'Could not start the quiz.' }); });
     return () => { active = false; };
-  }, [id, retry]);
-  const exit = () => router.replace({ pathname: '/learner/classwork/[id]', params: { id, classId } });
+  }, [id, retry, standalone]);
+  const exit = () => standalone
+    ? router.replace({ pathname: '/learner/class/[id]', params: { id: classId } })
+    : router.replace({ pathname: '/learner/classwork/[id]', params: { id, classId } });
   return <Screen>
     {response?.attempt ? <QuizRunner key={response.attempt._id} initial={response.attempt} onExit={exit} /> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ui.scroll}><View style={styles.stack}>
-      <Pressable accessibilityRole="button" onPress={exit} style={styles.action}><Text style={[typography.reading.sm, { color: colors.primary }]}>Return to reading activity</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={exit} style={styles.action}><Text style={[typography.reading.sm, { color: colors.primary }]}>{standalone ? 'Return to classroom' : 'Return to reading activity'}</Text></Pressable>
       {response?.error ? <><Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.retryText }]}>{response.error}</Text>
         <Pressable accessibilityRole="button" onPress={() => { setResponse(null); setRetry(v => v + 1); }} style={styles.action}><Text style={[typography.reading.sm, { color: colors.primary }]}>Try again</Text></Pressable></> : <ActivityIndicator color={colors.primary} />}
     </View></ScrollView>}

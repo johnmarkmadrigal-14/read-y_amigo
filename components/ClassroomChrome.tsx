@@ -9,9 +9,9 @@ export const classroomAccents = {
   activity: { fill: "#FAECE7", ink: "#993C1D" },
   quiz: { fill: "#EEEDFE", ink: "#534AB7" },
 };
-type Section = "Stream" | "Classwork" | "Materials" | "Learners" | "Progress" | "People";
+type Section = "Stream" | "Classwork" | "Materials" | "Library" | "Learners" | "Progress" | "People";
 const icons: Record<Section, keyof typeof Ionicons.glyphMap> = {
-  Stream: "megaphone-outline", Classwork: "clipboard-outline", Materials: "folder-open-outline",
+  Stream: "megaphone-outline", Classwork: "clipboard-outline", Materials: "folder-open-outline", Library: "library-outline",
   Learners: "people-outline", Progress: "analytics-outline", People: "people-outline",
 };
 
@@ -71,7 +71,7 @@ export function ClassroomTabs<T extends Section>({ tabs, active, onSelect }: {
   return <View accessibilityRole="tablist" style={styles.tabs}>
     {tabs.map(tab => {
       const selected = active === tab;
-      const accent = tab === "Materials" ? classroomAccents.quiz
+      const accent = (tab === "Materials" || tab === "Library") ? classroomAccents.quiz
         : tab === "Learners" || tab === "People" ? classroomAccents.reading
         : tab === "Progress" ? classroomAccents.activity : null;
       const ink = selected ? colors.primaryText : dark ? colors.text : accent?.ink ?? colors.text;

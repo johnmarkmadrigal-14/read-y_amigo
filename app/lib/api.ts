@@ -1,3 +1,4 @@
+import type { ReportsData } from '../../components/reports/data';
 import type { ReadingSummary } from '../../components/progress/data';
 import type { MiscueReview } from "../../components/miscueComparison";
 import type { ReadingPassage, ReadingMeasurement, RecordingPayload, ReadingRateResult } from "../../components/readingRate";
@@ -206,26 +207,9 @@ export type ApiLearnerEnrollment = {
   createdAt: string;
 };
 
-export type ApiReportClass = {
-  _id: string;
-  title: string;
-  code: string;
-  learnerCount: number;
-  avgStreakDays: number;
-  avgComprehension: number;
-};
-
-export type ApiReportTotals = {
-  classCount: number;
-  totalLearners: number;
-  avgComprehension: number;
-  avgStreakDays: number;
-};
-
-export type ApiReports = {
-  totals: ApiReportTotals;
-  classes: ApiReportClass[];
-};
+export type ApiReportClass = ReportsData['classes'][number];
+export type ApiReportTotals = ReportsData['totals'];
+export type ApiReports = ReportsData;
 
 type AuthResponse = {
   token: string;

@@ -90,14 +90,14 @@ function ManualReview({ attempt, assignment, manual, onChange, onSaved, onBack }
     if (!complete) { setError('Mark correctness and enter valid quiz points for every written response.'); return; }
     const grades: Grade[] = questions.map(question => ({ questionId: question.id!, correct: manual[question.id!].correct!, awardedPoints: Number(manual[question.id!].points), feedback: manual[question.id!].feedback }));
     setBusy(true); setError('');
-    try { onSaved((await gradeComprehension(attempt, grades)).attempt); Alert.alert('Review saved', 'The final comprehension percentage and quiz points have been updated.'); }
+    try { onSaved((await gradeComprehension(attempt, grades)).attempt); Alert.alert('Review saved', 'The final correctness percentage and quiz points have been updated.'); }
     catch (err) { setError(err instanceof Error ? err.message : 'Could not save grades.'); }
     finally { setBusy(false); }
   }
   return <KeyboardAvoidingView style={ui.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <View style={ui.header}>
       <QuizAction label="‹ Results" onPress={onBack} disabled={busy} compact />
-      <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>Comprehension review</Text>
+      <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>{attempt.assessmentType === 'standalone' ? 'Quiz review' : 'Comprehension review'}</Text>
     </View>
     <ScrollView style={ui.fill} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.scroll}>
       <View style={[ui.titleCard, { backgroundColor: colors.surface }]}><Text style={[typography.display.md, { color: colors.text }]}>{assignment}</Text></View>
@@ -109,7 +109,7 @@ function ManualReview({ attempt, assignment, manual, onChange, onSaved, onBack }
         </View>
       </View>
       <Text style={[typography.reading.sm, { color: colors.secondaryText, backgroundColor: colors.secondary, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }]}>{statusLabel(attempt)}</Text>
-      <QuizDisclosure title="Recording and passage">
+      <QuizDisclosure title={attempt.assessmentType === 'standalone' ? 'Quiz context' : 'Recording and passage'}>
         <Text style={text}>{attempt.attemptLabel}</Text>
         {!!attempt.passage && <Text selectable style={text}>{attempt.passage.text}</Text>}
         {!!attempt.readingSubmission && <QuizAction label="Open linked reading submission" onPress={() => router.push({ pathname: '/teacher/classwork/submission/[id]', params: { id: attempt.readingSubmission!, classworkId: attempt.classwork } })} disabled={busy} />}
@@ -143,7 +143,7 @@ function ManualReview({ attempt, assignment, manual, onChange, onSaved, onBack }
             <Text style={[...text, ui.flex]}>Quiz points (0–{q.points})</Text>
             <TextInput accessibilityLabel={`Points for ${q.id}`} value={manual[q.id!].points} onChangeText={points => change(q.id!, { points })} keyboardType="decimal-pad" editable={!busy} style={[input, { width: 88 }]} />
           </View>
-          <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Points are separate from comprehension %.</Text>
+          <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Points are separate from the correctness percentage.</Text>
           <TextInput accessibilityLabel={`Feedback for ${q.id}`} value={manual[q.id!].feedback} onChangeText={feedback => change(q.id!, { feedback })} multiline maxLength={6000} editable={!busy} placeholder="Feedback (optional)" placeholderTextColor={colors.textMuted} style={[input, { minHeight: 80, textAlignVertical: 'top' }]} />
         </View>}
         {questions.length > 1 && <>
@@ -163,7 +163,7 @@ function ManualReview({ attempt, assignment, manual, onChange, onSaved, onBack }
     </View>}
   </KeyboardAvoidingView>;
 }
-export function TeacherQuizResultsScreen() {
+export function TeacherQuizResultsScreen({ standalone = false }: { standalone?: boolean } = {}) {
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [data, setData] = useState<{ title: string; attempts: Attempt[] } | null>(null);
@@ -173,9 +173,9 @@ export function TeacherQuizResultsScreen() {
   const [error, setError] = useState(''), [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
-    teacherAttempts(id).then(result => { if (active) { setData(result); setError(''); } }).catch(err => { if (active) setError(err instanceof Error ? err.message : 'Could not load results.'); });
+    teacherAttempts(id, standalone).then(result => { if (active) { setData(result); setError(''); } }).catch(err => { if (active) setError(err instanceof Error ? err.message : 'Could not load results.'); });
     return () => { active = false; };
-  }, [id, retry]);
+  }, [id, retry, standalone]);
   useFocusEffect(useCallback(() => {
     if (Platform.OS !== 'android' || !selected) return;
     const listener = BackHandler.addEventListener('hardwareBackPress', () => { setSelected(null); return true; });
@@ -190,7 +190,7 @@ export function TeacherQuizResultsScreen() {
   return <Screen>
     <View style={ui.header}>
       <QuizAction label="‹ Back" onPress={() => router.back()} compact />
-      <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>Comprehension results</Text>
+      <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>{standalone ? 'Classroom quiz results' : 'Comprehension results'}</Text>
       <QuizAction label="Refresh" onPress={() => setRetry(v => v + 1)} compact />
     </View>
     <ScrollView style={ui.fill} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.scroll}>
@@ -207,7 +207,7 @@ export function TeacherQuizResultsScreen() {
             <Text style={[typography.reading.sm, { color: filter === item.key ? colors.primaryText : colors.text, textAlign: 'center' }]}>{item.label} ({counts(item.key)})</Text>
           </Pressable>)}
         </View>
-        {!data.attempts.length && <Text style={[typography.reading.sm, { color: colors.textMuted }]}>No comprehension attempts yet.</Text>}
+        {!data.attempts.length && <Text style={[typography.reading.sm, { color: colors.textMuted }]}>No quiz attempts yet.</Text>}
         {!!data.attempts.length && !counts(filter) && <Text style={[typography.reading.sm, { color: colors.textMuted }]}>No {filter === 'pending-review' ? 'pending reviews' : filter === 'graded' ? 'graded attempts' : 'saved drafts'} in this view. Choose another filter.</Text>}
         {data.attempts.filter(attempt => attempt.status === filter).map(attempt => <Pressable key={attempt._id} accessibilityRole="button" accessibilityLabel={`Review ${learnerName(attempt)}`} onPress={() => setSelected(attempt._id)}
           style={[ui.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
@@ -219,7 +219,7 @@ export function TeacherQuizResultsScreen() {
             </View>
             <Text style={{ fontSize: 24, color: colors.primary }}>›</Text>
           </View>
-          {attempt.result?.percentage !== null && attempt.result?.percentage !== undefined && <Text style={[typography.reading.sm, { color: colors.primary }]}>{attempt.result.percentage.toFixed(1)}% comprehension</Text>}
+          {attempt.result?.percentage !== null && attempt.result?.percentage !== undefined && <Text style={[typography.reading.sm, { color: colors.primary }]}>{attempt.result.percentage.toFixed(1)}% {standalone ? 'correct' : 'comprehension'}</Text>}
         </Pressable>)}
       </>}
       {!data && !error && <ActivityIndicator color={colors.primary} />}

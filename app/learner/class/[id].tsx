@@ -1,3 +1,4 @@
+import { ClassroomLibrary } from '../../../components/library/ClassroomLibrary';
 import { LearnerQuizList } from '../../../components/progress/LearnerQuizList';
 import { ClassroomHeader, ClassroomTabs, classroomAccents } from "../../../components/ClassroomChrome";
 import { TextAction } from "../../components/InterfaceChrome";
@@ -19,7 +20,6 @@ import ClassworkDetailsSheet, {
   classworkIconName,
   classworkTypeLabel,
   formatDueDateTime,
-  openRemoteUrl,
 } from "../../components/learner/ClassworkDetailsSheet";
 import LearnerClassStream from "../../components/learner/LearnerClassStream";
 import { Screen } from "../../components/Screen";
@@ -27,12 +27,10 @@ import {
   ApiClass,
   ApiClasswork,
   ApiEnrollment,
-  ApiMaterial,
   ApiStreamPost,
   getLearnerClass,
   getLearnerClassmates,
   getLearnerClasswork,
-  getLearnerMaterials,
   getLearnerStream,
 } from "../../lib/api";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -42,7 +40,7 @@ import { spacing, typography } from "../../theme/tokens";
    CONSTANTS + HELPERS
    ========================================================= */
 
-const TABS = ["Stream", "Classwork", "Materials", "People"] as const;
+const TABS = ["Stream", "Classwork", "Library", "People"] as const;
 type Tab = (typeof TABS)[number];
 
 type ThemeColors = ReturnType<typeof useTheme>["colors"];
@@ -64,36 +62,6 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 
 
-function materialIcon(type: ApiMaterial["type"]) {
-  switch (type) {
-    case "document":
-      return "document-text-outline";
-    case "video":
-      return "play-circle-outline";
-    case "link":
-      return "link-outline";
-    case "image":
-      return "image-outline";
-    default:
-      return "folder-outline";
-  }
-}
-
-function formatRelativeTime(dateString: string) {
-  const date = new Date(dateString);
-  const diffMins = Math.floor((Date.now() - date.getTime()) / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
 /* =========================================================
    MAIN SCREEN
    ========================================================= */
@@ -110,7 +78,6 @@ export default function LearnerClassDetail() {
   } | null>(null);
   const [posts, setPosts] = useState<ApiStreamPost[]>([]);
   const [classwork, setClasswork] = useState<ApiClasswork[]>([]);
-  const [materials, setMaterials] = useState<ApiMaterial[]>([]);
   const [classmates, setClassmates] = useState<ApiEnrollment[]>([]);
 
   const [detailsItem, setDetailsItem] = useState<ApiClasswork | null>(null);
@@ -131,19 +98,17 @@ export default function LearnerClassDetail() {
       }
 
       try {
-        const [info, streamPosts, work, materialList, mates] =
+        const [info, streamPosts, work, mates] =
           await Promise.all([
             getLearnerClass(classId),
             getLearnerStream(classId),
             getLearnerClasswork(classId),
-            getLearnerMaterials(classId),
             getLearnerClassmates(classId),
           ]);
 
         setClassInfo(info);
         setPosts(streamPosts);
         setClasswork(work);
-        setMaterials(materialList);
         setClassmates(mates);
       } catch (err) {
         const message =
@@ -169,7 +134,7 @@ export default function LearnerClassDetail() {
   const openClasswork = useCallback(
     (item: ApiClasswork) => {
       if (item.type === "quiz") {
-        setDetailsItem(item);
+        router.push({ pathname: '/learner/quiz/[id]', params: { id: item._id, classId } });
         return;
       }
 
@@ -257,12 +222,8 @@ export default function LearnerClassDetail() {
             onOpen={openClasswork}
           />
         )}
-        {activeTab === "Materials" && (
-          <MaterialsTab
-            materials={materials}
-            cardStyle={cardStyle}
-            colors={colors}
-          />
+        {activeTab === "Library" && (
+          <ClassroomLibrary classId={classId} role="learner" />
         )}
         {activeTab === "People" && (
           <PeopleTab
@@ -451,89 +412,6 @@ function ClassworkTab({
 
 /* =========================================================
    MATERIALS TAB
-   ========================================================= */
-
-function MaterialsTab({
-  materials,
-  cardStyle,
-  colors,
-}: {
-  materials: ApiMaterial[];
-  cardStyle: any;
-  colors: ThemeColors;
-}) {
-  if (materials.length === 0) {
-    return (
-      <EmptyText
-        colors={colors}
-        message="No learning materials have been added yet."
-      />
-    );
-  }
-
-  return (
-    <View>
-      {materials.map((material) => (
-        <View key={material._id} style={cardStyle}>
-          <View style={styles.row}>
-            <View
-              style={[styles.materialIcon, { backgroundColor: colors.background }]}
-            >
-              <Ionicons
-                name={materialIcon(material.type) as any}
-                size={24}
-                color={colors.primary}
-              />
-            </View>
-
-            <View style={{ flex: 1, marginLeft: spacing.sm }}>
-              <Text
-                style={[typography.reading.sm, { color: colors.text, fontWeight: "700" }]}
-              >
-                {material.title}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 3 }}>
-                {material.category || "General"} • {material.type}
-              </Text>
-            </View>
-          </View>
-
-          {material.description ? (
-            <Text
-              style={[
-                typography.reading.sm,
-                { color: colors.textMuted, marginTop: spacing.sm },
-              ]}
-            >
-              {material.description}
-            </Text>
-          ) : null}
-
-          {material.fileUrl ? (
-            <TextAction icon="book-outline"
-              onPress={() => openRemoteUrl(material.fileUrl as string)}
-              style={{ marginTop: spacing.sm }}
-            >
-              <Text
-                style={{ color: colors.primary, fontSize: 13, fontWeight: "600" }}
-                numberOfLines={2}
-              >
-                {material.fileUrl}
-              </Text>
-            </TextAction>
-          ) : null}
-
-          <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: spacing.sm }}>
-            Added {formatRelativeTime(material.createdAt)}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-/* =========================================================
-   PEOPLE TAB
    ========================================================= */
 
 function PeopleTab({

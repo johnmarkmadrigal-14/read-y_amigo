@@ -1,7 +1,7 @@
-import { comprehensionCompletion } from '../../components/comprehension/api';
+import { standaloneQuizResults, comprehensionCompletion } from '../../components/comprehension/api';
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -191,11 +191,12 @@ export default function LearnerTodoScreen() {
       const perClass = await Promise.all(
         activeClasses.map(async (cls) => {
           try {
-            const [classwork, submissions, comprehension] = await Promise.all([
+            const [classwork, submissions, comprehension, quizzes] = await Promise.all([
               getLearnerClasswork(cls._id),
               // If submissions fail to load, just treat nothing as done.
               getMySubmissions(cls._id).catch(() => []),
               comprehensionCompletion(cls._id).catch(() => ({ classworkIds: [] as string[] })),
+              standaloneQuizResults(cls._id).catch(() => ({ classworkIds: [] as string[] })),
             ]);
 
             const doneIds = new Set(submissions.map((s) => String(s.classwork)));
@@ -204,7 +205,7 @@ export default function LearnerTodoScreen() {
             return classwork.map((cw) => ({
               ...cw,
               classTitle: cls.title,
-              done: cw.type === 'reading' && cw.readingActivities?.includes('comprehension')
+              done: cw.type === 'quiz' ? quizzes.classworkIds.includes(cw._id) : cw.type === 'reading' && cw.readingActivities?.includes('comprehension')
                 ? comprehensionDone.has(cw._id) && (!cw.readingActivities.includes('read-aloud') || doneIds.has(cw._id))
                 : doneIds.has(cw._id),
             }));
@@ -520,7 +521,8 @@ export default function LearnerTodoScreen() {
                       colors={colors}
                       onPress={() => {
                         tap();
-                        setDetailsItem(item);
+                        if (item.type === 'quiz') router.push({ pathname: '/learner/quiz/[id]', params: { id: item._id, classId: item.class } });
+                        else setDetailsItem(item);
                       }}
                     />
                   );

@@ -1,14 +1,10 @@
-import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
-
+import { AuthButton, AuthCanvas, AuthHeader, AuthInput, authStyles } from '../../components/auth/AuthUI';
 import { router } from "expo-router";
 import { useState } from "react";
-import { Image, Platform, Text, View } from "react-native";
-import { Button } from "../components/Button";
-import { Screen } from "../components/Screen";
-import { TextField } from "../components/TextField";
+import { Pressable, Text, View } from "react-native";
 import { login } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
-import { spacing, typography } from "../theme/tokens";
+import { typography } from "../theme/tokens";
 
 export default function LoginScreen() {
   const { colors } = useTheme();
@@ -54,117 +50,14 @@ export default function LoginScreen() {
     }
   }
 
-  return (
-    <Screen scroll>
-      <View
-        style={{
-          alignItems: "center",
-          marginTop: spacing.xl,
-          marginBottom: spacing.xl,
-        }}
-      >
-        <Image
-          source={require("../../assets/images/logo.png")}
-          style={{
-            width: 100,
-            height: 100,
-            marginBottom: spacing.xs,
-          }}
-          resizeMode="contain"
-        />
-
-        <HeadingLabel icon="person-outline" style={{ ...typography.display.lg, color: colors.text }}>
-          Welcome back!
-        </HeadingLabel>
-
-        <Text
-          style={{
-            color: colors.textMuted,
-            fontSize: 13,
-            marginTop: 2,
-          }}
-        >
-          Log in to continue the story.
-        </Text>
-      </View>
-
-      <TextField
-        label="Email or Username"
-        placeholder="you@email.com or username"
-        autoCapitalize="none"
-        value={identifier}
-        onChangeText={setIdentifier}
-      />
-
-      <TextField
-        label="Password"
-        placeholder="Enter your password"
-        isPassword
-        value={password}
-        onChangeText={setPassword}
-      />
-
-      {error && (
-        <Text
-          accessibilityRole="alert"
-          style={{
-            color: colors.retryText,
-            fontSize: 13,
-            marginBottom: spacing.sm,
-          }}
-        >
-          {error}
-        </Text>
-      )}
-
-      <View
-        style={{
-          alignItems: "flex-end",
-          marginBottom: spacing.lg,
-        }}
-      >
-        <TextAction icon="lock-closed-outline" onPress={() => {
-            // Connect your forgot-password screen here.
-          }}><Text
-          style={{ color: colors.primary, fontSize: 12 }}
-
-        >
-          Forgot password?
-        </Text></TextAction>
-      </View>
-
-      <Button
-        label="Log in"
-        onPress={handleLogin}
-        loading={loading}
-      />
-
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: spacing.sm,
-          marginTop: spacing.lg,
-        }}
-      >
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>
-          New here?{" "}
-        </Text>
-
-        <TextAction icon="person-outline" onPress={() => router.push("/auth/choose-role")}><Text
-          style={{
-            color: colors.primary,
-            fontSize: 13,
-            fontWeight: "600",
-          }}
-
-        >
-          Create an account
-        </Text></TextAction>
-      </View>
-    </Screen>
-  );
+  return <AuthCanvas scroll>
+    <View style={{ flex: 1, justifyContent: 'center', paddingVertical: 24 }}>
+      <AuthHeader title="Log in" onBack={() => router.back()} />
+      <AuthInput label="Email or username" placeholder="Enter email or username" value={identifier} onChangeText={setIdentifier} autoComplete="username" editable={!loading} />
+      <AuthInput label="Password" placeholder="Enter password" password value={password} onChangeText={setPassword} autoComplete="current-password" editable={!loading} onSubmitEditing={() => { if (!loading) void handleLogin(); }} />
+      {!!error && <Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.retryText, marginBottom: 16 }]}>{error}</Text>}
+      <AuthButton label="Log in" onPress={() => { void handleLogin(); }} busy={loading} />
+      <Pressable accessibilityRole="button" onPress={() => router.push('/auth/choose-role')} style={[authStyles.link, { marginTop: 20 }]}><Text style={[typography.reading.sm, { color: colors.primary }]}>Create an account</Text></Pressable>
+    </View>
+  </AuthCanvas>;
 }
-

@@ -1,122 +1,19 @@
-import { HeadingLabel } from "../components/InterfaceChrome";
-import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
-import { Button } from "../components/Button";
-import { Screen } from "../components/Screen";
-import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
-
-const SHADOW_OFFSET = 5;
-
-interface RoleCardProps {
-  title: string;
-  fill: string;
-  shadowColor: string;
-  onPress: () => void;
-}
-
-function RoleCard({ title, fill, shadowColor, onPress }: RoleCardProps) {
-  const pressed = useSharedValue(0);
-
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: pressed.value * SHADOW_OFFSET }],
-  }));
-
-  const shadowStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(pressed.value ? 0 : 1, { duration: 80 }),
-  }));
-
-  return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={() => (pressed.value = withTiming(1, { duration: 80 }))}
-      onPressOut={() => (pressed.value = withTiming(0, { duration: 80 }))}
-      style={styles.cardWrapper}
-    >
-      <Animated.View
-        style={[styles.shadowBlock, { backgroundColor: shadowColor }, shadowStyle]}
-      />
-      <Animated.View style={[styles.card, { backgroundColor: fill, borderColor: shadowColor }, cardStyle]}>
-        <Text style={[typography.display.lg, { textAlign: "center" }]}>{title}</Text>
-      </Animated.View>
-    </Pressable>
-  );
-}
-
+import { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { AuthButton, AuthCanvas, AuthHeader, authStyles } from '../../components/auth/AuthUI';
+import { useTheme } from '../theme/ThemeProvider';
+import { typography } from '../theme/tokens';
 export default function ChooseRole() {
-  const { colors } = useTheme();
-
-  return (
-    <Screen>
-      <View style={styles.container}>
-        <HeadingLabel icon="person-outline" style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.xs }]}>
-          Who are you?
-        </HeadingLabel>
-
-        <Text
-          style={[
-            typography.reading.sm,
-            { color: colors.textMuted, textAlign: "center", marginBottom: spacing.xl },
-          ]}
-        >
-          Choose how you will use READ-Y AMIGO.
-        </Text>
-
-        <RoleCard
-          title="Teacher"
-          fill={colors.surface}
-          shadowColor={colors.border}
-          onPress={() => router.push("/auth/teacher-signup")}
-        />
-
-        <RoleCard
-          title="Learner"
-          fill={colors.surface}
-          shadowColor={colors.border}
-          onPress={() => router.push("/auth/learner-signup")}
-        />
-
-        <Button
-          label="← Back"
-          variant="secondary"
-          onPress={() => router.back()}
-          style={{ marginTop: spacing.md, width: "80%" }}
-        />
-      </View>
-    </Screen>
-  );
+  const { colors } = useTheme(); const [role, setRole] = useState<'learner' | 'teacher'>('learner');
+  return <AuthCanvas scroll><View style={{ flex: 1, justifyContent: 'center', paddingVertical: 24 }}>
+    <AuthHeader title="Sign up" onBack={() => router.back()} />
+    <Text style={[typography.reading.sm, { color: colors.text, marginBottom: 12 }]}>Choose your role</Text>
+    <View accessibilityRole="radiogroup" style={{ gap: 12, marginBottom: 32 }}>{(['learner', 'teacher'] as const).map(value => <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: role === value }} onPress={() => setRole(value)} style={[authStyles.input, { paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 14, borderColor: role === value ? colors.primary : colors.border }]}>
+      <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: role === value ? colors.primary : colors.textMuted, alignItems: 'center', justifyContent: 'center' }}>{role === value && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary }} />}</View>
+      <Text style={[typography.display.md, { color: colors.text }]}>{value === 'learner' ? 'Learner' : 'Teacher'}</Text>
+    </Pressable>)}</View>
+    <AuthButton label="Continue" onPress={() => router.push(role === 'learner' ? '/auth/learner-signup' : '/auth/teacher-signup')} />
+    <Pressable accessibilityRole="button" onPress={() => router.replace('/auth/login')} style={[authStyles.link, { marginTop: 20 }]}><Text style={[typography.reading.sm, { color: colors.primary }]}>Already have an account? Log in</Text></Pressable>
+  </View></AuthCanvas>;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: spacing.lg,
-  },
-  cardWrapper: {
-    width: "80%",
-    marginBottom: spacing.md,
-  },
-  card: {
-    borderRadius: radius.lg,
-    borderWidth: 3,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  shadowBlock: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: SHADOW_OFFSET,
-    bottom: -SHADOW_OFFSET,
-    borderRadius: radius.lg,
-  },
-});

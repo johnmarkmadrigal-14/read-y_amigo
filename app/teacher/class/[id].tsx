@@ -1,3 +1,4 @@
+import { ClassroomLibrary } from '../../../components/library/ClassroomLibrary';
 import { TeacherProgress } from '../../../components/progress/TeacherProgress';
 import { QuizBuilder } from '../../../components/comprehension/QuizBuilder';
 import { publishComprehension, validateComprehension } from '../../../components/comprehension/api';
@@ -43,9 +44,7 @@ import {
   ReadingActivity,
     createClasswork,
   createClassworkWithFile,
-  createMaterial,
     deleteClass,
-  deleteMaterial,
     getClass,
     getClasswork,
     getLearners,
@@ -66,7 +65,7 @@ import { spacing, typography } from "../../theme/tokens";
 const TABS = [
   "Stream",
   "Classwork",
-  "Materials",
+  "Library",
   "Learners",
   "Progress",
 ] as const;
@@ -314,15 +313,17 @@ function createEmptyQuestion(): ApiQuizQuestion {
 export default function ClassDetail() {
   const { colors } = useTheme();
 
-  const { id } =
+  const { id, tab } =
     useLocalSearchParams<{
-      id: string;
+      id: string; tab?: string;
     }>();
 
   const classId = id ?? "";
 
   const [activeTab, setActiveTab] =
-    useState<Tab>("Stream");
+    useState<Tab>(tab === "Progress" ? "Progress" : "Stream");
+
+  useFocusEffect(useCallback(() => { if (tab === 'Progress') setActiveTab('Progress'); }, [tab]));
 
   const [
     classInfo,
@@ -639,14 +640,8 @@ export default function ClassDetail() {
           />
         )}
 
-        {activeTab === "Materials" && (
-          <MaterialsTab
-            classId={classId}
-            materials={materials}
-            cardStyle={cardStyle}
-            colors={colors}
-            onChanged={loadEverything}
-          />
+        {activeTab === "Library" && (
+          <ClassroomLibrary classId={classId} role="teacher" />
         )}
 
         {activeTab === "Learners" && (
@@ -3445,6 +3440,9 @@ function ClassworkTab({
                 </View>
 
                 <View style={styles.detailActions}>
+                  {detailsItem.type === 'quiz' && <TextAction onPress={() => { const target = detailsItem; setDetailsItem(null); router.push({ pathname: '/teacher/classwork/quiz/[id]', params: { id: target._id } }); }}>
+                    <Text style={[typography.reading.sm, { color: colors.primary }]}>Quiz results and grading</Text>
+                  </TextAction>}
                   {detailsItem.type === 'reading' && detailsItem.readingActivities?.includes('comprehension') && <>
                     <TextAction onPress={() => { const target = detailsItem; setDetailsItem(null); router.push({ pathname: '/teacher/classwork/comprehension-setup/[id]', params: { id: target._id } }); }}>
                       <Text style={[typography.reading.sm, { color: colors.primary }]}>Comprehension setup</Text>
@@ -4328,561 +4326,6 @@ function EmptyClasswork({
 
 /* =========================================================
    MATERIALS
-   ========================================================= */
-
-function MaterialsTab({
-  classId,
-  materials,
-  cardStyle,
-  colors,
-  onChanged,
-}: {
-  classId: string;
-  materials: ApiMaterial[];
-  cardStyle: any;
-  colors: ReturnType<
-    typeof useTheme
-  >["colors"];
-  onChanged: () => void;
-}) {
-  const [
-    modalVisible,
-    setModalVisible,
-  ] = useState(false);
-
-  const [title, setTitle] =
-    useState("");
-
-  const [
-    description,
-    setDescription,
-  ] = useState("");
-
-  const [type, setType] =
-    useState<ApiMaterial["type"]>(
-      "document"
-    );
-
-  const [category, setCategory] =
-    useState("");
-
-  const [fileUrl, setFileUrl] =
-    useState("");
-
-  const [
-    submitting,
-    setSubmitting,
-  ] = useState(false);
-
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setType("document");
-    setCategory("");
-    setFileUrl("");
-  };
-
-  const handleCreate = async () => {
-    if (!title.trim()) {
-      Alert.alert(
-        "Title required",
-        "Please enter a material title."
-      );
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      await createMaterial(
-        classId,
-        {
-          title: title.trim(),
-          description:
-            description.trim() ||
-            undefined,
-          type,
-          category:
-            category.trim() ||
-            "General",
-          fileUrl:
-            fileUrl.trim() ||
-            undefined,
-        }
-      );
-
-      resetForm();
-      setModalVisible(false);
-
-      onChanged();
-    } catch (err) {
-      Alert.alert(
-        "Couldn't add material",
-        err instanceof Error
-          ? err.message
-          : "Something went wrong."
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDelete = (
-    material: ApiMaterial
-  ) => {
-    Alert.alert(
-      "Delete material?",
-      `Are you sure you want to delete "${material.title}"?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteMaterial(
-                classId,
-                material._id
-              );
-
-              onChanged();
-            } catch (err) {
-              Alert.alert(
-                "Couldn't delete material",
-                err instanceof Error
-                  ? err.message
-                  : "Something went wrong."
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  return (
-    <View>
-      <Pressable
-        onPress={() =>
-          setModalVisible(true)
-        }
-        style={[
-          styles.addMaterialButton,
-          {
-            backgroundColor:
-              colors.primary,
-            borderColor:
-              colors.primaryShadow,
-          },
-        ]}
-      >
-        <Ionicons
-          name="add"
-          size={21}
-          color={
-            colors.primaryText
-          }
-        />
-
-        <Text
-          style={[
-            typography.reading.sm,
-            {
-              color:
-                colors.primaryText,
-              fontWeight: "800",
-              marginLeft: 6,
-            },
-          ]}
-        >
-          Add material
-        </Text>
-      </Pressable>
-
-      {materials.length === 0 ? (
-        <EmptyState
-          colors={colors}
-          message="No learning materials added yet."
-        />
-      ) : (
-        materials.map((material) => (
-          <View
-            key={material._id}
-            style={cardStyle}
-          >
-            <View
-              style={
-                styles.materialHeader
-              }
-            >
-              <View
-                style={[
-                  styles.materialIcon,
-                  {
-                    backgroundColor:
-                      colors.background,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={
-                    materialIcon(
-                      material.type
-                    ) as any
-                  }
-                  size={24}
-                  color={
-                    colors.primary
-                  }
-                />
-              </View>
-
-              <View
-                style={{
-                  flex: 1,
-                  marginLeft:
-                    spacing.sm,
-                }}
-              >
-                <Text
-                  style={[
-                    typography.reading.sm,
-                    {
-                      color:
-                        colors.text,
-                      fontWeight:
-                        "700",
-                    },
-                  ]}
-                >
-                  {material.title}
-                </Text>
-
-                <Text
-                  style={{
-                    color:
-                      colors.textMuted,
-                    fontSize: 12,
-                    marginTop: 3,
-                  }}
-                >
-                  {material.category ||
-                    "General"}{" "}
-                  • {material.type}
-                </Text>
-              </View>
-
-              <TextAction accessibilityLabel="Delete"
-                onPress={() =>
-                  handleDelete(
-                    material
-                  )
-                }
-                hitSlop={8}
-              >
-                <Ionicons
-                  name="trash-outline"
-                  size={19}
-                  color={
-                    colors.textMuted
-                  }
-                />
-              </TextAction>
-            </View>
-
-            {material.description ? (
-              <Text
-                style={[
-                  typography.reading.sm,
-                  {
-                    color:
-                      colors.textMuted,
-                    marginTop:
-                      spacing.sm,
-                  },
-                ]}
-              >
-                {material.description}
-              </Text>
-            ) : null}
-
-            {material.fileUrl ? (
-              <TextAction icon="book-outline"
-                onPress={() =>
-                  Alert.alert(
-                    "Material link",
-                    material.fileUrl
-                  )
-                }
-                style={{
-                  marginTop:
-                    spacing.sm,
-                }}
-              >
-                <Text
-                  style={{
-                    color:
-                      colors.primary,
-                    fontSize: 13,
-                    fontWeight:
-                      "600",
-                  }}
-                  numberOfLines={2}
-                >
-                  {material.fileUrl}
-                </Text>
-              </TextAction>
-            ) : null}
-
-            <Text
-              style={{
-                color:
-                  colors.textMuted,
-                fontSize: 11,
-                marginTop:
-                  spacing.sm,
-              }}
-            >
-              Added{" "}
-              {formatRelativeTime(
-                material.createdAt
-              )}
-            </Text>
-          </View>
-        ))
-      )}
-
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() =>
-          setModalVisible(false)
-        }
-      >
-        <View
-          style={styles.modalOverlay}
-        >
-          <View
-            style={[
-              styles.modalCard,
-              {
-                backgroundColor:
-                  colors.surface,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                typography.display.sm,
-                {
-                  color: colors.text,
-                  marginBottom:
-                    spacing.md,
-                },
-              ]}
-            >
-              Add Learning Material
-            </Text>
-
-        <TextInput
-              placeholder="Material title"
-              placeholderTextColor={
-                colors.textMuted
-              }
-          value={title}
-          onChangeText={setTitle}
-              style={[
-                styles.input,
-                {
-                  color: colors.text,
-                  borderColor:
-                    colors.border,
-                  backgroundColor:
-                    colors.background,
-                },
-              ]}
-        />
-
-        <TextInput
-          placeholder="Description (optional)"
-              placeholderTextColor={
-                colors.textMuted
-              }
-          value={description}
-              onChangeText={
-                setDescription
-              }
-          multiline
-              style={[
-                styles.input,
-                styles.multiline,
-                {
-                  color: colors.text,
-                  borderColor:
-                    colors.border,
-                  backgroundColor:
-                    colors.background,
-                },
-              ]}
-            />
-
-            <TextInput
-              placeholder="Type: document, video, link, image, other"
-              placeholderTextColor={
-                colors.textMuted
-              }
-              value={type}
-              onChangeText={(value) => {
-                const allowedTypes: ApiMaterial["type"][] =
-                  [
-                    "document",
-                    "video",
-                    "link",
-                    "image",
-                    "other",
-                  ];
-
-                if (
-                  allowedTypes.includes(
-                    value as ApiMaterial["type"]
-                  )
-                ) {
-                  setType(
-                    value as ApiMaterial["type"]
-                  );
-                }
-              }}
-              style={[
-                styles.input,
-                {
-                  color: colors.text,
-                  borderColor:
-                    colors.border,
-                  backgroundColor:
-                    colors.background,
-                },
-              ]}
-            />
-
-            <TextInput
-              placeholder="Category, e.g. Reading"
-              placeholderTextColor={
-                colors.textMuted
-              }
-              value={category}
-              onChangeText={setCategory}
-              style={[
-                styles.input,
-                {
-                  color: colors.text,
-                  borderColor:
-                    colors.border,
-                  backgroundColor:
-                    colors.background,
-                },
-              ]}
-            />
-
-            <TextInput
-              placeholder="File or website URL (optional)"
-              placeholderTextColor={
-                colors.textMuted
-              }
-              value={fileUrl}
-              onChangeText={setFileUrl}
-              autoCapitalize="none"
-              keyboardType="url"
-              style={[
-                styles.input,
-                {
-                  color: colors.text,
-                  borderColor:
-                    colors.border,
-                  backgroundColor:
-                    colors.background,
-                },
-              ]}
-        />
-
-            <View
-              style={[
-                styles.modalButtonRow,
-                {
-                  marginTop:
-                    spacing.sm,
-                },
-              ]}
-            >
-        <Pressable
-                onPress={() => {
-                  resetForm();
-                  setModalVisible(false);
-                }}
-                style={[
-                  styles.smallButton,
-                  {
-                    flex: 1,
-                    backgroundColor:
-                      colors.border,
-                  },
-                ]}
-        >
-                <Text
-                  style={{
-                    color: colors.text,
-                    fontWeight: "600",
-                  }}
-                >
-                  Cancel
-          </Text>
-        </Pressable>
-
-              <Pressable
-                onPress={handleCreate}
-                disabled={
-                  !title.trim() ||
-                  submitting
-                }
-                style={[
-                  styles.smallButton,
-                  {
-                    flex: 1,
-                    backgroundColor:
-                      colors.primary,
-                    opacity:
-                      !title.trim() ||
-                      submitting
-                        ? 0.6
-                        : 1,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    color:
-                      colors.primaryText,
-                    fontWeight: "600",
-                  }}
-                >
-                  {submitting
-                    ? "Adding..."
-                    : "Add material"}
-              </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
-}
-
-/* =========================================================
-   LEARNERS
    ========================================================= */
 
 function LearnersTab({

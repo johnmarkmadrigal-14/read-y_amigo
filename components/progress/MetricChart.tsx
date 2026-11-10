@@ -6,7 +6,7 @@ import { metricNumber, metricText, submissionDate, type ReadingHistoryEntry, typ
 import { ProgressCard } from './ProgressUI';
 
 type Metric = keyof ReadingSummary;
-export function MetricChart({ title, metric, rows }: { title: string; metric: Metric; rows: ReadingHistoryEntry[] }) {
+export function MetricChart({ title, metric, rows, axisLabel = 'Submissions in order' }: { title: string; metric: Metric; rows: ReadingHistoryEntry[]; axisLabel?: string }) {
   const { colors } = useTheme();
   const [selected, setSelected] = useState<string | null>(null);
   const [viewport, setViewport] = useState(260);
@@ -53,7 +53,7 @@ export function MetricChart({ title, metric, rows }: { title: string; metric: Me
           </View>
         </ScrollView>
       </View>
-      <Text style={{ color: colors.textMuted, fontSize: 12 }}>Submissions in order · Tap a point for details{chronological.length > 4 ? ' · Swipe to see more' : ''}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 12 }}>{axisLabel} · Tap a point for details{chronological.length > 4 ? ' · Swipe to see more' : ''}</Text>
       {chosen && <Text style={[typography.reading.sm, { color }]}>{chosen.title} · {submissionDate(chosen.submittedAt)} · {metricText(chosen[metric], percentage ? '%' : 'WPM')}{chosen[metric].status === 'provisional' ? ' · Provisional' : ''}</Text>}
     </>}
   </ProgressCard>;

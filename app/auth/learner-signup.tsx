@@ -1,4 +1,5 @@
-import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
+import { AuthButton, AuthCanvas, AuthHeader, authStyles } from '../../components/auth/AuthUI';
+import { TextAction } from "../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
@@ -14,13 +15,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Button } from "../components/Button";
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
-import { Screen } from "../components/Screen";
-import { StepIndicator } from "../components/StepIndicator";
 import { signupLearner } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
+import { spacing, typography } from "../theme/tokens";
 import { CaptchaModal } from "../components/CaptchaModal";
 
 // Each step lists which fields belong to it and its heading.
@@ -66,6 +64,7 @@ function validatePassword(password: string) {
 export default function LearnerSignup() {
   const { colors } = useTheme();
 
+  const [showGoogle, setShowGoogle] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const currentStep = STEPS[stepIndex];
   const isLastStep = stepIndex === STEPS.length - 1;
@@ -185,7 +184,7 @@ const handleCaptchaVerified = async (captchaToken: string) => {
   ];
 
   return (
-    <Screen>
+    <AuthCanvas>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -196,64 +195,29 @@ const handleCaptchaVerified = async (captchaToken: string) => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <HeadingLabel icon="person-outline"
-          style={[
-            typography.display.xl,
-            { color: colors.primary, textAlign: "center", marginBottom: spacing.lg },
-          ]}
-        >
-          Learner Account
-        </HeadingLabel>
-
-        {stepIndex === 0 && (
-          <View style={{ marginBottom: spacing.lg }}>
-            <GoogleSignInButton
-              roleForNewAccount="learner"
-              onSuccess={() => router.replace("/learner/dashboard")}
-              onNeedsProfile={(pendingToken, suggestedDisplayName) =>
-                router.push({
-                  pathname: "/auth/complete-google-profile",
-                  params: { pendingToken, suggestedDisplayName, role: "learner" },
-                })
-              }
-              onError={(message) => Alert.alert("Google sign-in failed", message)}
-            />
-            <View style={styles.dividerRow}>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-              <Text style={[typography.reading.sm, { color: colors.textMuted, marginHorizontal: spacing.sm }]}>
-                or
-              </Text>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            </View>
-          </View>
-        )}
-
-        <StepIndicator
-          currentStep={stepIndex}
-          totalSteps={STEPS.length}
-          title={currentStep.title}
-        />
+        <AuthHeader title="Learner sign up" onBack={handleBack} />
+        <Text style={[typography.reading.sm, { color: colors.textMuted, marginBottom: 6 }]}>Step {stepIndex + 1} of {STEPS.length}</Text>
+        <Text accessibilityRole="header" style={[typography.display.md, { color: colors.text, marginBottom: 22 }]}>{currentStep.title}</Text>
 
         {currentStep.key === "name" && (
           <View>
             <TextInput
               style={inputStyle}
-              placeholder="First Name"
+              accessibilityLabel="First Name" placeholder="First Name"
               placeholderTextColor={colors.textMuted}
               value={firstName}
               onChangeText={setFirstName}
-              autoFocus
             />
             <TextInput
               style={inputStyle}
-              placeholder="Second / Last Name"
+              accessibilityLabel="Second / Last Name" placeholder="Second / Last Name"
               placeholderTextColor={colors.textMuted}
               value={secondName}
               onChangeText={setSecondName}
             />
             <TextInput
               style={inputStyle}
-              placeholder="Middle Initial"
+              accessibilityLabel="Middle Initial" placeholder="Middle Initial"
               placeholderTextColor={colors.textMuted}
               value={middleInitial}
               onChangeText={setMiddleInitial}
@@ -265,11 +229,10 @@ const handleCaptchaVerified = async (captchaToken: string) => {
           <View>
             <TextInput
               style={inputStyle}
-              placeholder="What do you want to be called?"
+              accessibilityLabel="What do you want to be called?" placeholder="What do you want to be called?"
               placeholderTextColor={colors.textMuted}
               value={displayName}
               onChangeText={setDisplayName}
-              autoFocus
             />
           </View>
         )}
@@ -327,7 +290,6 @@ const handleCaptchaVerified = async (captchaToken: string) => {
               autoCapitalize="none"
               value={username}
               onChangeText={setUsername}
-              autoFocus
             />
             <View
               style={[
@@ -362,20 +324,22 @@ const handleCaptchaVerified = async (captchaToken: string) => {
           </View>
         )}
 
-        <Button
-          label={isLastStep ? "Create Learner Account" : "Next"}
-          variant="primary"
-          onPress={handleNext}
-          loading={loading}
-          style={{ marginTop: spacing.sm }}
-        />
-
-        <Button
-          label="← Back"
-          variant="secondary"
-          onPress={handleBack}
-          style={{ marginTop: spacing.md }}
-        />
+        <AuthButton label={isLastStep ? "Create account" : "Next"} onPress={handleNext} busy={loading} />
+        {stepIndex === 0 && <View style={{ marginTop: 12 }}>
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded: showGoogle }} onPress={() => setShowGoogle(value => !value)} style={authStyles.link}><Text style={[typography.reading.sm, { color: colors.primary }]}>{showGoogle ? 'Hide Google sign-up' : 'Use Google instead'}</Text></Pressable>
+          {showGoogle && <GoogleSignInButton
+              roleForNewAccount="learner"
+              onSuccess={() => router.replace("/learner/dashboard")}
+              onNeedsProfile={(pendingToken, suggestedDisplayName) =>
+                router.push({
+                  pathname: "/auth/complete-google-profile",
+                  params: { pendingToken, suggestedDisplayName, role: "learner" },
+                })
+              }
+              onError={(message) => Alert.alert("Google sign-in failed", message)}
+            />}
+        </View>}
+        <Pressable accessibilityRole="button" onPress={() => router.replace('/auth/login')} style={[authStyles.link, { marginTop: 12 }]}><Text style={[typography.reading.sm, { color: colors.primary }]}>Already have an account? Log in</Text></Pressable>
       </ScrollView>
       </KeyboardAvoidingView>
        <CaptchaModal
@@ -383,7 +347,7 @@ const handleCaptchaVerified = async (captchaToken: string) => {
         onVerified={handleCaptchaVerified}
         onDismiss={() => setCaptchaVisible(false)}
       />
-    </Screen>
+    </AuthCanvas>
   );
 }
 
@@ -395,19 +359,20 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: "center",
-    padding: spacing.lg,
+    paddingVertical: 16,
   },
 
   input: {
-    borderWidth: 3,
-    borderRadius: radius.md,
-    padding: spacing.md,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    minHeight: 50,
     marginBottom: spacing.sm,
   },
 
   passwordContainer: {
-    borderWidth: 3,
-    borderRadius: radius.md,
+    borderWidth: 1,
+    borderRadius: 10,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginBottom: spacing.xs ?? 4,

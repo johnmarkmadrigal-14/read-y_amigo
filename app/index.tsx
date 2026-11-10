@@ -1,97 +1,39 @@
-import { router } from "expo-router";
-import { useEffect } from "react";
-import { Text, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSpring,
-} from "react-native-reanimated";
-import { Button } from "./components/Button";
-import { Screen } from "./components/Screen";
-import { useTheme } from "./theme/ThemeProvider";
-import { spacing, typography } from "./theme/tokens";
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { AuthButton, AuthCanvas, BookMark } from '../components/auth/AuthUI';
+import { useTheme } from './theme/ThemeProvider';
+import { typography } from './theme/tokens';
 
 export default function Index() {
   const { colors } = useTheme();
-
-  const logoScale = useSharedValue(0.6);
-  const logoOpacity = useSharedValue(0);
-  const titleTranslateY = useSharedValue(16);
-  const titleOpacity = useSharedValue(0);
-
+  const [book] = useState(() => new Animated.Value(0));
+  const [reveal] = useState(() => new Animated.Value(0));
+  const [appear] = useState(() => new Animated.Value(0));
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    logoScale.value = withSpring(1, { damping: 7, stiffness: 140 });
-    logoOpacity.value = withSpring(1, { damping: 12 });
-    titleTranslateY.value = withDelay(120, withSpring(0, { damping: 10, stiffness: 120 }));
-    titleOpacity.value = withDelay(120, withSpring(1, { damping: 12 }));
-  }, []);
-
-  const logoStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }],
-    opacity: logoOpacity.value,
-  }));
-
-  const titleStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: titleTranslateY.value }],
-    opacity: titleOpacity.value,
-  }));
-
-  return (
-    <Screen>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Animated.Image
-          source={require("../assets/images/logo.png")}
-          style={[
-            {
-              width: 180,
-              height: 180,
-              marginBottom: spacing.xs,
-            },
-            logoStyle,
-          ]}
-          resizeMode="contain"
-        />
-
-        <Animated.Text
-          style={[
-            typography.display.xl,
-            {
-              color: colors.primary,
-              textAlign: "center",
-              marginBottom: spacing.xs,
-            },
-            titleStyle,
-          ]}
-        >
-          READ-Y AMIGO
-        </Animated.Text>
-
-        <Text
-          style={{
-            ...typography.reading.sm,
-            color: colors.textMuted,
-            textAlign: "center",
-            marginBottom: spacing.xxl,
-            paddingHorizontal: spacing.lg,
-          }}
-        >
-          Learn, read, and improve together.
-        </Text>
-
-        <View style={{ width: "85%", gap: spacing.md }}>
-          <Button
-            label="Create account"
-            variant="primary"
-            onPress={() => router.push("/auth/choose-role")}
-          />
-          <Button
-            label="Log in"
-            variant="secondary"
-            onPress={() => router.push("/auth/login")}
-          />
-        </View>
-      </View>
-    </Screen>
-  );
+    let active = true; let animation: Animated.CompositeAnimation | undefined;
+    const show = (reduced: boolean) => {
+      if (!active) return;
+      if (reduced) { book.setValue(1); appear.setValue(1); reveal.setValue(1); setReady(true); return; }
+      animation = Animated.sequence([
+        Animated.timing(appear, { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.delay(180),
+        Animated.timing(book, { toValue: 1, duration: 850, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(reveal, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]);
+      animation.start(({ finished }) => { if (active && finished) setReady(true); });
+    };
+    AccessibilityInfo.isReduceMotionEnabled().then(show).catch(() => show(false));
+    return () => { active = false; animation?.stop(); };
+  }, [book, reveal, appear]);
+  return <AuthCanvas>
+    <View style={{ flex: 1, justifyContent: 'center', gap: 30 }}>
+      <Animated.View accessibilityLabel="Opening book" style={{ opacity: appear, alignItems: 'center', transform: [{ translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [90, 0] }) }] }}><BookMark size={200} progress={book} /></Animated.View>
+      <Animated.View aria-hidden={!ready} accessibilityElementsHidden={!ready} importantForAccessibility={ready ? 'auto' : 'no-hide-descendants'} pointerEvents={ready ? 'auto' : 'none'} style={{ opacity: reveal, gap: 42 }}>
+        <Text accessibilityRole="header" style={[typography.display.lg, { color: colors.primary, textAlign: 'center' }]}>READ-Y AMIGO</Text>
+        <View style={{ gap: 12 }}><AuthButton label="Log in" onPress={() => router.push('/auth/login')} /><AuthButton label="Sign up" outline onPress={() => router.push('/auth/choose-role')} /></View>
+      </Animated.View>
+    </View>
+  </AuthCanvas>;
 }

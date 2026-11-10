@@ -1,3 +1,4 @@
+import { standaloneQuizResults } from '../comprehension/api';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -14,14 +15,15 @@ export function LearnerQuizList({ classId, items, onOpenStandalone }: {
 }) {
   const { colors } = useTheme();
   const [attempts, setAttempts] = useState<QuizResultSummary[]>([]);
+  const [classroomAttempts, setClassroomAttempts] = useState<QuizResultSummary[]>([]);
   const [source, setSource] = useState('All sources');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [revision, setRevision] = useState(0);
   useFocusEffect(useCallback(() => {
     let active = true;
-    setLoading(true); setError(''); setAttempts([]);
-    learnerQuizResults(classId).then(data => { if (active) setAttempts(data); })
+    setLoading(true); setError(''); setAttempts([]); setClassroomAttempts([]);
+    Promise.all([learnerQuizResults(classId), standaloneQuizResults(classId)]).then(([data, quizzes]) => { if (active) { setAttempts(data); setClassroomAttempts(quizzes.attempts); } })
       .catch(err => { if (active) setError(err instanceof Error ? err.message : 'Could not load your quiz results.'); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -58,12 +60,18 @@ export function LearnerQuizList({ classId, items, onOpenStandalone }: {
         <ProgressAction label={attempt?.status === 'graded' || attempt?.status === 'pending-review' ? 'View result' : 'Open reading activity'} onPress={() => attempt?.status === 'graded' || attempt?.status === 'pending-review' ? openPassage(item._id) : router.push({ pathname: '/learner/classwork/[id]', params: { id: item._id, classId } })} />
       </ProgressCard>;
     })}
-    {source !== 'From passages' && standalone.map(item => <ProgressCard key={item._id}>
-      <Text style={[typography.display.md, { color: colors.text }]}>{item.title}</Text>
-      <ProgressBadge>Standalone quiz</ProgressBadge>
-      <Text style={[typography.reading.sm, { color: colors.textMuted }]}>General classroom quiz · {item.points} points</Text>
-      <ProgressAction label="Open classroom quiz" onPress={() => onOpenStandalone(item)} />
-    </ProgressCard>)}
+    {source !== 'From passages' && standalone.map(item => {
+      const attempt = classroomAttempts.find(attempt => attempt.classwork === item._id);
+      const percentage = attempt ? finalPercentage(attempt) : null;
+      return <ProgressCard key={item._id}>
+        <Text style={[typography.display.md, { color: colors.text }]}>{item.title}</Text>
+        <ProgressBadge>Standalone quiz</ProgressBadge>
+        <Text style={[typography.reading.sm, { color: colors.textMuted }]}>{attempt?.status === 'pending-review' ? 'Pending teacher review' : attempt?.status === 'graded' ? 'Completed' : attempt ? 'In progress' : 'Classroom assessment'}</Text>
+        {percentage !== null && attempt?.result && <Text style={[typography.display.md, { color: colors.primary }]}>{attempt.result.earnedPoints} / {attempt.result.maxPoints} points · {Number(percentage.toFixed(1))}% correct</Text>}
+        {!!attempt?.submittedAt && <Text style={{ color: colors.textMuted }}>{submissionDate(attempt.submittedAt)}</Text>}
+        <ProgressAction label={attempt && attempt.status !== 'draft' ? 'View quiz result' : 'Open classroom quiz'} onPress={() => onOpenStandalone(item)} />
+      </ProgressCard>;
+    })}
     {!loading && !error && (source === 'Standalone' ? standalone.length === 0 : source === 'From passages' ? passages.length === 0 : passages.length + standalone.length === 0) && <Text style={[typography.reading.sm, { color: colors.textMuted }]}>No quizzes in this category yet.</Text>}
     <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Your passage quiz results appear here automatically.</Text>
   </View>;

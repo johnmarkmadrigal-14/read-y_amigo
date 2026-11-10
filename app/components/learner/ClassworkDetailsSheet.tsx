@@ -322,6 +322,12 @@ export default function ClassworkDetailsSheet({
                 </View>
               ) : null}
 
+              {item.type === 'quiz' && <Pressable accessibilityRole="button" onPress={() => {
+                const target = item; onClose(); router.push({ pathname: '/learner/quiz/[id]', params: { id: target._id, classId: target.class } });
+              }} style={[styles.doneButton, { borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.background, marginBottom: 12 }]}>
+                <Text style={{ color: colors.primary, fontWeight: '800' }}>Open quiz or view result</Text>
+              </Pressable>}
+
               {item.type === 'reading' && <Pressable accessibilityRole="button" onPress={() => {
                 const target = item; onClose(); router.push({ pathname: '/learner/classwork/[id]', params: { id: target._id, classId: target.class } });
               }} style={[styles.doneButton, { borderWidth: 1.5, borderColor: colors.primary, backgroundColor: colors.background, marginBottom: 12 }]}>
