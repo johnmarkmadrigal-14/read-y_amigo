@@ -8,9 +8,12 @@ import {
   removeItem,
 } from "./secureStorage";
 
-// TODO: Replace with your computer's local network IP.
-// Your phone and computer must be connected to the same Wi-Fi.
-const API_ROOT = "http://192.168.18.5:4000/api";
+// EAS inlines this public URL into the release bundle. The LAN URL is the
+// existing local-development default when no environment value is provided.
+const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/+$/, "");
+const API_ROOT = configuredApiUrl
+  ? configuredApiUrl.endsWith("/api") ? configuredApiUrl : `${configuredApiUrl}/api`
+  : "http://192.168.18.5:4000/api";
 // Server origin without "/api" — used to build links to /uploads files.
 export const API_ORIGIN = API_ROOT.replace(/\/api$/, "");
 
