@@ -105,7 +105,7 @@ export function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () =
   const q = attempt.quiz.questions[index], answer = answers.find(a => a.questionId === q.id)?.answer;
   return <KeyboardAvoidingView style={ui.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <View style={ui.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel={standalone ? 'Return to classroom' : 'Return to reading activity'} disabled={busy} onPress={() => { void exit(); }} style={styles.back}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back" disabled={busy} onPress={() => { void exit(); }} style={styles.back}>
         <Text style={{ color: colors.primary, fontSize: 28 }}>‹</Text>
       </Pressable>
       <Text accessibilityRole="header" style={[typography.display.md, ui.flex, { color: colors.text }]}>{standalone ? 'Classroom quiz' : 'Comprehension quiz'}</Text>
@@ -173,12 +173,20 @@ export function LearnerQuizScreen({ standalone = false }: { standalone?: boolean
     (standalone ? startStandaloneQuiz(id) : startComprehension(id)).then(data => { if (active) setResponse(data); }).catch(err => { if (active) setResponse({ error: err instanceof Error ? err.message : 'Could not start the quiz.' }); });
     return () => { active = false; };
   }, [id, retry, standalone]);
-  const exit = () => standalone
-    ? router.replace({ pathname: '/learner/class/[id]', params: { id: classId } })
-    : router.replace({ pathname: '/learner/classwork/[id]', params: { id, classId } });
-  return <Screen>
+  const exit = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else if (!standalone) {
+      router.replace({ pathname: '/learner/classwork/[id]', params: { id, classId } });
+    } else if (classId) {
+      router.replace({ pathname: '/learner/class/[id]', params: { id: classId } });
+    } else {
+      router.replace('/learner/todo');
+    }
+  }, [classId, id, standalone]);
+
+  return <Screen onBack={response?.attempt ? undefined : exit}>
     {response?.attempt ? <QuizRunner key={response.attempt._id} initial={response.attempt} onExit={exit} /> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ui.scroll}><View style={styles.stack}>
-      <Pressable accessibilityRole="button" onPress={exit} style={styles.action}><Text style={[typography.reading.sm, { color: colors.primary }]}>{standalone ? 'Return to classroom' : 'Return to reading activity'}</Text></Pressable>
       {response?.error ? <><Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.retryText }]}>{response.error}</Text>
         <Pressable accessibilityRole="button" onPress={() => { setResponse(null); setRetry(v => v + 1); }} style={styles.action}><Text style={[typography.reading.sm, { color: colors.primary }]}>Try again</Text></Pressable></> : <ActivityIndicator color={colors.primary} />}
     </View></ScrollView>}

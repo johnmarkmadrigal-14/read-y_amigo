@@ -1,6 +1,6 @@
-import { HeadingLabel } from "../components/InterfaceChrome";
+import { HeadingLabel } from "../../components/InterfaceChrome";
 // app/learner/dashboard.tsx
-import { DashboardAction, DashboardEmpty, DashboardWelcome, ReadingClassCard, dashboardLayout } from "../components/ReadingDashboard";
+import { DashboardAction, DashboardEmpty, DashboardWelcome, ReadingClassCard, dashboardLayout } from "../../components/ReadingDashboard";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -11,15 +11,15 @@ import {
   Text,
   View,
 } from "react-native";
-import { Screen } from "../components/Screen";
+import { Screen } from "../../components/Screen";
 import {
   ApiLearnerEnrollment,
   ApiUser,
   getMyEnrollments,
   getMyProfile,
-} from "../lib/api";
-import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
+} from "../../lib/api";
+import { useTheme } from "../../theme/ThemeProvider";
+import { radius, spacing, typography } from "../../theme/tokens";
 
 export default function LearnerDashboard() {
   const { colors } = useTheme();

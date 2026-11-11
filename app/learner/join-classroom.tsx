@@ -44,7 +44,7 @@ export default function JoinClassroom() {
   };
 
   return (
-    <Screen>
+    <Screen back>
       <View style={styles.container}>
         <HeadingLabel icon="school-outline" style={[typography.display.xl, { color: colors.primary, textAlign: "center", marginBottom: spacing.sm }]}>
           Join Classroom
@@ -80,12 +80,6 @@ export default function JoinClassroom() {
           onPress={handleJoin}
           loading={loading}
           style={{ marginTop: spacing.sm }}
-        />
-        <Button
-          label="← Back"
-          variant="secondary"
-          onPress={() => router.back()}
-          style={{ marginTop: spacing.md }}
         />
       </View>
     </Screen>

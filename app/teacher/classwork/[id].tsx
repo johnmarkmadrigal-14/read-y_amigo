@@ -43,7 +43,7 @@ export default function TeacherClassworkSubmissions() {
   }, [data, filter, query]);
 
   const loadError = !id ? 'This classwork could not be found.' : error;
-  if (!data || loadError) return <Screen>
+  if (!data || loadError) return <Screen back>
     <View style={styles.centered}>
       {loadError ? <>
         <Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.textMuted, textAlign: 'center' }]}>{loadError}</Text>
@@ -55,9 +55,6 @@ export default function TeacherClassworkSubmissions() {
   </Screen>;
 
   const header = <View style={styles.header}>
-    <TextAction icon="chevron-back" onPress={() => router.back()}>
-      <Text style={[typography.reading.sm, { color: colors.text }]}>Back</Text>
-    </TextAction>
     <HeadingLabel icon="bookmark-outline" style={[typography.display.lg, { color: colors.text }]}>Submissions</HeadingLabel>
     <Text style={[typography.display.md, { color: colors.text }]}>{data.classwork.title}</Text>
     <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Reading assignment</Text>
@@ -90,7 +87,7 @@ export default function TeacherClassworkSubmissions() {
     {!!query.trim() && <Text accessibilityLiveRegion="polite" style={[typography.reading.sm, { color: colors.textMuted }]}>{rows.length} {rows.length === 1 ? 'learner' : 'learners'} found</Text>}
   </View>;
 
-  return <Screen>
+  return <Screen back>
     <FlatList<LearnerRow>
       data={rows} keyExtractor={item => item.key} ListHeaderComponent={header}
       keyboardShouldPersistTaps="handled" contentContainerStyle={styles.listContent}

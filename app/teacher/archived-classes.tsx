@@ -68,7 +68,7 @@ export default function ArchivedClassesScreen() {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
         </View>
@@ -78,7 +78,7 @@ export default function ArchivedClassesScreen() {
 
   if (error) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <Text style={[typography.reading.sm, { color: colors.text, textAlign: "center" }]}>
             {error}
@@ -94,7 +94,7 @@ export default function ArchivedClassesScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll back>
       <HeadingLabel icon="archive-outline" style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
         Archived classes
       </HeadingLabel>

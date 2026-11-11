@@ -149,7 +149,7 @@ export default function ClassesScreen() {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
         </View>
@@ -159,7 +159,7 @@ export default function ClassesScreen() {
 
   if (error) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <Text style={[typography.reading.sm, { color: colors.text, textAlign: "center" }]}>
             {error}
@@ -178,7 +178,7 @@ export default function ClassesScreen() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll back>
       <View style={styles.headerRow}>
         <HeadingLabel icon="school-outline" style={[typography.display.lg, { color: colors.text }]}>Classes</HeadingLabel>
         <TextAction icon="archive-outline" onPress={() => router.push("/teacher/archived-classes")}>

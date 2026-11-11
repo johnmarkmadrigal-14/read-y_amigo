@@ -155,7 +155,7 @@ export default function LearnerClassDetail() {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
         </View>
@@ -165,7 +165,7 @@ export default function LearnerClassDetail() {
 
   if (error) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <Text
             style={[

@@ -1,5 +1,5 @@
-import { myActivities } from '../../components/workflow/api';
-import { standaloneQuizResults, comprehensionCompletion } from '../../components/comprehension/api';
+import { myActivities } from '../../../components/workflow/api';
+import { standaloneQuizResults, comprehensionCompletion } from '../../../components/comprehension/api';
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect } from "expo-router";
@@ -19,17 +19,17 @@ import ClassworkDetailsSheet, {
   classworkIconName,
   classworkTypeLabel,
   formatDueDateTime,
-} from "../components/learner/ClassworkDetailsSheet";
-import { Screen } from "../components/Screen";
+} from "../../components/learner/ClassworkDetailsSheet";
+import { Screen } from "../../components/Screen";
 import {
   ApiClasswork,
   ClassworkType,
   getLearnerClasswork,
   getMyEnrollments,
   getMySubmissions,
-} from "../lib/api";
-import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
+} from "../../lib/api";
+import { useTheme } from "../../theme/ThemeProvider";
+import { radius, spacing, typography } from "../../theme/tokens";
 
 type TodoItem = ApiClasswork & { classTitle: string; done: boolean };
 

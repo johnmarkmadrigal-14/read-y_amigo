@@ -65,7 +65,7 @@ export default function CompleteGoogleProfileScreen() {
   };
 
   return (
-    <Screen>
+    <Screen back>
       <ScrollView contentContainerStyle={styles.container}>
         <HeadingLabel icon="bookmark-outline" style={[typography.display.lg, { color: colors.text }]}>
           Almost done!

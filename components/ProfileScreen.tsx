@@ -104,7 +104,10 @@ export function ProfileScreen({ role }: { role: Role }) {
 
   return <Screen>
     <View style={styles.top}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back to settings" onPress={() => router.replace(teacher ? "/teacher/settings" : "/learner/settings")} style={styles.iconButton}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => {
+        if (router.canGoBack()) router.back();
+        else router.replace(teacher ? "/teacher/settings" : "/learner/settings");
+      }} style={styles.iconButton}>
         <Ionicons name="arrow-back" size={25} color={colors.text} />
       </Pressable>
       <Text accessibilityRole="header" style={[typography.display.lg, { color: colors.text }]}>Profile</Text><View style={styles.iconButton} />

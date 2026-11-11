@@ -1,4 +1,4 @@
-import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
+import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { router, useFocusEffect } from "expo-router";
@@ -14,8 +14,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { DashboardAction, DashboardEmpty, DashboardWelcome, ReadingClassCard, dashboardLayout } from "../components/ReadingDashboard";
-import { Screen } from "../components/Screen";
+import { DashboardAction, DashboardEmpty, DashboardWelcome, ReadingClassCard, dashboardLayout } from "../../components/ReadingDashboard";
+import { Screen } from "../../components/Screen";
 import {
   ApiClass,
   ApiUser,
@@ -23,9 +23,9 @@ import {
   getMyClasses,
   getMyProfile,
   updateClass,
-} from "../lib/api";
-import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
+} from "../../lib/api";
+import { useTheme } from "../../theme/ThemeProvider";
+import { radius, spacing, typography } from "../../theme/tokens";
 
 export default function TeacherDashboard() {
   const { colors } = useTheme();

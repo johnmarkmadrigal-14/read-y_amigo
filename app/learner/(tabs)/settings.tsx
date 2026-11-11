@@ -1,12 +1,12 @@
-import { AppInformationLinks } from "../../components/AppInformationScreen";
-import { HeadingLabel } from "../components/InterfaceChrome";
+import { AppInformationLinks } from "../../../components/AppInformationScreen";
+import { HeadingLabel } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text } from "react-native";
-import { Screen } from "../components/Screen";
-import { logout } from "../lib/api";
-import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
+import { Screen } from "../../components/Screen";
+import { logout } from "../../lib/api";
+import { useTheme } from "../../theme/ThemeProvider";
+import { radius, spacing, typography } from "../../theme/tokens";
 
 export default function LearnerSettingsScreen() {
   const { colors } = useTheme();

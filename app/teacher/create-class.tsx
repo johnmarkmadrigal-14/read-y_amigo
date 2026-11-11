@@ -59,7 +59,7 @@ export default function CreateClassroom() {
   ];
 
   return (
-    <Screen>
+    <Screen back>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -104,13 +104,6 @@ export default function CreateClassroom() {
             onPress={handleCreate}
             loading={loading}
             style={{ marginTop: spacing.sm }}
-          />
-
-          <Button
-            label="← Back"
-            variant="secondary"
-            onPress={() => router.back()}
-            style={{ marginTop: spacing.md }}
           />
         </ScrollView>
       </KeyboardAvoidingView>

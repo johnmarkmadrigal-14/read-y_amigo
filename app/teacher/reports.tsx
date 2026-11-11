@@ -31,7 +31,7 @@ export default function ReportsScreen() {
   const classes = response?.data.availableClasses || [];
   const rows = useMemo(() => data ? reportTrendRows(data) : [], [data]);
   const label = metric === 'speed' ? 'Average reading speed trend' : metric === 'accuracy' ? 'Average word accuracy trend' : 'Average comprehension trend';
-  return <Screen>
+  return <Screen back>
     <View style={[s.row, { justifyContent: 'space-between', paddingBottom: 12 }]}><Text accessibilityRole="header" style={[typography.display.lg, { color: colors.text }]}>Reports</Text><ProgressAction label="Refresh" onPress={() => setRevision(value => value + 1)} /></View>
     <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={() => setRevision(value => value + 1)} />} contentContainerStyle={[s.stack, { paddingBottom: 32 }]}>
       <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Overall learner progress</Text>

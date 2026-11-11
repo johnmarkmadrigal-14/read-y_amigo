@@ -101,12 +101,9 @@ export function SubmissionReviewScreen() {
     data: { ...previous.data, submissions: previous.data.submissions.map(item => item._id === updated._id ? { ...updated, learner: item.learner } : item) },
   } : previous);
 
-  return <Screen>
+  return <Screen onBack={backToList}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: spacing.xl }}>
     <View style={styles.content}>
-      <TextAction icon="chevron-back" onPress={backToList}>
-        <Text style={[typography.reading.sm, { color: colors.text }]}>Submissions</Text>
-      </TextAction>
       <HeadingLabel icon="person-outline" style={[typography.display.lg, { color: colors.text }]}>Learner submission</HeadingLabel>
       {!id || !classworkId ? <Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.textMuted }]}>This submission link is incomplete. Return to the classwork and open the submission again.</Text>
         : !current ? <View style={styles.loading}><ActivityIndicator accessibilityLabel="Loading learner submission" color={colors.primary} /></View>

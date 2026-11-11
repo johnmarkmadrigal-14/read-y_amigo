@@ -322,9 +322,7 @@ export default function ClassDetail() {
   const classId = id ?? "";
 
   const [activeTab, setActiveTab] =
-    useState<Tab>(tab === "Progress" ? "Progress" : "Stream");
-
-  useFocusEffect(useCallback(() => { if (tab === 'Progress' || tab === 'Learners') setActiveTab(tab); }, [tab]));
+    useState<Tab>(tab === "Progress" || tab === "Learners" ? tab : "Stream");
 
   const [
     classInfo,
@@ -493,9 +491,8 @@ export default function ClassDetail() {
     try {
       await deleteClass(classId);
 
-      router.replace(
-        "/teacher/dashboard"
-      );
+      if (router.canGoBack()) router.back();
+      else router.replace("/teacher/dashboard");
     } catch (err) {
       Alert.alert(
         "Couldn't archive class",
@@ -551,7 +548,7 @@ export default function ClassDetail() {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <ActivityIndicator
             color={colors.primary}
@@ -563,7 +560,7 @@ export default function ClassDetail() {
 
   if (error) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <Text
             style={[

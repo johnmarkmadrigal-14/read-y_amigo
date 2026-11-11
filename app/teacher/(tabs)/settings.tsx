@@ -1,12 +1,12 @@
-import { AppInformationLinks } from "../../components/AppInformationScreen";
-import { HeadingLabel } from "../components/InterfaceChrome";
+import { AppInformationLinks } from "../../../components/AppInformationScreen";
+import { HeadingLabel } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text } from "react-native";
-import { Screen } from "../components/Screen";
-import { logout } from "../lib/api";
-import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
+import { Screen } from "../../components/Screen";
+import { logout } from "../../lib/api";
+import { useTheme } from "../../theme/ThemeProvider";
+import { radius, spacing, typography } from "../../theme/tokens";
 
 // Profile and Reports used to be their own tabs; both are used less often
 // than Home/To-do/Notifications, so they're folded in here as menu rows

@@ -31,8 +31,13 @@ export default function ClassroomCreated() {
     resetTimer.current = setTimeout(() => setCopied(false), 1800);
   };
 
+  const finish = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/teacher/dashboard");
+  };
+
   return (
-    <Screen>
+    <Screen onBack={finish}>
       <View style={styles.container}>
         <Ionicons
           name="checkmark-circle"
@@ -97,7 +102,7 @@ export default function ClassroomCreated() {
         <Button
           label="Go to Dashboard"
           variant="primary"
-          onPress={() => router.replace("/teacher/dashboard")}
+          onPress={finish}
           style={{ width: "100%" }}
         />
       </View>

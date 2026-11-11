@@ -3,7 +3,7 @@ import { QuizLaunch } from '../../../components/comprehension/LearnerQuiz';
 import { useReadingPreferences } from "../../../components/ReadingPreferences";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { FileViewer } from "../../components/FileViewer";
@@ -76,7 +76,7 @@ export default function LearnerClassworkScreen() {
 
   if (loading) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} />
         </View>
@@ -86,7 +86,7 @@ export default function LearnerClassworkScreen() {
 
   if (error || !item) {
     return (
-      <Screen>
+      <Screen back>
         <View style={styles.centered}>
           <Text
             style={[
@@ -115,19 +115,13 @@ export default function LearnerClassworkScreen() {
     (!item.readingActivities?.length || item.readingActivities.includes("read-aloud"));
 
   return (
-    <Screen scroll>
+    <Screen scroll back>
       <View
         style={[
           styles.titleBlock,
           { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
       >
-        <TextAction onPress={() => router.back()} hitSlop={10} style={styles.backRow}>
-          <Ionicons name="arrow-back" size={19} color={colors.textMuted} />
-          <Text style={[typography.reading.sm, { color: colors.textMuted, fontWeight: "600" }]}>
-            Back
-          </Text>
-        </TextAction>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>
           {item.type === "reading" ? "READING ACTIVITY" : item.type.toUpperCase()}
         </Text>
@@ -355,15 +349,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.lg,
-  },
-  backRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingRight: spacing.sm,
-    marginBottom: spacing.md,
   },
   titleBlock: {
     marginBottom: spacing.md,

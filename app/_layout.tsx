@@ -30,10 +30,6 @@ export default function RootLayout() {
         <Stack.Screen name="auth/teacher-signup" />
         <Stack.Screen name="auth/learner-signup" />
 
-        {/* teacher/ has its own _layout.tsx (the Tabs navigator) - hand the
-            whole group off to it instead of listing each screen here.
-            Listing them individually caused screens like classroom-created
-            to render as top-level Stack screens outside the tab bar. */}
         <Stack.Screen name="teacher" />
 
         <Stack.Screen name="learner" />

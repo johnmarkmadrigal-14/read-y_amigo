@@ -9,8 +9,13 @@ import { radius, spacing, typography } from "../theme/tokens";
 export default function ClassroomJoined() {
   const { colors } = useTheme();
 
+  const finish = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/learner/dashboard");
+  };
+
   return (
-    <Screen>
+    <Screen onBack={finish}>
       <View style={styles.container}>
         {/* Success badge */}
         <View style={[styles.checkBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -38,7 +43,7 @@ export default function ClassroomJoined() {
         <Button
           label="Go to My Classrooms"
           variant="primary"
-          onPress={() => router.replace("/learner/dashboard")}
+          onPress={finish}
           style={{ width: "100%" }}
         />
       </View>

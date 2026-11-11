@@ -88,10 +88,10 @@ export function AppInformationScreen({ role, topic }: { role: Role; topic: Topic
   const about = topic === "about";
   return <Screen scroll>
     <View style={styles.content}>
-      <TextAction icon="arrow-back" accessibilityLabel="Back to settings" onPress={() => {
+      <TextAction icon="arrow-back" accessibilityLabel="Back" onPress={() => {
         if (router.canGoBack()) router.back();
         else router.replace(`/${role}/settings`);
-      }}><Text style={[typography.reading.sm, { color: colors.text }]}>Settings</Text></TextAction>
+      }}><Text style={[typography.reading.sm, { color: colors.text }]}>Back</Text></TextAction>
       <HeadingLabel icon={about ? "heart-outline" : "book-outline"} style={[typography.display.lg, { color: colors.text }]}>
         {about ? "About READ-Y AMIGO" : "Understanding Phil-IRI"}
       </HeadingLabel>
