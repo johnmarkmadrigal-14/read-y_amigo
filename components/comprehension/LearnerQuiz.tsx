@@ -1,7 +1,8 @@
+import { useConfirmation } from '../ConfirmationDialog';
 import { comprehensionLevel, finalPercentage } from '../progress/data';
 import { ProgressBadge } from '../progress/ProgressUI';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, AppState, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, AppState, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Screen } from '../../app/components/Screen';
 import { useTheme } from '../../app/theme/ThemeProvider';
@@ -65,6 +66,7 @@ export function AttemptResult({ attempt }: { attempt: Attempt }) {
   </View>;
 }
 export function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () => void }) {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
   const [attempt, setAttempt] = useState(initial);
   const [answers, setAnswers] = useState(initial.answers);
@@ -157,7 +159,15 @@ export function QuizRunner({ initial, onExit }: { initial: Attempt; onExit: () =
           const missing = attempt.quiz.questions.filter(question => !answered(question, answers)).length;
           if (missing) { setError(`Answer all questions before submitting. ${missing} unanswered.`); return; }
           setConfirming(true);
-          Alert.alert(standalone ? 'Submit classroom quiz?' : 'Submit comprehension quiz?', 'Your responses will be locked after submission.', [{ text: 'Keep answering', style: 'cancel', onPress: () => setConfirming(false) }, { text: 'Submit', onPress: () => { setConfirming(false); void persist(true); } }], { cancelable: true, onDismiss: () => setConfirming(false) });
+          confirm({
+            title: standalone ? 'Submit classroom quiz?' : 'Submit comprehension quiz?',
+            message: 'Your responses will be locked after submission.',
+            icon: "paper-plane-outline",
+            cancelLabel: 'Keep answering',
+            confirmLabel: 'Submit',
+            onCancel: () => setConfirming(false),
+            onConfirm: () => { setConfirming(false); void persist(true); },
+          });
         }} /></View>
       </View>
     </View>}

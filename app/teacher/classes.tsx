@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../components/ConfirmationDialog';
 import { HeadingLabel, TextAction } from "../components/InterfaceChrome";
 import * as Clipboard from "expo-clipboard";
 import { router, useFocusEffect } from "expo-router";
@@ -29,6 +30,7 @@ const CARD_PALETTE = [
 ];
 
 export default function ClassesScreen() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const [classes, setClasses] = useState<ApiClass[]>([]);
@@ -104,18 +106,13 @@ export default function ClassesScreen() {
         ? ` It has ${classItem.learnerCount} learner${classItem.learnerCount === 1 ? "" : "s"} enrolled.`
         : "";
 
-    Alert.alert(
-      `Archive "${classItem.title}"?`,
-      `This moves the class to Archived Classes and hides it from your list.${learnerNote} You can restore it anytime — nothing is deleted.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Archive",
-          style: "destructive",
-          onPress: () => handleArchive(classItem._id),
-        },
-      ]
-    );
+    confirm({
+      title: `Archive "${classItem.title}"?`,
+      message: `This moves the class to Archived Classes and hides it from your list.${learnerNote} You can restore it anytime — nothing is deleted.`,
+      icon: "archive-outline",
+      confirmLabel: "Archive",
+      onConfirm: () => handleArchive(classItem._id),
+    });
   }
 
   async function handleArchive(classId: string) {

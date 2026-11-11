@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../../../components/ConfirmationDialog';
 import { HeadingLabel, TextAction } from "../../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -52,6 +53,7 @@ function personName(person: PersonRef, fallback: string) {
 }
 
 export default function LearnerAnnouncementScreen() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const params = useLocalSearchParams<{
@@ -184,31 +186,30 @@ export default function LearnerAnnouncementScreen() {
   const confirmDelete = (comment: ApiPostComment) => {
     if (!classId || !postId) return;
 
-    Alert.alert("Delete comment?", "This comment will be permanently removed.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            setBusy(true);
-            await deletePostComment(classId, postId, comment._id);
-            setComments((previous) =>
-              previous.filter((c) => c._id !== comment._id)
-            );
-          } catch (error) {
-            Alert.alert(
-              "Error",
-              error instanceof Error
-                ? error.message
-                : "Unable to delete the comment."
-            );
-          } finally {
-            setBusy(false);
-          }
-        },
+    confirm({
+      title: "Delete comment?",
+      message: "This comment will be permanently removed.",
+      icon: "trash-outline",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          setBusy(true);
+          await deletePostComment(classId, postId, comment._id);
+          setComments((previous) =>
+            previous.filter((c) => c._id !== comment._id)
+          );
+        } catch (error) {
+          Alert.alert(
+            "Error",
+            error instanceof Error
+              ? error.message
+              : "Unable to delete the comment."
+          );
+        } finally {
+          setBusy(false);
+        }
       },
-    ]);
+    });
   };
 
   /* LOADING */

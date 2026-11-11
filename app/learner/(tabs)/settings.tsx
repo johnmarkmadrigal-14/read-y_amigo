@@ -1,28 +1,29 @@
+import { useConfirmation } from '../../../components/ConfirmationDialog';
 import { AppInformationLinks } from "../../../components/AppInformationScreen";
 import { HeadingLabel } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Alert, Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import { Screen } from "../../components/Screen";
 import { logout } from "../../lib/api";
 import { useTheme } from "../../theme/ThemeProvider";
 import { radius, spacing, typography } from "../../theme/tokens";
 
 export default function LearnerSettingsScreen() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   function confirmLogout() {
-    Alert.alert("Log out?", "You'll need to log back in to access your classrooms.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log out",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/auth/login");
-        },
+    confirm({
+      title: "Log out?",
+      message: "You'll need to log back in to access your classrooms.",
+      icon: "log-out-outline",
+      confirmLabel: "Log out",
+      onConfirm: async () => {
+        await logout();
+        router.replace("/auth/login");
       },
-    ]);
+    });
   }
 
   return (

@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../../components/ConfirmationDialog';
 import { classroomAccents } from "../../../components/ClassroomChrome";
 import { HeadingLabel } from "../InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
@@ -51,6 +52,7 @@ export default function ClassStream({
   teacherName = "Teacher",
   classwork,
 }: ClassStreamProps) {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const [posts, setPosts] = useState<TeacherPost[]>([]);
@@ -212,35 +214,27 @@ export default function ClassStream({
      ========================================================= */
 
   const handleDelete = (post: TeacherPost) => {
-    Alert.alert(
-      "Delete announcement?",
-      `Are you sure you want to delete "${post.title}"?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            /*
-             * NOTE:
-             * Current backend does not yet have a DELETE
-             * StreamPost endpoint.
-             *
-             * For now this removes it from the current UI only.
-             */
+    confirm({
+      title: "Delete announcement?",
+      message: `Are you sure you want to delete "${post.title}"?`,
+      icon: "trash-outline",
+      confirmLabel: "Delete",
+      onConfirm: () => {
+        /*
+         * NOTE:
+         * Current backend does not yet have a DELETE
+         * StreamPost endpoint.
+         *
+         * For now this removes it from the current UI only.
+         */
 
-            setPosts((previous) =>
-              previous.filter(
-                (item) => item.id !== post.id
-              )
-            );
-          },
-        },
-      ]
-    );
+        setPosts((previous) =>
+          previous.filter(
+            (item) => item.id !== post.id
+          )
+        );
+      },
+    });
   };
 
   /* =========================================================

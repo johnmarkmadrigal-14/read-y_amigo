@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../../components/ConfirmationDialog';
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -28,6 +29,7 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { radius, spacing, typography } from "../../theme/tokens";
 
 export default function TeacherDashboard() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const [profile, setProfile] = useState<ApiUser | null>(null);
@@ -115,18 +117,13 @@ export default function TeacherDashboard() {
         ? ` It has ${classItem.learnerCount} learner${classItem.learnerCount === 1 ? "" : "s"} enrolled.`
         : "";
 
-    Alert.alert(
-      `Archive "${classItem.title}"?`,
-      `This moves the class to Archived Classes and hides it from your list.${learnerNote} You can restore it anytime — nothing is deleted.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Archive",
-          style: "destructive",
-          onPress: () => handleArchive(classItem._id),
-        },
-      ]
-    );
+    confirm({
+      title: `Archive "${classItem.title}"?`,
+      message: `This moves the class to Archived Classes and hides it from your list.${learnerNote} You can restore it anytime — nothing is deleted.`,
+      icon: "archive-outline",
+      confirmLabel: "Archive",
+      onConfirm: () => handleArchive(classItem._id),
+    });
   }
 
   async function handleArchive(classId: string) {

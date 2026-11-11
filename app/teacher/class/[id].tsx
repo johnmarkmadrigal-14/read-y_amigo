@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../../components/ConfirmationDialog';
 import { ClassroomPeople } from '../../../components/people/ClassroomPeople';
 import { ClassroomLibrary } from '../../../components/library/ClassroomLibrary';
 import { TeacherProgress } from '../../../components/progress/TeacherProgress';
@@ -312,6 +313,7 @@ function createEmptyQuestion(): ApiQuizQuestion {
    ========================================================= */
 
 export default function ClassDetail() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const { id, tab } =
@@ -504,21 +506,13 @@ export default function ClassDetail() {
   };
 
   const confirmArchive = () => {
-    Alert.alert(
-      "Archive this class?",
-      "It'll move to Archived Classes. You can restore it later.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Archive",
-          style: "destructive",
-          onPress: handleArchive,
-        },
-      ]
-    );
+    confirm({
+      title: "Archive this class?",
+      message: "It'll move to Archived Classes. You can restore it later.",
+      icon: "archive-outline",
+      confirmLabel: "Archive",
+      onConfirm: handleArchive,
+    });
   };
 
   const openMenu = () => {

@@ -1,3 +1,4 @@
+import { ConfirmationProvider } from "../components/ConfirmationDialog";
 import { ReadingPreferencesProvider } from "../components/ReadingPreferences";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -21,7 +22,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider><ReadingPreferencesProvider>
+    <ThemeProvider><ReadingPreferencesProvider><ConfirmationProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
 
@@ -34,6 +35,6 @@ export default function RootLayout() {
 
         <Stack.Screen name="learner" />
       </Stack>
-    </ReadingPreferencesProvider></ThemeProvider>
+    </ConfirmationProvider></ReadingPreferencesProvider></ThemeProvider>
   );
 }

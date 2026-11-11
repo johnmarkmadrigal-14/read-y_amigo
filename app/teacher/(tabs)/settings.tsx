@@ -1,8 +1,9 @@
+import { useConfirmation } from '../../../components/ConfirmationDialog';
 import { AppInformationLinks } from "../../../components/AppInformationScreen";
 import { HeadingLabel } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Alert, Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import { Screen } from "../../components/Screen";
 import { logout } from "../../lib/api";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -13,20 +14,20 @@ import { radius, spacing, typography } from "../../theme/tokens";
 // instead, matching how Classroom tucks less-frequent destinations behind
 // a single menu rather than giving each one its own nav slot.
 export default function SettingsScreen() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   function confirmLogout() {
-    Alert.alert("Log out?", "You'll need to log back in to access your classes.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log out",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/auth/login");
-        },
+    confirm({
+      title: "Log out?",
+      message: "You'll need to log back in to access your classes.",
+      icon: "log-out-outline",
+      confirmLabel: "Log out",
+      onConfirm: async () => {
+        await logout();
+        router.replace("/auth/login");
       },
-    ]);
+    });
   }
 
   return (

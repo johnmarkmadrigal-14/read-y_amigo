@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../components/ConfirmationDialog';
 import { HeadingLabel } from "../components/InterfaceChrome";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
@@ -15,6 +16,7 @@ import { radius, spacing, typography } from "../theme/tokens";
 const ARCHIVED_PALETTE = { fill: "#ECECEC", shadow: "#6B6B6B", text: "#2B2B2B" };
 
 export default function ArchivedClassesScreen() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const [classes, setClasses] = useState<ApiClass[]>([]);
@@ -41,14 +43,13 @@ export default function ArchivedClassesScreen() {
   );
 
   function confirmRestore(classItem: ApiClass) {
-    Alert.alert(
-      `Restore "${classItem.title}"?`,
-      "This brings the class back to your active list.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Restore", onPress: () => handleRestore(classItem._id) },
-      ]
-    );
+    confirm({
+      title: `Restore "${classItem.title}"?`,
+      message: "This brings the class back to your active list.",
+      icon: "refresh-outline",
+      confirmLabel: "Restore",
+      onConfirm: () => handleRestore(classItem._id),
+    });
   }
 
   async function handleRestore(classId: string) {

@@ -1,5 +1,6 @@
+import { useConfirmation } from '../ConfirmationDialog';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { getFileUrl, getStoredToken, submitActivity } from '../../app/lib/api';
@@ -25,6 +26,7 @@ export function ActivityFile({ file }: { file: NonNullable<ActivitySubmission['a
   return headers ? <FileViewer url={getFileUrl(file.url)} name={file.name} mimeType={file.mimeType} headers={headers} /> : <ActivityIndicator color={colors.primary} />;
 }
 export function LearnerActivity({ classId, classworkId, deadlinePassed }: { classId: string; classworkId: string; deadlinePassed: boolean }) {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
   const [submission, setSubmission] = useState<ActivitySubmission | null>(null), [text, setText] = useState('');
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
@@ -63,7 +65,14 @@ export function LearnerActivity({ classId, classworkId, deadlinePassed }: { clas
       {!busy && !deadlinePassed && <ProgressAction label="Attach file" onPress={() => { void pick(); }} />}
       {deadlinePassed ? <Text style={{ color: colors.retryText }}>The deadline has passed.</Text> : busy ? <ActivityIndicator color={colors.primary} /> : <ProgressAction label="Submit activity" onPress={() => {
         if (!text.trim() && !file) { setError('Write an answer or attach a file first.'); return; }
-        Alert.alert('Submit activity?', 'Your submitted answer will be locked for review.', [{ text: 'Keep editing', style: 'cancel' }, { text: 'Submit', onPress: () => { void submit(); } }]);
+        confirm({
+          title: 'Submit activity?',
+          message: 'Your submitted answer will be locked for review.',
+          icon: "paper-plane-outline",
+          cancelLabel: 'Keep editing',
+          confirmLabel: 'Submit',
+          onConfirm: () => { void submit(); },
+        });
       }} />}
     </View> : null}
   </ProgressCard>;

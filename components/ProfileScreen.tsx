@@ -1,8 +1,9 @@
+import { useConfirmation } from './ConfirmationDialog';
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { Screen } from "../app/components/Screen";
 import { getMyProfile, logout, removeProfilePhoto, updateMyProfile, uploadProfilePhoto, type ApiUser, type ReadingPreferences } from "../app/lib/api";
 import { useTheme } from "../app/theme/ThemeProvider";
@@ -16,6 +17,7 @@ const blank: Draft = { firstName: "", secondName: "", middleInitial: "", display
 const toDraft = (user: ApiUser): Draft => Object.fromEntries(Object.keys(blank).map(key => [key, typeof user[key] === "string" ? user[key] : ""])) as Draft;
 
 export function ProfileScreen({ role }: { role: Role }) {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
   const reading = useReadingPreferences();
   const { setPreferences: applyPreferences } = reading;
@@ -74,22 +76,30 @@ export function ProfileScreen({ role }: { role: Role }) {
     finally { setBusy(false); }
   }
   function removePhoto() {
-    Alert.alert("Remove profile picture?", "Your initials will be shown instead.", [
-      { text: "Cancel", style: "cancel" }, { text: "Remove", style: "destructive", onPress: async () => {
+    confirm({
+      title: "Remove profile picture?",
+      message: "Your initials will be shown instead.",
+      icon: "image-outline",
+      confirmLabel: "Remove",
+      onConfirm: async () => {
         setBusy(true); setError("");
         try { setUser(await removeProfilePhoto()); setMessage("Profile picture removed."); }
         catch (err) { setError(err instanceof Error ? err.message : "Couldn't remove the photo."); }
         finally { setBusy(false); }
-      } },
-    ]);
+      },
+    });
   }
   function confirmLogout() {
-    Alert.alert("Log out?", "You can log back in to access your account and classes.", [
-      { text: "Cancel", style: "cancel" }, { text: "Log out", onPress: async () => {
+    confirm({
+      title: "Log out?",
+      message: "You can log back in to access your account and classes.",
+      icon: "log-out-outline",
+      confirmLabel: "Log out",
+      onConfirm: async () => {
         try { await logout(); await reading.refresh(); router.replace("/auth/login"); }
         catch (err) { setError(err instanceof Error ? err.message : "Couldn't log out. Try again."); }
-      } },
-    ]);
+      },
+    });
   }
   const button = (label: string, action: () => void, secondary = false) => <Pressable disabled={busy} onPress={action} accessibilityRole="button"
     style={({ pressed }) => [styles.button, { backgroundColor: secondary ? colors.surface : colors.primary, opacity: busy ? 0.5 : pressed ? 0.75 : 1 }]}>

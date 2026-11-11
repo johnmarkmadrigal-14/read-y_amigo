@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../../../components/ConfirmationDialog';
 import { HeadingLabel, TextAction } from "../../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -34,6 +35,7 @@ import {
 } from "../../../theme/tokens";
 
 export default function AnnouncementDetailsScreen() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const params = useLocalSearchParams<{
@@ -384,50 +386,42 @@ export default function AnnouncementDetailsScreen() {
       return;
     }
 
-    Alert.alert(
-      "Delete comment?",
-      "This comment will be permanently removed.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setCommentLoading(true);
+    confirm({
+      title: "Delete comment?",
+      message: "This comment will be permanently removed.",
+      icon: "trash-outline",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          setCommentLoading(true);
 
-              await deletePostComment(
-                classId,
-                postId,
-                comment._id
-              );
+          await deletePostComment(
+            classId,
+            postId,
+            comment._id
+          );
 
-              setComments((previous) =>
-                previous.filter(
-                  (item) =>
-                    item._id !== comment._id
-                )
-              );
-            } catch (error) {
-              console.error(
-                "Failed to delete comment:",
-                error
-              );
+          setComments((previous) =>
+            previous.filter(
+              (item) =>
+                item._id !== comment._id
+            )
+          );
+        } catch (error) {
+          console.error(
+            "Failed to delete comment:",
+            error
+          );
 
-              Alert.alert(
-                "Error",
-                "Unable to delete the comment."
-              );
-            } finally {
-              setCommentLoading(false);
-            }
-          },
-        },
-      ]
-    );
+          Alert.alert(
+            "Error",
+            "Unable to delete the comment."
+          );
+        } finally {
+          setCommentLoading(false);
+        }
+      },
+    });
   };
 
   /*

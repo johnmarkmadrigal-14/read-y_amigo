@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../../components/ConfirmationDialog';
 import { LearnerActivity } from '../../../components/workflow/ActivityUI';
 import { QuizLaunch } from '../../../components/comprehension/LearnerQuiz';
 import { useReadingPreferences } from "../../../components/ReadingPreferences";
@@ -35,6 +36,7 @@ function iconForFile(name: string): keyof typeof Ionicons.glyphMap {
 }
 
 export default function LearnerClassworkScreen() {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
   const reading = useReadingPreferences();
   const { refresh: refreshReadingPreferences } = reading;
@@ -286,33 +288,31 @@ export default function LearnerClassworkScreen() {
                 accessibilityState={{ disabled: unsubmitting || !canUnsubmit }}
                 disabled={unsubmitting || !canUnsubmit}
                 onPress={() => {
-                  Alert.alert(
-                    "Unsubmit this activity?",
-                    "Your recording will be removed from submitted work. You can submit again before the deadline.",
-                    [
-                      { text: "Keep submission", style: "cancel" },
-                      {
-                        text: "Unsubmit",
-                        style: "destructive",
-                        onPress: async () => {
-                          if (!canUnsubmit) return;
-                          setUnsubmitting(true);
-                          try {
-                            await unsubmitReading(item._id);
-                            setSubmission(null);
-                            Alert.alert("Submission undone", "You can now record and submit again before the deadline.");
-                          } catch (err) {
-                            Alert.alert(
-                              "Couldn't unsubmit",
-                              err instanceof Error ? err.message : "Please try again."
-                            );
-                          } finally {
-                            setUnsubmitting(false);
-                          }
-                        },
-                      },
-                    ]
-                  );
+                  confirm({
+                    title: "Unsubmit your reading?",
+                    message: item.readingActivities?.includes("comprehension")
+                      ? "Your recording will be withdrawn. If you started the linked quiz, your next recording will start a new quiz attempt."
+                      : "Your recording will be withdrawn. You can submit again before the deadline.",
+                    icon: "arrow-undo-outline",
+                    cancelLabel: "Keep submission",
+                    confirmLabel: "Unsubmit",
+                    onConfirm: async () => {
+                      if (!canUnsubmit) return;
+                      setUnsubmitting(true);
+                      try {
+                        await unsubmitReading(item._id, submission._id);
+                        setSubmission(current => current?._id === submission._id ? null : current);
+                        Alert.alert("Submission undone", "You can now record and submit again before the deadline.");
+                      } catch (err) {
+                        Alert.alert(
+                          "Couldn't unsubmit",
+                          err instanceof Error ? err.message : "Please try again."
+                        );
+                      } finally {
+                        setUnsubmitting(false);
+                      }
+                    },
+                  });
                 }}
                 style={({ pressed }) => [
                   styles.unsubmitButton,

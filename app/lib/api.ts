@@ -1078,12 +1078,10 @@ export async function getMySubmissions(classId: string) {
 }
 
 // Learner: undo a reading submission before the classwork deadline.
-// Requires the backend DELETE /submissions/classwork/:classworkId route
-// to enforce ownership and deadline checks server-side as well.
-export async function unsubmitReading(classworkId: string) {
+export async function unsubmitReading(classworkId: string, submissionId: string) {
   return authRequest<{ message: string }>(
     `/submissions/classwork/${classworkId}`,
-    { method: "DELETE" }
+    { method: "DELETE", body: { submissionId } }
   );
 }
 

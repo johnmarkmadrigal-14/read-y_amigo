@@ -1,7 +1,8 @@
+import { ConfirmationOverlay, useConfirmationController } from './ConfirmationDialog';
 import { useReadingPreferences } from "./ReadingPreferences";
 import { HeadingLabel, TextAction } from "../app/components/InterfaceChrome";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppState, Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { AppState, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { ExpoSpeechRecognitionModule as Speech, useSpeechRecognitionEvent } from "expo-speech-recognition";
 import type { ReadAloudRecorderProps } from "../app/components/ReadAloudRecorder";
 import { AudioPlayerBar, formatTime } from "../app/components/AudioPlayerBar";
@@ -21,6 +22,7 @@ type Phase = "idle" | "countdown" | "starting" | "recording" | "finishing";
 // Speech recognition owns the microphone AND saves the audio; running a second
 // expo-audio recorder alongside it can interrupt either recording on native devices.
 export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, readingText, readingAttachment, readingPassage }: ReadAloudRecorderProps & { onUseAudioOnly: () => void }) {
+  const { request, confirm, close } = useConfirmationController();
   const { colors } = useTheme();
   const reading = useReadingPreferences();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -201,9 +203,14 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
   function submit() {
     if (!uri || submitting || phase !== "idle") return;
     const savedUri = uri;
-    Alert.alert("Submit your reading?", "Your teacher will be able to listen to it.", [
-      { text: "Not yet", style: "cancel" },
-      { text: "Submit", onPress: async () => {
+    confirm({
+      title: "Submit your reading?",
+      message: transcript.trim()
+        ? "Your teacher will receive your recording and transcript for review."
+        : "Your teacher will receive your recording for review.",
+      icon: "paper-plane-outline",
+      confirmLabel: "Submit",
+      onConfirm: async () => {
         setSubmitting(true);
         try {
           await onSubmit({ uri: savedUri, durationMs, transcript, transcriptLocale: locale, recordingInterrupted: interrupted,
@@ -213,21 +220,25 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
         } catch (err) {
           if (mounted.current) setError(err instanceof Error ? err.message : "Couldn't submit. Your recording is still available.");
         } finally { if (mounted.current) setSubmitting(false); }
-      } },
-    ]);
+      },
+    });
   }
 
   function closeReader() {
     if (submitting || phase === "finishing") return;
     if (active.current) {
-      Alert.alert("Stop reading?", "Your recording will be kept for review.", [
-        { text: "Keep reading", style: "cancel" },
-        { text: "Stop reading", onPress: () => {
+      confirm({
+        title: "Stop reading?",
+        message: "Your recording will be kept for review.",
+        icon: "stop-circle-outline",
+        cancelLabel: "Keep reading",
+        confirmLabel: "Stop reading",
+        onConfirm: () => {
           closeAfterStop.current = true;
           setPhase("finishing");
           stopRequested.current = true; Speech.stop();
-        } },
-      ]);
+        },
+      });
       return;
     }
     generation.current += 1;
@@ -253,9 +264,10 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
     </View>
     <Button label={uri ? "Review your reading" : "Read now"} onPress={() => uri ? setReaderOpen(true) : start()} disabled={submitting || phase !== "idle"} />
     {!uri && <Button label="Use audio recording only" variant="secondary" onPress={onUseAudioOnly} disabled={submitting || phase !== "idle"} />}
-    <Modal visible={readerOpen} animationType="slide" presentationStyle="fullScreen" onRequestClose={closeReader}>
+    <Modal visible={readerOpen} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => request ? close(false) : closeReader()}>
       <Screen>
-        <View style={styles.reader}>
+        <View style={styles.reader} accessibilityElementsHidden={!!request}
+          importantForAccessibility={request ? "no-hide-descendants" : "auto"}>
           <View style={styles.heading}>
             <HeadingLabel icon="book-outline" style={[typography.display.md, styles.title, { color: colors.text }]} numberOfLines={1}>
               {readingTitle || "Read aloud"}
@@ -349,6 +361,7 @@ export function LiveReadAloudRecorder({ onSubmit, onUseAudioOnly, readingTitle, 
           </View>
         </View>
       </Screen>
+      {request && <ConfirmationOverlay request={request} close={close} />}
     </Modal>
   </View>;
 }

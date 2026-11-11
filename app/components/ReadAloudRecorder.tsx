@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../components/ConfirmationDialog';
 import { Ionicons } from "@expo/vector-icons";
 import {
   AudioModule,
@@ -199,6 +200,7 @@ export function ReadAloudRecorder(props: ReadAloudRecorderProps) {
 }
 
 function AudioOnlyRecorder({ onSubmit, submitted, readingPassage }: ReadAloudRecorderProps) {
+  const confirm = useConfirmation();
   const { colors } = useTheme();
 
   const recorder = useAudioRecorder(recorderOptions);
@@ -396,33 +398,29 @@ function AudioOnlyRecorder({ onSubmit, submitted, readingPassage }: ReadAloudRec
   const handleSubmit = () => {
     if (!recordingUri || submitting) return;
 
-    Alert.alert(
-      "Submit your reading?",
-      "Your teacher will be able to listen to it. You can't change it after you submit.",
-      [
-        { text: "Not yet", style: "cancel" },
-        {
-          text: "Submit",
-          onPress: async () => {
-            setSubmitting(true);
-            try {
-              await onSubmit({ uri: recordingUri, durationMs, recordingInterrupted: interrupted,
-                readingMeasurement: measurement && readingPassage && !validateReadingMeasurement(readingPassage, { ...measurement, interrupted: false }, durationMs)
-                  ? { ...measurement, interrupted } : undefined });
-              success();
-              setCelebrate(true);
-            } catch (err) {
-              Alert.alert(
-                "Couldn't submit",
-                err instanceof Error ? err.message : "Something went wrong."
-              );
-            } finally {
-              if (mountedRef.current) setSubmitting(false);
-            }
-          },
-        },
-      ]
-    );
+    confirm({
+      title: "Submit your reading?",
+      message: "Your teacher will receive your recording for review.",
+      icon: "paper-plane-outline",
+      confirmLabel: "Submit",
+      onConfirm: async () => {
+        setSubmitting(true);
+        try {
+          await onSubmit({ uri: recordingUri, durationMs, recordingInterrupted: interrupted,
+            readingMeasurement: measurement && readingPassage && !validateReadingMeasurement(readingPassage, { ...measurement, interrupted: false }, durationMs)
+              ? { ...measurement, interrupted } : undefined });
+          success();
+          setCelebrate(true);
+        } catch (err) {
+          Alert.alert(
+            "Couldn't submit",
+            err instanceof Error ? err.message : "Something went wrong."
+          );
+        } finally {
+          if (mountedRef.current) setSubmitting(false);
+        }
+      },
+    });
   };
 
   // ── Already submitted ──────────────────────────────────────────────────────
