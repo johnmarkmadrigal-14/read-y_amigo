@@ -165,9 +165,10 @@ function ManualReview({ attempt, assignment, manual, onChange, onSaved, onBack }
 }
 export function TeacherQuizResultsScreen({ standalone = false }: { standalone?: boolean } = {}) {
   const { colors } = useTheme();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, attemptId } = useLocalSearchParams<{ id: string; attemptId?: string }>();
   const [data, setData] = useState<{ title: string; attempts: Attempt[] } | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(attemptId || null);
+  useFocusEffect(useCallback(() => { if (attemptId) setSelected(attemptId); }, [attemptId]));
   const [filter, setFilter] = useState<Attempt['status']>('pending-review');
   const [drafts, setDrafts] = useState<Record<string, ManualDraft>>({});
   const [error, setError] = useState(''), [retry, setRetry] = useState(0);

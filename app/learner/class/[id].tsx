@@ -1,3 +1,4 @@
+import { ClassroomPeople } from '../../../components/people/ClassroomPeople';
 import { ClassroomLibrary } from '../../../components/library/ClassroomLibrary';
 import { LearnerQuizList } from '../../../components/progress/LearnerQuizList';
 import { ClassroomHeader, ClassroomTabs, classroomAccents } from "../../../components/ClassroomChrome";
@@ -29,7 +30,8 @@ import {
   ApiEnrollment,
   ApiStreamPost,
   getLearnerClass,
-  getLearnerClassmates,
+  getClassroomPeople,
+  ClassroomPerson,
   getLearnerClasswork,
   getLearnerStream,
 } from "../../lib/api";
@@ -78,6 +80,7 @@ export default function LearnerClassDetail() {
   } | null>(null);
   const [posts, setPosts] = useState<ApiStreamPost[]>([]);
   const [classwork, setClasswork] = useState<ApiClasswork[]>([]);
+  const [teacher, setTeacher] = useState<ClassroomPerson | null>(null);
   const [classmates, setClassmates] = useState<ApiEnrollment[]>([]);
 
   const [detailsItem, setDetailsItem] = useState<ApiClasswork | null>(null);
@@ -103,13 +106,14 @@ export default function LearnerClassDetail() {
             getLearnerClass(classId),
             getLearnerStream(classId),
             getLearnerClasswork(classId),
-            getLearnerClassmates(classId),
+            getClassroomPeople(classId),
           ]);
 
         setClassInfo(info);
         setPosts(streamPosts);
         setClasswork(work);
-        setClassmates(mates);
+        setClassmates(mates.learners);
+        setTeacher(mates.teacher);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Couldn't load this classroom.";
@@ -147,10 +151,7 @@ export default function LearnerClassDetail() {
   );
 
 
-  const cardStyle = [
-    styles.card,
-    { backgroundColor: colors.surface, borderColor: colors.border },
-  ];
+
 
   if (loading) {
     return (
@@ -226,11 +227,7 @@ export default function LearnerClassDetail() {
           <ClassroomLibrary classId={classId} role="learner" />
         )}
         {activeTab === "People" && (
-          <PeopleTab
-            classmates={classmates}
-            cardStyle={cardStyle}
-            colors={colors}
-          />
+          <ClassroomPeople role="learner" learners={classmates} teacher={teacher} />
         )}
       </ScrollView>
     );
@@ -413,73 +410,6 @@ function ClassworkTab({
 /* =========================================================
    MATERIALS TAB
    ========================================================= */
-
-function PeopleTab({
-  classmates,
-  cardStyle,
-  colors,
-}: {
-  classmates: ApiEnrollment[];
-  cardStyle: any;
-  colors: ThemeColors;
-}) {
-  if (classmates.length === 0) {
-    return (
-      <EmptyText colors={colors} message="No other learners have joined yet." />
-    );
-  }
-
-  return (
-    <View>
-      {classmates.map((enrollment) => (
-        <View key={enrollment._id} style={[cardStyle, styles.row]}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text
-              style={{ color: colors.primaryText, fontWeight: "600", fontSize: 13 }}
-            >
-              {enrollment.learner.displayName?.[0]?.toUpperCase() ?? "?"}
-            </Text>
-          </View>
-
-          <View style={{ flex: 1, marginLeft: spacing.sm }}>
-            <Text
-              style={[typography.reading.sm, { color: colors.text, fontWeight: "600" }]}
-            >
-              {enrollment.learner.displayName}
-            </Text>
-
-            {enrollment.streakDays > 0 && (
-              <View style={styles.streakRow}>
-                <Ionicons name="flame" size={12} color="#FF8A00" />
-                <Text style={{ color: colors.textMuted, fontSize: 12, marginLeft: 3 }}>
-                  {enrollment.streakDays}-day streak
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function EmptyText({ colors, message }: { colors: ThemeColors; message: string }) {
-  return (
-    <Text
-      style={[
-        typography.reading.sm,
-        {
-          color: colors.textMuted,
-          textAlign: "center",
-          marginTop: spacing.lg,
-          marginBottom: spacing.lg,
-        },
-      ]}
-    >
-      {message}
-    </Text>
-  );
-}
 
 /* =========================================================
    STYLES

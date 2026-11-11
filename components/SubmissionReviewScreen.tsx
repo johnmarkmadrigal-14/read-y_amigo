@@ -1,3 +1,4 @@
+import { ReadingVerification } from './workflow/ReadingVerification';
 import { WordAccuracyReview } from './progress/WordAccuracyReview';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -63,6 +64,7 @@ function LearnerSubmission({ submission, assignment, onSaved }: {
     <ReviewSection title="Reading speed review" subtitle="Word count and reading time">
       <ReadingRateReview embedded key={`${submission._id}:${submission.reviewedAt ?? 'new'}`} submission={submission} onSaved={onSaved} />
     </ReviewSection>
+    <ReadingVerification submission={submission} onSaved={onSaved} />
     <Text style={[typography.reading.sm, { color: colors.textMuted, textAlign: 'center' }]}>Review and save each section separately.</Text>
   </View>;
 }

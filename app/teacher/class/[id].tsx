@@ -1,3 +1,4 @@
+import { ClassroomPeople } from '../../../components/people/ClassroomPeople';
 import { ClassroomLibrary } from '../../../components/library/ClassroomLibrary';
 import { TeacherProgress } from '../../../components/progress/TeacherProgress';
 import { QuizBuilder } from '../../../components/comprehension/QuizBuilder';
@@ -323,7 +324,7 @@ export default function ClassDetail() {
   const [activeTab, setActiveTab] =
     useState<Tab>(tab === "Progress" ? "Progress" : "Stream");
 
-  useFocusEffect(useCallback(() => { if (tab === 'Progress') setActiveTab('Progress'); }, [tab]));
+  useFocusEffect(useCallback(() => { if (tab === 'Progress' || tab === 'Learners') setActiveTab(tab); }, [tab]));
 
   const [
     classInfo,
@@ -546,13 +547,7 @@ export default function ClassDetail() {
     );
   };
 
-  const cardStyle = [
-    styles.card,
-    {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-    },
-  ];
+
 
   if (loading) {
     return (
@@ -645,11 +640,7 @@ export default function ClassDetail() {
         )}
 
         {activeTab === "Learners" && (
-          <LearnersTab
-            learners={learners}
-            cardStyle={cardStyle}
-            colors={colors}
-          />
+          <ClassroomPeople role="teacher" learners={learners} />
         )}
 
         {activeTab === "Progress" && (
@@ -4327,132 +4318,6 @@ function EmptyClasswork({
 /* =========================================================
    MATERIALS
    ========================================================= */
-
-function LearnersTab({
-  learners,
-  cardStyle,
-  colors,
-}: {
-  learners: ApiEnrollment[];
-  cardStyle: any;
-  colors: ReturnType<
-    typeof useTheme
-  >["colors"];
-}) {
-  if (learners.length === 0) {
-    return (
-      <EmptyState
-        colors={colors}
-        message="No learners have joined yet. Share your class code so they can join."
-      />
-    );
-  }
-
-  return (
-    <View>
-      {learners.map((enrollment) => (
-        <View
-          key={enrollment._id}
-          style={[
-            cardStyle,
-            styles.row,
-          ]}
-        >
-          <View
-            style={[
-              styles.avatar,
-              {
-                backgroundColor:
-                  colors.primary,
-              },
-            ]}
-          >
-            <Text
-              style={{
-                color:
-                  colors.primaryText,
-                fontWeight: "600",
-                fontSize: 13,
-              }}
-            >
-              {enrollment.learner.displayName?.[0]?.toUpperCase() ??
-                "?"}
-            </Text>
-          </View>
-
-          <View
-            style={{
-              flex: 1,
-              marginLeft: spacing.sm,
-            }}
-          >
-            <Text
-              style={[
-                typography.reading.sm,
-                {
-                  color: colors.text,
-                  fontWeight: "600",
-                },
-              ]}
-            >
-              {
-                enrollment.learner
-                  .displayName
-              }
-            </Text>
-
-            <Text
-              style={[
-                typography.reading.sm,
-                {
-                  color:
-                    colors.textMuted,
-                },
-              ]}
-            >
-              {enrollment.streakDays}
-              -day streak
-            </Text>
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-/* =========================================================
-   EMPTY
-   ========================================================= */
-
-function EmptyState({
-  colors,
-  message,
-}: {
-  colors: ReturnType<
-    typeof useTheme
-  >["colors"];
-  message: string;
-}) {
-  return (
-    <Text
-      style={[
-        typography.reading.sm,
-        {
-          color: colors.textMuted,
-          textAlign: "center",
-          marginTop: spacing.lg,
-          marginBottom: spacing.lg,
-        },
-      ]}
-    >
-      {message}
-    </Text>
-  );
-}
 
 /* =========================================================
    STYLES

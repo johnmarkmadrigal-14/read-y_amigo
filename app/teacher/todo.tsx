@@ -1,125 +1,45 @@
-import { HeadingLabel } from "../components/InterfaceChrome";
-import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import { Screen } from "../components/Screen";
-import { ApiClass, ApiClasswork, getClasswork, getMyClasses } from "../lib/api";
-import { useTheme } from "../theme/ThemeProvider";
-import { radius, spacing, typography } from "../theme/tokens";
-
-type TodoItem = ApiClasswork & { classTitle: string };
-
-// Classroom's "To-do" screen is just every class's upcoming classwork
-// merged into one due-date-sorted list. There's no dedicated to-do
-// endpoint yet, so this fetches each active class's classwork and merges
-// client-side - fine at small scale, worth moving server-side later if
-// teachers start having many classes.
-export default function TodoScreen() {
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { Screen } from '../components/Screen';
+import { useTheme } from '../theme/ThemeProvider';
+import { typography } from '../theme/tokens';
+import { ProgressAction, ProgressBadge, ProgressCard, progressStyles as s } from '../../components/progress/ProgressUI';
+import { submissionDate } from '../../components/progress/data';
+import { getToCheck } from '../../components/workflow/api';
+import { workDestination, workLabel, type ToCheckItem } from '../../components/workflow/data';
+export default function ToCheckScreen() {
   const { colors } = useTheme();
-  const [items, setItems] = useState<TodoItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      const classes: ApiClass[] = await getMyClasses();
-      const perClass = await Promise.all(
-        classes.map(async (c) => {
-          const classwork = await getClasswork(c._id);
-          return classwork
-            .filter((cw) => !!cw.dueDate)
-            .map((cw) => ({ ...cw, classTitle: c.title }));
-        })
-      );
-      const merged = perClass.flat().sort((a, b) => {
-        return new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime();
-      });
-      setItems(merged);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't load your to-do list.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
-
-  if (loading) {
-    return (
-      <Screen>
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      </Screen>
-    );
-  }
-
-  if (error) {
-    return (
-      <Screen>
-        <View style={styles.centered}>
-          <Text style={[typography.reading.sm, { color: colors.text, textAlign: "center" }]}>
-            {error}
-          </Text>
-          <Pressable onPress={load} style={[styles.retryButton, { borderColor: colors.border }]}>
-            <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "600" }]}>
-              Try again
-            </Text>
-          </Pressable>
-        </View>
-      </Screen>
-    );
-  }
-
-  return (
-    <Screen scroll>
-      <HeadingLabel icon="clipboard-outline" style={[typography.display.lg, { color: colors.text, marginBottom: spacing.lg }]}>
-        To-do
-      </HeadingLabel>
-
-      {items.length === 0 && (
-        <Text style={[typography.reading.sm, { color: colors.textMuted }]}>
-          Nothing due yet. Classwork with a due date will show up here.
-        </Text>
-      )}
-
-      {items.map((item) => (
-        <View key={item._id} style={[styles.row, { borderColor: colors.border }]}>
-          <Text style={[typography.reading.sm, { color: colors.text, fontWeight: "600" }]}>
-            {item.title}
-          </Text>
-          <Text style={[typography.reading.sm, { color: colors.textMuted, marginTop: 2 }]}>
-            {item.classTitle} · Due {new Date(item.dueDate!).toLocaleDateString()}
-          </Text>
-        </View>
-      ))}
-    </Screen>
-  );
+  const [items, setItems] = useState<ToCheckItem[]>([]), [filter, setFilter] = useState('All');
+  const [loading, setLoading] = useState(true), [error, setError] = useState(''), [revision, setRevision] = useState(0);
+  const request = String(revision);
+  useFocusEffect(useCallback(() => {
+    let active = true; setLoading(true); setError('');
+    getToCheck().then(data => { if (active) setItems(data.items); }).catch(err => { if (active) setError(err instanceof Error ? err.message : 'Could not load To-check.'); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+    // The revision intentionally reloads the same endpoint on manual refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request]));
+  const visible = items.filter(item => filter === 'All' || (filter === 'Reading' ? item.kind === 'reading' || item.kind === 'comprehension' : filter === 'Activities' ? item.kind === 'activity' : item.kind === 'quiz'));
+  return <Screen>
+    <View style={[s.row, { justifyContent: 'space-between', paddingBottom: 12 }]}><Text accessibilityRole="header" style={[typography.display.lg, { color: colors.text }]}>To-check</Text><ProgressAction label="Refresh" onPress={() => setRevision(v => v + 1)} /></View>
+    <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={() => setRevision(v => v + 1)} />} contentContainerStyle={[s.stack, { paddingBottom: 28 }]}>
+      <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Submitted work waiting for your review.</Text>
+      <ProgressBadge>{items.length} pending</ProgressBadge>
+      <View style={s.row}>{['All', 'Reading', 'Activities', 'Quizzes'].map(value => <ProgressAction key={value} label={value} selected={filter === value} onPress={() => setFilter(value)} />)}</View>
+      <Text style={{ color: colors.textMuted, fontSize: 12 }}>Oldest pending first</Text>
+      {loading && <ActivityIndicator color={colors.primary} />}
+      {!!error && <Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.retryText }]}>{error}</Text>}
+      {!loading && !error && !visible.length && <Text style={[typography.reading.sm, { color: colors.textMuted }]}>{items.length ? 'No pending submissions in this category.' : 'All caught up. No submitted work is waiting for review.'}</Text>}
+      {!error && visible.map(item => <ProgressCard key={item._id}>
+        <Text style={[typography.display.md, { color: colors.text }]}>{item.learnerName}</Text>
+        <Text style={[typography.display.md, { color: colors.text }]}>{item.title}</Text>
+        <View style={s.row}><ProgressBadge tone={item.kind === 'activity' ? 'green' : 'blue'}>{workLabel(item.kind)}</ProgressBadge><ProgressBadge tone="orange">{item.status}</ProgressBadge></View>
+        <Text style={{ color: colors.textMuted }}>{item.classTitle}</Text>
+        <Text style={{ color: colors.textMuted }}>Submitted {submissionDate(item.submittedAt)}</Text>
+        <ProgressAction label="Open submission" onPress={() => router.push(workDestination(item))} />
+      </ProgressCard>)}
+      <Text style={[typography.reading.sm, { color: colors.textMuted }]}>Reviewed work leaves this list.</Text>
+    </ScrollView>
+  </Screen>;
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  retryButton: {
-    borderWidth: 2,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  row: {
-    borderWidth: 1.5,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-});
