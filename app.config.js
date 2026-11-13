@@ -1,7 +1,17 @@
-// Set this to an EAS file environment variable for Android push builds.
 module.exports = ({ config }) => {
-  const googleServicesFile = process.env.GOOGLE_SERVICES_JSON;
-  if (!googleServicesFile) return config;
+  const isDevelopment = process.env.APP_VARIANT === "development";
+  const googleServicesFile = isDevelopment
+    ? process.env.GOOGLE_SERVICES_JSON_DEV
+    : process.env.GOOGLE_SERVICES_JSON;
 
-  return { ...config, android: { ...config.android, googleServicesFile } };
+  return {
+    ...config,
+    name: isDevelopment ? "Read-y Amigo Dev" : config.name,
+    scheme: isDevelopment ? "readyamigo-dev" : config.scheme,
+    android: {
+      ...config.android,
+      package: isDevelopment ? "com.readyamigo.app.dev" : config.android.package,
+      ...(googleServicesFile ? { googleServicesFile } : {}),
+    },
+  };
 };
