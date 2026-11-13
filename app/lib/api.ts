@@ -19,6 +19,30 @@ export const API_ORIGIN = API_ROOT.replace(/\/api$/, "");
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
+const SESSION_KEY = "device_session";
+const LOGOUT_KEY = "pending_device_logouts";
+const reminderListeners = new Set<() => void>();
+const sessionListeners = new Set<(user: ApiUser | null) => void>();
+let sessionRevision = 0;
+let renewal: Promise<string | null> | undefined;
+let upgrading: Promise<void> | undefined;
+let flushingLogout: Promise<void> | undefined;
+
+export function onReminderDataChange(listener: () => void) {
+  reminderListeners.add(listener);
+  return () => { reminderListeners.delete(listener); };
+}
+
+function notifyReminderDataChange(path: string) {
+  if (/^\/(submissions|activities|quizzes|comprehension|enrollments|classes)(\/|$)/.test(path)) {
+    reminderListeners.forEach(listener => listener());
+  }
+}
+
+export function onSessionChange(listener: (user: ApiUser | null) => void) {
+  sessionListeners.add(listener);
+  return () => { sessionListeners.delete(listener); };
+}
 
 // =========================
 // TYPES
@@ -214,6 +238,8 @@ export type ApiReports = ReportsData;
 
 type AuthResponse = {
   token: string;
+  refreshToken?: string;
+  accessExpiresAt?: number;
   user: ApiUser;
 };
 
@@ -300,7 +326,9 @@ export async function authRequest<T>(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  return parseOrThrow<T>(res);
+  const result = await parseOrThrow<T>(res);
+  if (options.method && options.method !== "GET") notifyReminderDataChange(path);
+  return result;
 }
 
 async function authMultipartRequest<T>(
@@ -334,18 +362,66 @@ export function getFileUrl(path: string) {
 // SESSION
 // =========================
 
+type DeviceCredentials = { token: string; refreshToken: string; accessExpiresAt: number };
+
+async function readDeviceCredentials(): Promise<DeviceCredentials | null> {
+  const stored = await getItem(SESSION_KEY);
+  return stored ? JSON.parse(stored) as DeviceCredentials : null;
+}
+
+async function saveCredentials(response: AuthResponse) {
+  const { token, refreshToken, accessExpiresAt } = response;
+  if (refreshToken && accessExpiresAt) {
+    await saveItem(SESSION_KEY, JSON.stringify({ token, refreshToken, accessExpiresAt }));
+    await removeItem(TOKEN_KEY);
+  } else {
+    await saveItem(TOKEN_KEY, token);
+    await removeItem(SESSION_KEY);
+  }
+}
+
 async function persistSession(response: AuthResponse) {
-  await saveItem(TOKEN_KEY, response.token);
+  sessionRevision++;
+  await saveCredentials(response);
   await saveItem(USER_KEY, JSON.stringify(response.user));
+  sessionListeners.forEach(listener => listener(response.user));
+}
+
+async function clearSession() {
+  sessionRevision++;
+  await Promise.all([removeItem(TOKEN_KEY), removeItem(SESSION_KEY), removeItem(USER_KEY)]);
+  sessionListeners.forEach(listener => listener(null));
+}
+
+async function renewDeviceSession(credentials: DeviceCredentials, revision: number) {
+  const res = await rawFetch("/auth/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: credentials.refreshToken }),
+  });
+  if (revision !== sessionRevision) return null;
+  if (res.status === 401) {
+    await clearSession();
+    return null;
+  }
+  const response = await parseOrThrow<AuthResponse>(res);
+  if (revision !== sessionRevision) return null;
+  await saveCredentials(response);
+  return response.token;
 }
 
 export async function getStoredToken(): Promise<string | null> {
-  return getItem(TOKEN_KEY);
+  const revision = sessionRevision;
+  const credentials = await readDeviceCredentials();
+  if (revision !== sessionRevision) return null;
+  if (!credentials) return getItem(TOKEN_KEY);
+  if (credentials.accessExpiresAt > Date.now() + 60_000) return credentials.token;
+  renewal ??= renewDeviceSession(credentials, revision).finally(() => { renewal = undefined; });
+  return renewal;
 }
 
 export async function getStoredUser(): Promise<ApiUser | null> {
   const raw = await getItem(USER_KEY);
-
   if (!raw) return null;
 
   try {
@@ -355,9 +431,93 @@ export async function getStoredUser(): Promise<ApiUser | null> {
   }
 }
 
+async function pendingLogouts() {
+  const stored = await getItem(LOGOUT_KEY);
+  return stored ? JSON.parse(stored) as string[] : [];
+}
+
+async function revokePendingLogouts() {
+  for (const refreshToken of await pendingLogouts()) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(`${API_ROOT}/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        signal: controller.signal,
+      });
+      if (!response.ok) break;
+      const remaining = (await pendingLogouts()).filter(token => token !== refreshToken);
+      if (remaining.length) await saveItem(LOGOUT_KEY, JSON.stringify(remaining));
+      else await removeItem(LOGOUT_KEY);
+    } catch {
+      break; // Retry on the next foreground sync if the device was offline.
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+export function flushDeviceLogout() {
+  flushingLogout ??= revokePendingLogouts().finally(() => { flushingLogout = undefined; });
+  return flushingLogout;
+}
+
 export async function logout() {
-  await removeItem(TOKEN_KEY);
-  await removeItem(USER_KEY);
+  await renewal?.catch(() => {});
+  await upgrading?.catch(() => {});
+  await flushingLogout?.catch(() => {});
+  const credentials = await readDeviceCredentials();
+  if (credentials) {
+    const pending = await pendingLogouts();
+    await saveItem(LOGOUT_KEY, JSON.stringify([...new Set([...pending, credentials.refreshToken])]));
+  }
+  await clearSession();
+  void flushDeviceLogout().catch(() => {});
+}
+
+async function upgradeSavedSession(token: string, revision: number) {
+  const response = await rawFetch("/auth/upgrade-session", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok || revision !== sessionRevision) return;
+  const credentials = await parseOrThrow<AuthResponse>(response);
+  if (revision !== sessionRevision) return;
+  await saveCredentials(credentials);
+  sessionListeners.forEach(listener => listener(credentials.user));
+}
+
+export async function restoreSession() {
+  const savedUser = await getStoredUser();
+  if (!savedUser) return null;
+
+  const revision = sessionRevision;
+  try {
+    const token = await getStoredToken();
+    if (!token) {
+      if (revision === sessionRevision) await clearSession();
+      return null;
+    }
+    const response = await rawFetch("/auth/me", { headers: { Authorization: `Bearer ${token}` } });
+    if (revision !== sessionRevision) return getStoredUser();
+    if (response.status === 401 || response.status === 404) {
+      await clearSession();
+      return null;
+    }
+    const { user } = await parseOrThrow<{ user: ApiUser }>(response);
+    if (revision !== sessionRevision) return getStoredUser();
+    await saveItem(USER_KEY, JSON.stringify(user));
+    if (!await readDeviceCredentials() && revision === sessionRevision) {
+      upgrading ??= upgradeSavedSession(token, revision).finally(() => { upgrading = undefined; });
+      await upgrading;
+    }
+    return user;
+  } catch {
+    // Preserve the saved identity during a cold start or network outage.
+    return revision === sessionRevision ? savedUser : getStoredUser();
+  }
 }
 
 // =========================
@@ -374,8 +534,10 @@ export async function signupTeacher(payload: {
   email: string;
   password: string;
   captchaToken: string;
+  termsAccepted: boolean;
+  termsVersion: string;
 }) {
-  const data = await publicRequest<AuthResponse>("/auth/teacher-signup", payload);
+  const data = await publicRequest<AuthResponse>("/auth/teacher-signup", { ...payload, sessionVersion: 2 });
   await persistSession(data);
   return data;
 }
@@ -389,8 +551,10 @@ export async function signupLearner(payload: {
   username: string;
   password: string;
   captchaToken: string;
+  termsAccepted: boolean;
+  termsVersion: string;
 }) {
-  const data = await publicRequest<AuthResponse>("/auth/learner-signup", payload);
+  const data = await publicRequest<AuthResponse>("/auth/learner-signup", { ...payload, sessionVersion: 2 });
   await persistSession(data);
   return data;
 }
@@ -399,6 +563,7 @@ export async function login(identifier: string, password: string) {
   const data = await publicRequest<AuthResponse>("/auth/login", {
     identifier,
     password,
+    sessionVersion: 2,
   });
   await persistSession(data);
   return data;
@@ -811,6 +976,7 @@ export async function createClassworkWithFile(
 
       if (xhr.status >= 200 && xhr.status < 300) {
         if (data.classwork) {
+          notifyReminderDataChange("/classes");
           resolve(data.classwork);
         } else {
           reject(new Error("Server did not return the created classwork."));
@@ -1042,6 +1208,7 @@ export async function submitReading(
 
       if (xhr.status >= 200 && xhr.status < 300) {
         if (data.submission) {
+          notifyReminderDataChange("/submissions");
           resolve(data.submission as ApiSubmission);
         } else {
           reject(new Error("Server did not return the submitted recording."));
@@ -1129,7 +1296,10 @@ export async function submitActivity(classworkId: string, text: string, file?: {
     xhr.setRequestHeader('Authorization', `Bearer ${token}`); xhr.timeout = 60000;
     xhr.onload = () => {
       let data: any = {}; try { data = JSON.parse(xhr.responseText || '{}'); } catch {}
-      if (xhr.status >= 200 && xhr.status < 300 && data.submission) resolve(data.submission);
+      if (xhr.status >= 200 && xhr.status < 300 && data.submission) {
+        notifyReminderDataChange("/activities");
+        resolve(data.submission);
+      }
       else reject(new Error(data.error || 'Could not submit the activity.'));
     };
     xhr.onerror = () => reject(new Error('Could not reach the backend. Check your connection.'));

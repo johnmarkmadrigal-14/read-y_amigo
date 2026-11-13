@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { AuthButton, AuthCanvas, BookMark } from '../components/auth/AuthUI';
 import { useTheme } from './theme/ThemeProvider';
 import { typography } from './theme/tokens';
 
+import { useSession } from '../components/auth/SessionProvider';
+
 export default function Index() {
+  const { user } = useSession();
+  if (user) return <Redirect href={user.role === 'teacher' ? '/teacher/dashboard' : '/learner/dashboard'} />;
+  return <Welcome />;
+}
+
+function Welcome() {
   const { colors } = useTheme();
   const [book] = useState(() => new Animated.Value(0));
   const [reveal] = useState(() => new Animated.Value(0));

@@ -15,7 +15,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { GoogleSignInButton } from "../components/GoogleSignInButton";
+import { SignupTerms, SIGNUP_TERMS_VERSION } from "../../components/auth/SignupTerms";
 import { signupTeacher } from "../lib/api";
 import { useTheme } from "../theme/ThemeProvider";
 import { spacing, typography } from "../theme/tokens";
@@ -64,7 +64,7 @@ function validatePassword(password: string) {
 export default function TeacherSignup() {
   const { colors } = useTheme();
 
-  const [showGoogle, setShowGoogle] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const currentStep = STEPS[stepIndex];
   const isLastStep = stepIndex === STEPS.length - 1;
@@ -132,12 +132,15 @@ export default function TeacherSignup() {
     return;
   }
 
+  if (!termsAccepted) return;
+
   // Last step — show CAPTCHA before touching the backend.
   setCaptchaVisible(true);
 };
 
 const handleCaptchaVerified = async (captchaToken: string) => {
   setCaptchaVisible(false);
+  if (!termsAccepted || loading) return;
   setLoading(true);
   try {
     await signupTeacher({
@@ -149,6 +152,8 @@ const handleCaptchaVerified = async (captchaToken: string) => {
       learnerLevel,
       email,
       password,
+      termsAccepted,
+      termsVersion: SIGNUP_TERMS_VERSION,
       captchaToken,           // ← sent to backend for verification
     });
     router.replace("/teacher/dashboard");
@@ -335,21 +340,9 @@ const handleCaptchaVerified = async (captchaToken: string) => {
           </View>
         )}
 
-        <AuthButton label={isLastStep ? "Create account" : "Next"} onPress={handleNext} busy={loading} />
-        {stepIndex === 0 && <View style={{ marginTop: 12 }}>
-          <Pressable accessibilityRole="button" accessibilityState={{ expanded: showGoogle }} onPress={() => setShowGoogle(value => !value)} style={authStyles.link}><Text style={[typography.reading.sm, { color: colors.primary }]}>{showGoogle ? 'Hide Google sign-up' : 'Use Google instead'}</Text></Pressable>
-          {showGoogle && <GoogleSignInButton
-              roleForNewAccount="teacher"
-              onSuccess={() => router.replace("/teacher/dashboard")}
-              onNeedsProfile={(pendingToken, suggestedDisplayName) =>
-                router.push({
-                  pathname: "/auth/complete-google-profile",
-                  params: { pendingToken, suggestedDisplayName, role: "teacher" },
-                })
-              }
-              onError={(message) => Alert.alert("Google sign-in failed", message)}
-            />}
-        </View>}
+        {isLastStep && <SignupTerms checked={termsAccepted} onChange={setTermsAccepted} />}
+        <AuthButton label={isLastStep ? "Create account" : "Next"} onPress={handleNext}
+          disabled={isLastStep && !termsAccepted} busy={loading} />
         <Pressable accessibilityRole="button" onPress={() => router.replace('/auth/login')} style={[authStyles.link, { marginTop: 12 }]}><Text style={[typography.reading.sm, { color: colors.primary }]}>Already have an account? Log in</Text></Pressable>
       </ScrollView>
       </KeyboardAvoidingView>
