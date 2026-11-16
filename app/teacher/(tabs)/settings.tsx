@@ -69,6 +69,11 @@ export default function SettingsScreen() {
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} style={styles.chevron} />
       </Pressable>
 
+      <Pressable accessibilityRole="button" style={[styles.row, { borderColor: colors.border }]} onPress={() => router.push("/teacher/recovery-settings")}>
+        <Ionicons name="key-outline" size={20} color={colors.text} />
+        <Text style={[typography.reading.sm, { color: colors.text }]}>Password recovery</Text>
+      </Pressable>
+
       <AppInformationLinks role="teacher" />
 
       <Pressable style={[styles.row, { borderColor: colors.border }]} onPress={confirmLogout}>

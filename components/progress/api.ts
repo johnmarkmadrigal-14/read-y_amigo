@@ -1,5 +1,5 @@
 import { authRequest } from '../../app/lib/api';
-import type { QuizResultSummary, LearnerReadingProgress } from './data';
+import type { QuizResultSummary, LearnerReadingProgress, ReadingHistoryEntry } from './data';
 
 // These read-only DTOs are supplied by the companion backend update. Never create
 // quiz attempts just to display a result, or derive accuracy from ASR matches.
@@ -13,3 +13,11 @@ export async function learnerReadingProgress(classId: string, learnerId: string)
   if (!data.learner || !Array.isArray(data.history)) throw new Error('Reading history is not available from this server yet. Please refresh after the backend update.');
   return data;
 }
+
+export type MyReadingProgress = {
+  speed: ReadingHistoryEntry[];
+  accuracy: ReadingHistoryEntry | null;
+  comprehension: ReadingHistoryEntry[];
+};
+
+export const myReadingProgress = () => authRequest<MyReadingProgress>('/reports/learner');

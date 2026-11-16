@@ -5,7 +5,7 @@ import { useReadingPreferences } from "../../../components/ReadingPreferences";
 import { HeadingLabel, TextAction } from "../../components/InterfaceChrome";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { FileViewer } from "../../components/FileViewer";
 import { ReadAloudRecorder } from "../../components/ReadAloudRecorder";
@@ -72,9 +72,7 @@ export default function LearnerClassworkScreen() {
     }
   }, [id, classId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   if (loading) {
     return (
@@ -250,6 +248,13 @@ export default function LearnerClassworkScreen() {
           ) : submission ? (
             <Text style={[typography.reading.sm, { color: colors.textMuted, marginTop: spacing.sm }]}>Reading speed is unavailable until a valid continuous reading and its timing can be verified.</Text>
           ) : null}
+        </View>
+      )}
+
+      {submission?.verification?.verifiedAt && !!submission.verification.feedback && (
+        <View style={[styles.section, { padding: spacing.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }]}>
+          <HeadingLabel icon="chatbubble-outline" style={[typography.display.md, { color: colors.text }]}>Teacher feedback</HeadingLabel>
+          <Text selectable style={[typography.reading.sm, { color: colors.text, marginTop: spacing.sm }]}>{submission.verification.feedback}</Text>
         </View>
       )}
 

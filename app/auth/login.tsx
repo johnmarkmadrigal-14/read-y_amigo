@@ -55,6 +55,11 @@ export default function LoginScreen() {
       <AuthHeader title="Log in" onBack={() => router.back()} />
       <AuthInput label="Email or username" placeholder="Enter email or username" value={identifier} onChangeText={setIdentifier} autoComplete="username" editable={!loading} />
       <AuthInput label="Password" placeholder="Enter password" password value={password} onChangeText={setPassword} autoComplete="current-password" editable={!loading} onSubmitEditing={() => { if (!loading) void handleLogin(); }} />
+      <Pressable accessibilityRole="button" disabled={loading}
+        onPress={() => router.push('/auth/forgot-password')}
+        style={[authStyles.link, { alignSelf: 'flex-end', marginTop: -14, marginBottom: 8 }]}>
+        <Text style={[typography.reading.sm, { color: colors.primary }]}>Forgot password?</Text>
+      </Pressable>
       {!!error && <Text accessibilityRole="alert" style={[typography.reading.sm, { color: colors.retryText, marginBottom: 16 }]}>{error}</Text>}
       <AuthButton label="Log in" onPress={() => { void handleLogin(); }} busy={loading} />
       <Pressable accessibilityRole="button" onPress={() => router.push('/auth/choose-role')} style={[authStyles.link, { marginTop: 20 }]}><Text style={[typography.reading.sm, { color: colors.primary }]}>Create an account</Text></Pressable>

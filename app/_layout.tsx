@@ -1,3 +1,4 @@
+import { RecoveryCodePrompt } from "../components/auth/RecoveryCodePrompt";
 import { NotificationSync } from "../components/NotificationSync";
 import { ConfirmationProvider } from "../components/ConfirmationDialog";
 import { ReadingPreferencesProvider } from "../components/ReadingPreferences";
@@ -27,6 +28,7 @@ export default function RootLayout() {
     <ThemeProvider><SessionProvider><ReadingPreferencesProvider><ConfirmationProvider>
       <AppStack />
       <NotificationSync />
+      <RecoveryCodePrompt />
     </ConfirmationProvider></ReadingPreferencesProvider></SessionProvider></ThemeProvider>
   );
 }
@@ -40,6 +42,7 @@ function AppStack() {
       <Stack.Screen name="index" />
       <Stack.Protected guard={!user}>
         <Stack.Screen name="auth/login" />
+        <Stack.Screen name="auth/forgot-password" />
         <Stack.Screen name="auth/choose-role" />
         <Stack.Screen name="auth/teacher-signup" />
         <Stack.Screen name="auth/learner-signup" />

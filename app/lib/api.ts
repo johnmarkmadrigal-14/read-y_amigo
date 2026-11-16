@@ -569,6 +569,23 @@ export async function login(identifier: string, password: string) {
   return data;
 }
 
+export type RecoveryChallenge = { id: string; code: string; expiresAt: string };
+
+export const requestPasswordCode = (identifier: string, role: ApiUser['role']) =>
+  publicRequest<{ accepted: true }>('/auth/recovery/request', { identifier, role });
+
+export const verifyPasswordCode = (identifier: string, role: ApiUser['role'], code: string, method: 'device' | 'backup') =>
+  publicRequest<{ resetToken: string }>('/auth/recovery/verify', { identifier, role, code, method });
+
+export const resetPassword = (resetToken: string, password: string, confirmPassword: string) =>
+  publicRequest<{ reset: true }>('/auth/recovery/reset', { resetToken, password, confirmPassword });
+
+export const getDeviceRecoveryCode = () =>
+  authRequest<{ challenge: RecoveryChallenge | null }>('/auth/recovery/device-code');
+
+export const generateBackupRecoveryCode = (password: string) =>
+  authRequest<{ code: string }>('/auth/recovery/backup-code', { method: 'POST', body: { password } });
+
 export async function googleAuth(
   idToken: string,
   roleForNewAccount: "teacher" | "learner"
@@ -725,7 +742,7 @@ export async function getReports() {
 }
 
 export type ApiSubmission = {
-  verification?: { verifiedAt: string; verifiedBy: string };
+  verification?: { verifiedAt: string; verifiedBy: string; feedback?: string };
   wordAccuracy?: { wordsAssessed: number; errorCount: number; percentage: number; listened: boolean; reviewedAt: string; reviewedBy: string };
   miscueReview?: MiscueReview;
   recordingInterrupted?: boolean;
@@ -1307,7 +1324,7 @@ export async function submitActivity(classworkId: string, text: string, file?: {
     xhr.send(form);
   });
 }
-export const verifyReading = (submission: ApiSubmission) => authRequest<{ submission: ApiSubmission }>(`/submissions/${submission._id}/verify`, {
-  method: 'PATCH', body: { confirmed: true, previousVerifiedAt: submission.verification?.verifiedAt || null },
+export const verifyReading = (submission: ApiSubmission, feedback: string) => authRequest<{ submission: ApiSubmission }>(`/submissions/${submission._id}/verify-with-feedback`, {
+  method: 'PATCH', body: { confirmed: true, previousVerifiedAt: submission.verification?.verifiedAt || null, feedback },
 });
 export const getClassroomPeople = (classId: string) => authRequest<{ learners: ApiEnrollment[]; teacher: ClassroomPerson | null }>(`/learner/classes/${classId}/learners`);

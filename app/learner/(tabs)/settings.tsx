@@ -37,6 +37,11 @@ export default function LearnerSettingsScreen() {
         <Text style={[typography.reading.sm, { color: colors.text }]}>Profile and reading preferences</Text>
       </Pressable>
 
+      <Pressable accessibilityRole="button" style={[styles.row, { borderColor: colors.border }]} onPress={() => router.push("/learner/recovery-settings")}>
+        <Ionicons name="key-outline" size={20} color={colors.text} />
+        <Text style={[typography.reading.sm, { color: colors.text }]}>Password recovery</Text>
+      </Pressable>
+
       <AppInformationLinks role="learner" />
 
       <Pressable
