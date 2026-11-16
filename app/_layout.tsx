@@ -1,4 +1,5 @@
 import { RecoveryCodePrompt } from "../components/auth/RecoveryCodePrompt";
+import { AppLogo, AuthCanvas } from "../components/auth/AuthUI";
 import { NotificationSync } from "../components/NotificationSync";
 import { ConfirmationProvider } from "../components/ConfirmationDialog";
 import { ReadingPreferencesProvider } from "../components/ReadingPreferences";
@@ -6,6 +7,7 @@ import { SessionProvider, useSession } from "../components/auth/SessionProvider"
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { useAppFonts } from "./theme/fonts";
 import { ThemeProvider } from "./theme/ThemeProvider";
 
@@ -35,7 +37,12 @@ export default function RootLayout() {
 
 function AppStack() {
   const { ready, user } = useSession();
-  if (!ready) return null;
+  if (!ready) return <AuthCanvas>
+    <View accessibilityLabel="Loading Read-y Amigo" accessibilityState={{ busy: true }} accessible
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <AppLogo size={200} />
+    </View>
+  </AuthCanvas>;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

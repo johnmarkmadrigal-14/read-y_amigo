@@ -1,9 +1,14 @@
 import { useState, type ReactNode } from 'react';
-import { Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
+import { Animated, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../app/theme/ThemeProvider';
 import { typography } from '../../app/theme/tokens';
+
+export function AppLogo({ size }: { size: number }) {
+  return <Image source={require('../../assets/images/logo.png')} resizeMode="contain" accessible={false}
+    style={{ width: size, height: size }} />;
+}
 
 // Native shapes keep the book crisp at every screen size and need no new asset or module.
 export function BookMark({ size = 52, progress }: { size?: number; progress?: Animated.Value }) {
@@ -38,7 +43,7 @@ export function AuthHeader({ title, onBack }: { title: string; onBack: () => voi
   return <View style={{ gap: 28, marginBottom: 28 }}>
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={onBack} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}><Ionicons name="arrow-back" size={23} color={colors.primary} /></Pressable>
-      <View style={{ flex: 1, alignItems: 'center' }}><BookMark /></View><View style={{ width: 44 }} />
+      <View style={{ flex: 1, alignItems: 'center' }}><AppLogo size={52} /></View><View style={{ width: 44 }} />
     </View>
     <Text accessibilityRole="header" style={[typography.display.lg, { textAlign: 'center', color: colors.text }]}>{title}</Text>
   </View>;

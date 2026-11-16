@@ -18,7 +18,7 @@
     "android": {
       "package": "com.readyamigo.app",
       "adaptiveIcon": {
-        "backgroundColor": "#FDECAF",
+        "backgroundColor": "#FFDE59",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,

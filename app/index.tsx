@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
-import { AuthButton, AuthCanvas, BookMark } from '../components/auth/AuthUI';
+import { AppLogo, AuthButton, AuthCanvas, BookMark } from '../components/auth/AuthUI';
 import { useTheme } from './theme/ThemeProvider';
 import { typography } from './theme/tokens';
 
@@ -37,7 +37,14 @@ function Welcome() {
   }, [book, reveal, appear]);
   return <AuthCanvas>
     <View style={{ flex: 1, justifyContent: 'center', gap: 30 }}>
-      <Animated.View accessibilityLabel="Opening book" style={{ opacity: appear, alignItems: 'center', transform: [{ translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [90, 0] }) }] }}><BookMark size={200} progress={book} /></Animated.View>
+      <Animated.View style={{ alignItems: 'center', justifyContent: 'center', height: 200,
+        transform: [{ translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [64, 0] }) }],
+      }}>
+        <Animated.View style={{ position: 'absolute', opacity: Animated.multiply(appear, Animated.subtract(1, reveal)) }}>
+          <BookMark size={200} progress={book} />
+        </Animated.View>
+        <Animated.View style={{ opacity: reveal }}><AppLogo size={200} /></Animated.View>
+      </Animated.View>
       <Animated.View aria-hidden={!ready} accessibilityElementsHidden={!ready} importantForAccessibility={ready ? 'auto' : 'no-hide-descendants'} pointerEvents={ready ? 'auto' : 'none'} style={{ opacity: reveal, gap: 42 }}>
         <Text accessibilityRole="header" style={[typography.display.lg, { color: colors.primary, textAlign: 'center' }]}>READ-Y AMIGO</Text>
         <View style={{ gap: 12 }}><AuthButton label="Log in" onPress={() => router.push('/auth/login')} /><AuthButton label="Sign up" outline onPress={() => router.push('/auth/choose-role')} /></View>
